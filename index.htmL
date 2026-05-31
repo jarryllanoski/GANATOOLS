@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOOLWIN SORTEOS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #2563EB; --brand-dark: #1D4ED8; --brand-light: #EFF6FF;
+      --green: #16A34A; --green-light: #DCFCE7;
+      --red: #DC2626; --red-light: #FEE2E2;
+      --amber: #D97706; --amber-light: #FEF3C7;
+      --bg: #0F1117; --bg2: #1A1D27; --bg3: #222535; --bg4: #2A2D3E;
+      --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+      --text: #F0F2FF; --text2: #9CA3C4; --text3: #6B7080;
+      --radius: 10px; --radius-lg: 14px; --radius-xl: 18px;
+    }
+    html, body { min-height: 100vh; background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    /* ─── HEADER ─── */
+    .header {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 20px; display: flex; align-items: center; justify-content: space-between;
+      height: 56px; position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 36px; height: 36px; background: var(--brand); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; color: white;
+    }
+    .logo-text { font-weight: 700; font-size: 15px; }
+    .logo-sub  { font-size: 11px; color: var(--text2); }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .plan-badge {
+      background: linear-gradient(135deg,#7C3AED,#2563EB);
+      color: white; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+    }
+    .btn-icon {
+      width: 36px; height: 36px; border-radius: 8px; background: var(--bg3);
+      border: 1px solid var(--border); color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+
+    /* ─── TABS ─── */
+    .nav-tabs {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      display: flex; padding: 0 20px;
+    }
+    .tab {
+      padding: 14px 16px; font-size: 13px; font-weight: 500; color: var(--text2);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      display: flex; align-items: center; gap: 6px; transition: all .2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+    /* ─── MAIN ─── */
+    .main {
+      flex: 1; padding: 20px; max-width: 1100px; width: 100%; margin: 0 auto;
+    }
+
+    /* ─── STATS ─── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px;
+    }
+    .stat-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px;
+    }
+    .stat-num   { font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--text2); margin-top: 4px; }
+    .ic-blue  { background:#1E3A5F; color:#60A5FA; }
+    .ic-amber { background:#3D2B00; color:#FBBF24; }
+    .ic-green { background:#0A2E1A; color:#34D399; }
+    .ic-red   { background:#2D0A0A; color:#F87171; }
+    .num-blue  { color:#60A5FA; } .num-amber { color:#FBBF24; }
+    .num-green { color:#34D399; } .num-red   { color:#F87171; }
+
+    /* ─── SEARCH / FILTER ─── */
+    .search-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+    .search-input {
+      flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 10px 14px; color: var(--text);
+      font-size: 13px; font-family: inherit; outline: none;
+    }
+    .search-input::placeholder { color: var(--text3); }
+    .btn-filter {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 10px 12px; color: var(--text2); cursor: pointer; font-size: 16px;
+    }
+    .filter-pills { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .pill {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; transition: all .2s;
+      background: var(--bg3); color: var(--text2); border-color: var(--border2);
+    }
+    .pill.active { background: var(--brand); color: white; border-color: var(--brand); }
+
+    /* ─── PARTICIPANT LIST ─── */
+    .part-list { display: flex; flex-direction: column; gap: 8px; }
+    .part-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px; transition: border-color .2s;
+    }
+    .part-card:hover { border-color: var(--border2); }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .part-info { flex: 1; min-width: 0; }
+    .part-name  { font-weight: 600; font-size: 14px; }
+    .part-meta  { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .part-right { text-align: right; }
+    .part-amount { font-weight: 700; font-size: 15px; }
+    .part-date   { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .status-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; margin-top: 4px;
+    }
+    .sb-pend  { background:#3D2B00; color:#FBBF24; }
+    .sb-verif { background:#0A2E1A; color:#34D399; }
+    .sb-rech  { background:#2D0A0A; color:#F87171; }
+    .part-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+    .action-btn {
+      width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--border2);
+      background: var(--bg3); color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all .2s;
+    }
+    .action-btn:hover          { background: var(--brand);  color: white; border-color: var(--brand); }
+    .action-btn.green:hover    { background: var(--green);  color: white; border-color: var(--green); }
+    .action-btn.red-btn:hover  { background: var(--red);    color: white; border-color: var(--red); }
+
+    /* ─── PAGINATION ─── */
+    .pag-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+    .pag-info { font-size: 12px; color: var(--text2); }
+    .pag-btns { display: flex; gap: 4px; }
+    .pag-btn {
+      width: 30px; height: 30px; border-radius: 7px; background: var(--bg3);
+      border: 1px solid var(--border2); color: var(--text2); cursor: pointer;
+      font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all .2s;
+    }
+    .pag-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
+    .pag-btn:hover:not(.active) { background: var(--bg4); }
+
+    /* ─── COMPARTIR ─── */
+    .share-section { max-width: 620px; }
+    .section-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .section-sub   { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+    .share-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px;
+    }
+    .share-card-title {
+      font-size: 11px; font-weight: 700; color: var(--brand);
+      text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px;
+    }
+    .link-row { display: flex; gap: 8px; align-items: center; }
+    .link-input {
+      flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 10px 14px; color: var(--text2); font-size: 13px; font-family: inherit;
+    }
+    .btn-copy {
+      background: var(--brand); color: white; border: none; border-radius: var(--radius);
+      padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; font-family: inherit; transition: background .2s;
+    }
+    .btn-copy:hover { background: var(--brand-dark); }
+    .btn-share-icon {
+      width: 36px; height: 36px; border-radius: var(--radius); background: var(--bg4);
+      border: 1px solid var(--border2); color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .social-btn {
+      border: none; border-radius: var(--radius); padding: 12px 16px; font-size: 14px;
+      font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;
+      font-family: inherit; color: white; transition: opacity .2s;
+    }
+    .social-btn:hover { opacity: .85; }
+    .s-wa { background:#25D366; } .s-fb { background:#1877F2; }
+    .s-ig { background:linear-gradient(135deg,#E1306C,#F77737); } .s-tg { background:#0088CC; }
+    .qr-area { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .qr-box  {
+      width: 150px; height: 150px; background: white; border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center; padding: 8px;
+    }
+    .btn-dl-qr {
+      background: var(--brand); color: white; border: none; border-radius: var(--radius);
+      padding: 10px 20px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+
+    /* ─── CONFIGURACIÓN ─── */
+    .config-section { max-width: 680px; }
+    .config-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .btn-guardar {
+      background: var(--green); color: white; border: none; border-radius: var(--radius);
+      padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer;
+      font-family: inherit; display: flex; align-items: center; gap: 6px;
+    }
+    .config-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px;
+    }
+    .config-card-title {
+      font-size: 14px; font-weight: 700; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cfg-num {
+      width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: white;
+      font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 10px 14px; color: var(--text);
+      font-size: 13px; font-family: inherit; outline: none;
+    }
+    .form-input:focus { border-color: var(--brand); }
+    textarea.form-input { resize: vertical; min-height: 70px; }
+    .date-row  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pgrid3    { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .img-upload {
+      border: 2px dashed var(--border2); border-radius: var(--radius-lg);
+      padding: 20px; text-align: center; color: var(--text2); font-size: 13px;
+    }
+    .pago-check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); }
+    .pago-check input { width: 16px; height: 16px; accent-color: var(--brand); }
+
+    /* ─── VISTA PÚBLICA ─── */
+    .pub-header {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 20px; height: 56px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .pub-content {
+      display: grid; grid-template-columns: 1fr 380px; gap: 20px;
+      max-width: 960px; margin: 0 auto; padding: 24px 20px;
+    }
+    .prize-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+    .prize-img {
+      width: 80px; height: 80px; border-radius: var(--radius-lg); background: var(--bg3);
+      display: flex; align-items: center; justify-content: center; font-size: 36px; flex-shrink: 0;
+    }
+    .prize-title  { font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 6px; }
+    .prize-meta   { display: flex; gap: 12px; font-size: 13px; color: var(--text2); }
+    .pub-desc     { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
+    .form-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px;
+    }
+    .form-card-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .form-card-sub   { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+    .success-msg {
+      background: #0A2E1A; border: 1px solid #34D399; border-radius: var(--radius);
+      padding: 10px 14px; font-size: 13px; color: #34D399; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .phone-row { display: flex; gap: 8px; }
+    .country-sel {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 10px; color: var(--text);
+      font-family: inherit; font-size: 13px; width: 80px; flex-shrink: 0;
+    }
+    .ticket-row { display: flex; align-items: center; gap: 12px; }
+    .qty-btn {
+      width: 32px; height: 32px; border-radius: 8px; background: var(--bg3);
+      border: 1px solid var(--border2); color: var(--text); font-size: 18px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s;
+    }
+    .qty-btn:hover { background: var(--brand); border-color: var(--brand); }
+    .qty-num   { font-size: 18px; font-weight: 700; min-width: 24px; text-align: center; }
+    .qty-price { font-size: 13px; color: var(--text2); }
+    .pm-label  { font-size: 12px; color: var(--text2); margin-bottom: 10px; font-weight: 600; }
+    .pm-grid   { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pm-badge  {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius); padding: 8px 12px; font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .pm-icon { width: 22px; height: 22px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+    .yape-ic { background:#6B21A8; color:white; }
+    .plin-ic  { background:#0EA5E9; color:white; }
+    .bcp-ic   { background:#003087; color:white; }
+    .upload-zone {
+      border: 2px dashed var(--border2); border-radius: var(--radius-lg);
+      padding: 24px; text-align: center; color: var(--text2);
+      font-size: 13px; cursor: pointer; margin-top: 14px; transition: border-color .2s;
+    }
+    .upload-zone:hover { border-color: var(--brand); }
+    .btn-submit {
+      width: 100%; background: var(--brand); color: white; border: none;
+      border-radius: var(--radius-lg); padding: 14px; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit; margin-top: 16px; transition: background .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover { background: var(--brand-dark); }
+    .privacy-note { font-size: 11px; color: var(--text3); text-align: center; margin-top: 8px; }
+
+    /* ─── HOW IT WORKS ─── */
+    .how-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px;
+    }
+    .how-title  { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .how-step   { display: flex; gap: 12px; margin-bottom: 14px; }
+    .step-num   {
+      width: 28px; height: 28px; border-radius: 50%; background: var(--brand); color: white;
+      font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .step-num.party { background: var(--amber); }
+    .step-title { font-size: 13px; font-weight: 600; color: var(--brand); margin-bottom: 2px; }
+    .step-title.party { color: var(--amber); }
+    .step-desc  { font-size: 12px; color: var(--text2); }
+    .feature-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--text2); margin-bottom: 8px;
+    }
+    .feat-icon {
+      width: 20px; height: 20px; border-radius: 50%; background: var(--green);
+      display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; flex-shrink: 0;
+    }
+    .total-part {
+      text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);
+    }
+    .total-num   { font-size: 28px; font-weight: 700; color: var(--brand); }
+    .total-label { font-size: 12px; color: var(--text2); }
+
+    /* ─── MIS PARTICIPACIONES ─── */
+    .mis-wrap { max-width: 620px; margin: 0 auto; padding: 24px 20px; }
+    .revision-banner {
+      background: #0A2E1A; border: 1px solid #34D399; border-radius: var(--radius-lg);
+      padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; font-size: 13px;
+    }
+    .rev-icon {
+      width: 28px; height: 28px; border-radius: 50%; background: #34D399; color: #0A2E1A;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    }
+    .rev-title { font-weight: 600; color: #34D399; }
+    .rev-sub   { font-size: 12px; color: #4ADE80; }
+    .detail-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px; margin-bottom: 16px;
+    }
+    .detail-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+    .detail-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+    .detail-val   { font-size: 14px; font-weight: 600; }
+    .status-rev {
+      background: #3D2B00; color: #FBBF24;
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block;
+    }
+    .comp-row {
+      display: flex; align-items: center; gap: 12px; padding: 12px;
+      background: var(--bg3); border-radius: var(--radius); margin-top: 4px;
+    }
+    .comp-thumb {
+      width: 40px; height: 40px; background: var(--bg4); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; color: var(--text2); font-size: 18px;
+    }
+    .comp-name { font-size: 13px; font-weight: 500; }
+    .comp-meta { font-size: 11px; color: var(--text2); }
+    .comp-date { font-size: 11px; color: var(--text2); text-align: right; margin-left: auto; }
+    .ticket-chip {
+      background: var(--bg3); border: 1px dashed var(--border2);
+      border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700;
+    }
+    .tickets-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .btn-ver-lista {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: var(--radius-lg); padding: 14px; font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit; color: var(--text); margin-top: 12px;
+      display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .2s;
+    }
+    .btn-ver-lista:hover { background: var(--bg4); }
+    .transparencia {
+      background: #0A1A2E; border: 1px solid #1E3A5F;
+      border-radius: var(--radius-xl); padding: 16px 20px; margin-top: 16px;
+    }
+    .trans-title  { font-size: 14px; font-weight: 700; color: #60A5FA; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .trans-items  { display: flex; flex-wrap: wrap; gap: 12px; }
+    .trans-item   { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
+    .trans-dot    { width: 8px; height: 8px; border-radius: 50%; background: #34D399; }
+
+    /* ─── BOTTOM SWITCHER ─── */
+    .view-switcher {
+      background: var(--bg3); border-top: 1px solid var(--border);
+      padding: 12px 20px; position: sticky; bottom: 0; z-index: 200;
+    }
+    .vsw-inner { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
+    .vsw-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .vsw-btn {
+      padding: 8px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border2); font-family: inherit; transition: all .2s;
+      background: var(--bg2); color: var(--text2);
+    }
+    .vsw-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
+    .vsw-btn:hover:not(.active) { background: var(--bg4); }
+
+    /* ─── TOAST ─── */
+    #toast {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: #16A34A; color: white; padding: 12px 20px;
+      border-radius: 10px; font-size: 13px; font-weight: 600;
+      transition: transform .3s; z-index: 9999; pointer-events: none;
+      white-space: nowrap;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 700px) {
+      .stats-grid  { grid-template-columns: repeat(2,1fr); }
+      .pub-content { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: repeat(2,1fr); }
+      .social-grid { grid-template-columns: 1fr; }
+      .date-row, .pgrid3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     VISTA ADMIN
+════════════════════════════════════════════ -->
+<div id="viewAdmin">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">W</div>
+      <div>
+        <div class="logo-text">TOOLWIN SORTEOS</div>
+        <div class="logo-sub">933724178</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="plan-badge">PLAN PRO</span>
+      <button class="btn-icon" title="Configuración"><i class="ti ti-settings"></i></button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="tab active" id="tab-participantes" onclick="switchTab('participantes')">
+      <i class="ti ti-users"></i> Participantes
+    </div>
+    <div class="tab" id="tab-compartir" onclick="switchTab('compartir')">
+      <i class="ti ti-share"></i> Compartir
+    </div>
+    <div class="tab" id="tab-configuracion" onclick="switchTab('configuracion')">
+      <i class="ti ti-settings"></i> Configuración
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- TAB: PARTICIPANTES -->
+    <div id="tc-participantes">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon ic-blue"><i class="ti ti-users"></i></div>
+          <div class="stat-num num-blue" id="statTotal">125</div>
+          <div class="stat-label">Total participantes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ic-amber"><i class="ti ti-clock"></i></div>
+          <div class="stat-num num-amber" id="statPend">38</div>
+          <div class="stat-label">Pendientes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ic-green"><i class="ti ti-check"></i></div>
+          <div class="stat-num num-green" id="statVerif">78</div>
+          <div class="stat-label">Verificados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ic-red"><i class="ti ti-x"></i></div>
+          <div class="stat-num num-red" id="statRech">9</div>
+          <div class="stat-label">Rechazados</div>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input class="search-input" type="text" id="searchInput" placeholder="Buscar por nombre, teléfono o DNI..." oninput="renderParts()">
+        <button class="btn-filter"><i class="ti ti-adjustments-horizontal"></i></button>
+      </div>
+
+      <div class="filter-pills">
+        <span class="pill active" id="pill-todos"     onclick="setFilter('todos',this)">TODOS</span>
+        <span class="pill"        id="pill-pendiente" onclick="setFilter('pendiente',this)">⏳ PENDIENTES</span>
+        <span class="pill"        id="pill-verificado" onclick="setFilter('verificado',this)">✓ VERIFICADOS</span>
+        <span class="pill"        id="pill-rechazado" onclick="setFilter('rechazado',this)">✗ RECHAZADOS</span>
+      </div>
+
+      <div class="part-list" id="partList"></div>
+
+      <div class="pag-bar">
+        <span class="pag-info" id="pagInfo">Mostrando 1 a 5 de 125 participantes</span>
+        <div class="pag-btns" id="pagBtns"></div>
+      </div>
+    </div>
+
+    <!-- TAB: COMPARTIR -->
+    <div id="tc-compartir" style="display:none">
+      <div class="share-section">
+        <div class="section-title">Compartir sorteo</div>
+        <div class="section-sub">Comparte el link de tu sorteo para que más personas participen.</div>
+
+        <div class="share-card">
+          <div class="share-card-title"><i class="ti ti-link"></i> Link del sorteo</div>
+          <div class="link-row">
+            <input class="link-input" id="sorteoLink" value="https://toolwin.app/s/ABCD1234" readonly>
+            <button class="btn-copy" onclick="copyLink()"><i class="ti ti-copy"></i> Copiar</button>
+            <button class="btn-share-icon" title="Compartir"><i class="ti ti-share"></i></button>
+          </div>
+        </div>
+
+        <div class="share-card">
+          <div class="share-card-title">Compartir en redes</div>
+          <div class="social-grid">
+            <button class="social-btn s-wa" onclick="shareWA()"><span style="font-size:18px">💬</span> WhatsApp</button>
+            <button class="social-btn s-fb"><span style="font-size:18px">📘</span> Facebook</button>
+            <button class="social-btn s-ig"><span style="font-size:18px">📷</span> Instagram</button>
+            <button class="social-btn s-tg"><span style="font-size:18px">✈️</span> Telegram</button>
+          </div>
+        </div>
+
+        <div class="share-card">
+          <div class="share-card-title">Código QR</div>
+          <div class="qr-area">
+            <div class="qr-box"><div id="qrcode"></div></div>
+            <button class="btn-dl-qr"><i class="ti ti-download"></i> Descargar QR</button>
+          </div>
+        </div>
+
+        <div class="share-card" style="background:#0A2E1A;border-color:#34D399">
+          <div style="font-size:14px;font-weight:700;color:#34D399;margin-bottom:12px">
+            <i class="ti ti-shield-check"></i> Así funciona el link
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4ADE80"><span>✅</span> Las personas se registran desde este link.</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4ADE80"><span>✅</span> Sus datos se guardan automáticamente.</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4ADE80"><span>✅</span> Podrán ver los participantes verificados.</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#4ADE80"><span>✅</span> Más transparencia, más confianza.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CONFIGURACIÓN -->
+    <div id="tc-configuracion" style="display:none">
+      <div class="config-section">
+        <div class="config-header">
+          <div class="section-title">Configuración del sorteo</div>
+          <button class="btn-guardar" onclick="showToast('💾 ¡Guardado correctamente!')">
+            <i class="ti ti-device-floppy"></i> Guardar
+          </button>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-title"><span class="cfg-num">1</span> Información del sorteo</div>
+          <div class="form-group">
+            <label class="form-label">Nombre del sorteo</label>
+            <input class="form-input" type="text" value="Sorteo: Taladro Inalámbrico Makita 18V">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-input">Sorteamos este increíble taladro inalámbrico Makita 18V con maletín y accesorios.</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Imagen del premio</label>
+            <div class="img-upload">
+              <div style="font-size:40px;margin-bottom:8px">🔧</div>
+              <div style="font-size:13px;color:var(--text2)">Taladro Makita 18V — imagen actual</div>
+              <button style="margin-top:10px;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text2);cursor:pointer;font-family:inherit;font-size:12px">
+                <i class="ti ti-photo"></i> Cambiar imagen
+              </button>
+              <div style="font-size:11px;color:var(--text3);margin-top:6px">JPG, PNG máximo 5MB</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-title"><span class="cfg-num" style="background:#7C3AED">2</span> Fechas del sorteo</div>
+          <div class="date-row">
+            <div class="form-group">
+              <label class="form-label">Fecha del sorteo</label>
+              <input class="form-input" type="date" value="2026-06-30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hora del sorteo</label>
+              <input class="form-input" type="time" value="20:00">
+            </div>
+          </div>
+          <div class="date-row">
+            <div class="form-group">
+              <label class="form-label">Cierre de inscripciones</label>
+              <input class="form-input" type="date" value="2026-06-30">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hora de cierre</label>
+              <input class="form-input" type="time" value="18:00">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Zona horaria</label>
+            <select class="form-input">
+              <option>America/Lima (GMT-05:00)</option>
+              <option>America/Bogota (GMT-05:00)</option>
+              <option>America/Santiago (GMT-04:00)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-title"><span class="cfg-num" style="background:#0D9488">3</span> Configuración de participación</div>
+          <div class="pgrid3">
+            <div class="form-group">
+              <label class="form-label">Precio por ticket (S/)</label>
+              <input class="form-input" type="number" value="10.00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mínimo de tickets</label>
+              <input class="form-input" type="number" value="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Máximo de tickets</label>
+              <input class="form-input" type="number" value="50">
+            </div>
+          </div>
+        </div>
+
+        <div class="config-card">
+          <div class="config-card-title"><span class="cfg-num" style="background:#D97706">4</span> Métodos de pago</div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap">
+            <label class="pago-check"><input type="checkbox" checked> Yape</label>
+            <label class="pago-check"><input type="checkbox" checked> Plin</label>
+            <label class="pago-check"><input type="checkbox" checked> Transferencia BCP</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /viewAdmin -->
+
+
+<!-- ═══════════════════════════════════════════
+     VISTA PÚBLICA
+════════════════════════════════════════════ -->
+<div id="viewPublic" style="display:none">
+  <div class="pub-header">
+    <div class="logo">
+      <div class="logo-icon">W</div>
+      <div class="logo-text">TOOLWIN SORTEOS</div>
+    </div>
+    <button class="btn-copy" onclick="showView('misPart')">
+      <i class="ti ti-ticket"></i> Mis participaciones
+    </button>
+  </div>
+
+  <div class="pub-content">
+    <!-- Izquierda: formulario -->
+    <div>
+      <div class="prize-header">
+        <div class="prize-img">🔧</div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">SORTEO</div>
+          <div class="prize-title">Taladro Inalámbrico<br>Makita 18V</div>
+          <div class="prize-meta">
+            <span>📅 30 de junio de 2026</span>
+            <span>🕗 08:00 p.m.</span>
+          </div>
+        </div>
+      </div>
+      <div class="pub-desc">Sorteamos este increíble taladro inalámbrico Makita 18V con maletín y accesorios.</div>
+
+      <div class="form-card">
+        <div class="form-card-title">Participa en el sorteo</div>
+        <div class="form-card-sub">Completa tus datos, realiza el pago y envía tu comprobante.</div>
+        <div class="success-msg"><span>✅</span> ¡Así de fácil! En menos de 1 minuto ya estás participando.</div>
+
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input class="form-input" type="text" id="pubNombre" placeholder="Ej. Juan Pérez García">
+        </div>
+        <div class="form-group">
+          <label class="form-label">WhatsApp</label>
+          <div class="phone-row">
+            <select class="country-sel">
+              <option>+51</option><option>+57</option><option>+56</option><option>+54</option>
+            </select>
+            <input class="form-input" type="tel" id="pubPhone" placeholder="Ej. 933 724 178" style="flex:1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ciudad</label>
+          <select class="form-input" id="pubCiudad">
+            <option value="">Selecciona tu ciudad</option>
+            <option>Lima</option><option>Arequipa</option><option>Trujillo</option>
+            <option>Chiclayo</option><option>Cusco</option><option>Iquitos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cantidad de tickets</label>
+          <div class="ticket-row">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <span class="qty-num" id="qtyNum">1</span>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+            <span class="qty-price" id="qtyPrice">S/ 10.00 por ticket</span>
+          </div>
+        </div>
+
+        <div class="pm-label" style="margin-top:14px">1. Realiza tu pago con:</div>
+        <div class="pm-grid">
+          <div class="pm-badge">
+            <div class="pm-icon yape-ic">Y</div>
+            <div><div style="font-size:12px;font-weight:700">Yape</div><div style="font-size:11px;color:var(--text2)">933 724 178</div></div>
+          </div>
+          <div class="pm-badge">
+            <div class="pm-icon plin-ic">P</div>
+            <div><div style="font-size:12px;font-weight:700">Plin</div><div style="font-size:11px;color:var(--text2)">933 724 178</div></div>
+          </div>
+          <div class="pm-badge">
+            <div class="pm-icon bcp-ic">B</div>
+            <div><div style="font-size:12px;font-weight:700">Transferencia BCP</div><div style="font-size:11px;color:var(--text2)">191-12345678-0-12</div></div>
+          </div>
+        </div>
+
+        <div class="pm-label">2. Sube tu comprobante</div>
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+          <div style="font-size:28px;margin-bottom:8px">📤</div>
+          <div>Toca para seleccionar tu comprobante</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Formatos: JPG, PNG — Máx. 5MB</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(this)">
+
+        <button class="btn-submit" onclick="submitForm()">
+          🚀 ¡Ya pagué, enviar y participar!
+        </button>
+        <div class="privacy-note">🔒 Tus datos están seguros y solo se usarán para este sorteo.</div>
+      </div>
+    </div>
+
+    <!-- Derecha: cómo funciona -->
+    <div>
+      <div class="how-card">
+        <div class="how-title">¿Cómo participo?</div>
+        <div class="how-step">
+          <div class="step-num">1</div>
+          <div><div class="step-title">Completa tus datos</div><div class="step-desc">Llena el formulario con tus datos.</div></div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">2</div>
+          <div><div class="step-title">Realiza el pago</div><div class="step-desc">Elige tu método y realiza el pago.</div></div>
+        </div>
+        <div class="how-step">
+          <div class="step-num">3</div>
+          <div><div class="step-title">Sube tu comprobante</div><div class="step-desc">Adjunta tu comprobante de pago.</div></div>
+        </div>
+        <div class="how-step">
+          <div class="step-num party">🎉</div>
+          <div><div class="step-title party">¡Listo!</div><div class="step-desc">En minutos verificamos tu pago y recibirás confirmación por WhatsApp.</div></div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="feature-item"><div class="feat-icon">✓</div> Verificación rápida en minutos.</div>
+          <div class="feature-item"><div class="feat-icon">✓</div> 100% transparente — todos los participantes visibles.</div>
+          <div class="feature-item"><div class="feat-icon">✓</div> Sorteo en vivo el día del evento.</div>
+        </div>
+        <div class="total-part">
+          <div class="total-num">125</div>
+          <div class="total-label">personas ya participando</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /viewPublic -->
+
+
+<!-- ═══════════════════════════════════════════
+     MIS PARTICIPACIONES
+════════════════════════════════════════════ -->
+<div id="viewMisPart" style="display:none">
+  <div class="pub-header">
+    <div class="logo">
+      <div class="logo-icon">W</div>
+      <div class="logo-text">TOOLWIN SORTEOS</div>
+    </div>
+    <button class="btn-copy" onclick="showView('public')">
+      <i class="ti ti-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div class="mis-wrap">
+    <div class="section-title">Mis participaciones</div>
+    <div class="section-sub" style="margin-bottom:20px">Aquí puedes ver tus participaciones en este sorteo.</div>
+
+    <div class="revision-banner">
+      <div class="rev-icon">✓</div>
+      <div>
+        <div class="rev-title">¡Tu participación está en revisión!</div>
+        <div class="rev-sub">En cuanto verifiquemos tu pago, recibirás un WhatsApp.</div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div class="detail-grid">
+        <div><div class="detail-label">Sorteo</div><div class="detail-val" style="font-size:13px">Taladro Inalámbrico Makita 18V</div></div>
+        <div><div class="detail-label">Estado</div><span class="status-rev">⏳ EN REVISIÓN</span></div>
+        <div><div class="detail-label">Tickets</div><div class="detail-val">2</div></div>
+        <div><div class="detail-label">Total pagado</div><div class="detail-val" style="font-size:18px">S/ 20.00</div></div>
+      </div>
+
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Comprobante enviado</div>
+      <div class="comp-row">
+        <div class="comp-thumb"><i class="ti ti-file-description"></i></div>
+        <div style="flex:1">
+          <div class="comp-name">yape_comprobante.jpg</div>
+          <div class="comp-meta">234 KB</div>
+        </div>
+        <div class="comp-date">Enviado el<br>29/05/2026 10:45 a.m.</div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px">
+          Mis tickets <span style="color:var(--text2);font-weight:400">(cuando se verifique tu pago)</span>
+        </div>
+        <div class="tickets-grid">
+          <div class="ticket-chip">#00023</div>
+          <div class="ticket-chip">#00024</div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px">
+          <i class="ti ti-info-circle"></i> Tus números se generarán al verificar tu pago.
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:600">Ver participantes</div>
+          <div style="font-size:13px;color:var(--text2)">Mira la lista de participantes verificados.</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text2)">Total verificados</div>
+          <div style="font-size:24px;font-weight:700;color:#34D399">78</div>
+        </div>
+      </div>
+      <button class="btn-ver-lista"><i class="ti ti-users"></i> Ver lista de participantes →</button>
+    </div>
+
+    <div class="transparencia">
+      <div class="trans-title"><i class="ti ti-shield-check"></i> Transparencia total</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">En ToolWin Sorteos garantizamos sorteos justos y transparentes.</div>
+      <div class="trans-items">
+        <div class="trans-item"><div class="trans-dot"></div> Solo participaciones verificadas</div>
+        <div class="trans-item"><div class="trans-dot"></div> Resultados 100% aleatorios</div>
+        <div class="trans-item"><div class="trans-dot"></div> Transmisión en vivo</div>
+      </div>
+    </div>
+  </div>
+</div><!-- /viewMisPart -->
+
+
+<!-- ─── BOTTOM SWITCHER ─── -->
+<div class="view-switcher">
+  <div class="vsw-inner">
+    <span class="vsw-label">Vista:</span>
+    <button class="vsw-btn active" id="vsw-admin"   onclick="showView('admin')">🛠 Panel Admin</button>
+    <button class="vsw-btn"        id="vsw-public"  onclick="showView('public')">📱 Vista Pública</button>
+    <button class="vsw-btn"        id="vsw-misPart" onclick="showView('misPart')">🎟 Mis Participaciones</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✅ ¡Copiado!</div>
+
+
+<!-- ═══════ SCRIPTS ═══════ -->
+<script>
+/* ─── DATA ─── */
+const partsData = [
+  {name:'Juan Pérez García',    phone:'958 123 456',dni:'12345678',tickets:2,amount:20,date:'30/05/2026 11:30 a.m.',status:'pendiente', initials:'JP',color:'#7C3AED',nums:''},
+  {name:'María López Santos',   phone:'987 654 321',dni:'87654321',tickets:5,amount:50,date:'30/05/2026 10:45 a.m.',status:'verificado',initials:'ML',color:'#0D9488',nums:'#00021 – #00025'},
+  {name:'Carlos Ramírez',       phone:'912 456 789',dni:'34567890',tickets:1,amount:10,date:'30/05/2026 09:20 a.m.',status:'rechazado', initials:'CR',color:'#DC2626',nums:''},
+  {name:'Luis Alberto',         phone:'923 456 789',dni:'45678912',tickets:3,amount:30,date:'29/05/2026 06:15 p.m.',status:'verificado',initials:'LA',color:'#2563EB',nums:'#00016 – #00018'},
+  {name:'Rosa Huanca',          phone:'978 123 456',dni:'23456789',tickets:4,amount:40,date:'29/05/2026 03:00 p.m.',status:'pendiente', initials:'RH',color:'#D97706',nums:''},
+  {name:'Pedro Salazar',        phone:'945 678 901',dni:'56789012',tickets:2,amount:20,date:'29/05/2026 01:00 p.m.',status:'verificado',initials:'PS',color:'#16A34A',nums:'#00010 – #00011'},
+  {name:'Ana Torres',           phone:'966 234 567',dni:'67890123',tickets:1,amount:10,date:'28/05/2026 11:00 a.m.',status:'pendiente', initials:'AT',color:'#E11D48',nums:''},
+  {name:'Marco Quispe',         phone:'934 567 890',dni:'78901234',tickets:6,amount:60,date:'28/05/2026 09:30 a.m.',status:'verificado',initials:'MQ',color:'#8B5CF6',nums:'#00030 – #00035'},
+];
+
+let currentFilter = 'todos';
+let qty = 1;
+
+/* ─── RENDER PARTICIPANTS ─── */
+function renderParts() {
+  const search = (document.getElementById('searchInput').value || '').toLowerCase();
+  const filtered = partsData.filter(p => {
+    const matchF = currentFilter === 'todos' || p.status === currentFilter;
+    const matchS = !search || p.name.toLowerCase().includes(search) || p.phone.includes(search) || p.dni.includes(search);
+    return matchF && matchS;
+  });
+
+  const list = document.getElementById('partList');
+  if (!filtered.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="ti ti-search" style="font-size:32px;display:block;margin-bottom:8px"></i>No se encontraron participantes</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map((p, i) => {
+    const isPend  = p.status === 'pendiente';
+    const isVerif = p.status === 'verificado';
+    const badge   = isPend  ? 'sb-pend'  : isVerif ? 'sb-verif' : 'sb-rech';
+    const label   = isPend  ? 'PENDIENTE': isVerif  ? 'VERIFICADO':'RECHAZADO';
+    const numEl   = isVerif && p.nums ? `<div style="font-size:11px;color:#60A5FA;font-weight:600;margin-top:2px">${p.nums}</div>` : '';
+    const actions = isPend
+      ? `<button class="action-btn green"   title="Verificar" onclick="changeStatus(${partsData.indexOf(p)},'verificado')"><i class="ti ti-check"></i></button>
+         <button class="action-btn red-btn" title="Rechazar"  onclick="changeStatus(${partsData.indexOf(p)},'rechazado')"><i class="ti ti-x"></i></button>`
+      : '';
+    return `
+      <div class="part-card">
+        <div class="avatar" style="background:${p.color}22;color:${p.color}">${p.initials}</div>
+        <div class="part-info">
+          <div class="part-name">${p.name}</div>
+          <div class="part-meta">${p.phone} | DNI: ${p.dni}</div>
+          <div class="part-meta">${p.tickets} ticket${p.tickets > 1 ? 's' : ''}</div>
+          ${numEl}
+          <span class="status-badge ${badge}">${label}</span>
+        </div>
+        <div class="part-right">
+          <div class="part-amount">S/ ${p.amount}.00</div>
+          <div class="part-date">${p.date}</div>
+          <div class="part-actions">
+            ${actions}
+            <button class="action-btn" title="Ver detalle"><i class="ti ti-eye"></i></button>
+            <button class="action-btn" title="Descargar comprobante"><i class="ti ti-download"></i></button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('pagInfo').textContent =
+    `Mostrando 1 a ${filtered.length} de ${filtered.length} participantes`;
+}
+
+function changeStatus(idx, newStatus) {
+  partsData[idx].status = newStatus;
+  if (newStatus === 'verificado' && !partsData[idx].nums) {
+    const n = 100 + idx * 3;
+    partsData[idx].nums = `#${String(n).padStart(5,'0')} – #${String(n+partsData[idx].tickets-1).padStart(5,'0')}`;
+  }
+  updateStats();
+  renderParts();
+  showToast(newStatus === 'verificado' ? '✅ Participante verificado' : '❌ Participante rechazado');
+}
+
+function updateStats() {
+  const pend  = partsData.filter(p => p.status === 'pendiente').length;
+  const verif = partsData.filter(p => p.status === 'verificado').length;
+  const rech  = partsData.filter(p => p.status === 'rechazado').length;
+  document.getElementById('statPend').textContent  = pend + 30;
+  document.getElementById('statVerif').textContent = verif + 72;
+  document.getElementById('statRech').textContent  = rech + 7;
+}
+
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-pills .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderParts();
+}
+
+/* ─── TABS ─── */
+function switchTab(name) {
+  ['participantes','compartir','configuracion'].forEach(t => {
+    document.getElementById('tc-' + t).style.display     = t === name ? 'block' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+}
+
+/* ─── VIEWS ─── */
+function showView(v) {
+  document.getElementById('viewAdmin').style.display   = v === 'admin'    ? 'block' : 'none';
+  document.getElementById('viewPublic').style.display  = v === 'public'   ? 'block' : 'none';
+  document.getElementById('viewMisPart').style.display = v === 'misPart'  ? 'block' : 'none';
+  ['admin','public','misPart'].forEach((k,i) => {
+    document.getElementById('vsw-' + k).classList.toggle('active', k === v);
+  });
+  window.scrollTo(0,0);
+}
+
+/* ─── TICKET QTY ─── */
+function changeQty(d) {
+  qty = Math.max(1, Math.min(50, qty + d));
+  document.getElementById('qtyNum').textContent   = qty;
+  document.getElementById('qtyPrice').textContent = qty === 1
+    ? 'S/ 10.00 por ticket'
+    : `S/ ${(qty * 10).toFixed(2)} total`;
+}
+
+/* ─── FILE UPLOAD ─── */
+function handleFile(input) {
+  if (!input.files[0]) return;
+  const z = document.getElementById('uploadZone');
+  z.innerHTML = `
+    <div style="color:#34D399;font-size:24px;margin-bottom:6px">✅</div>
+    <div style="font-size:13px;color:#34D399;font-weight:600">${input.files[0].name}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">Archivo listo para enviar</div>`;
+  z.style.borderColor = '#34D399';
+}
+
+/* ─── SUBMIT ─── */
+function submitForm() {
+  const nombre = document.getElementById('pubNombre').value.trim();
+  const phone  = document.getElementById('pubPhone').value.trim();
+  if (!nombre || !phone) { showToast('⚠️ Por favor completa todos los campos'); return; }
+  showToast('🎉 ¡Participación enviada! Te contactaremos por WhatsApp.');
+  setTimeout(() => showView('misPart'), 1200);
+}
+
+/* ─── COPY LINK ─── */
+function copyLink() {
+  const val = document.getElementById('sorteoLink').value;
+  navigator.clipboard.writeText(val).catch(() => {});
+  showToast('✅ ¡Link copiado al portapapeles!');
+}
+
+function shareWA() {
+  const link = document.getElementById('sorteoLink').value;
+  window.open('https://wa.me/?text=' + encodeURIComponent('¡Participa en nuestro sorteo! ' + link), '_blank');
+}
+
+/* ─── TOAST ─── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => {
+    t.style.transform = 'translateX(-50%) translateY(120px)';
+  }, 2800);
+}
+
+/* ─── QR CODE ─── */
+window.addEventListener('DOMContentLoaded', () => {
+  renderParts();
+  setTimeout(() => {
+    try {
+      new QRCode(document.getElementById('qrcode'), {
+        text: 'https://toolwin.app/s/ABCD1234',
+        width: 130, height: 130,
+        colorDark: '#000000', colorLight: '#ffffff'
+      });
+    } catch(e) { console.warn('QR error', e); }
+  }, 400);
+});
+</script>
+
+</body>
+</html>
