@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>TOOLWIN SORTEOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1218;--c1:#161c28;--c2:#1a2030;--c3:#1e2638;--c4:#232a3b;
+  --br:rgba(255,255,255,0.06);--br2:rgba(255,255,255,0.11);
+  --tx:#ffffff;--tx2:#7b8db0;--tx3:#3d4d6a;
+  --gn:#3ecf5a;--or:#e8673a;--bl:#3b82f6;--pu:#9b59e8;
+  --rd:#e84040;--yw:#f59e0b;--cy:#22d3ee;
+  --r:12px;--rl:16px;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#LD{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:14px}
+.spin{width:38px;height:38px;border:3px solid rgba(255,255,255,0.07);border-top-color:var(--gn);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#AM{position:fixed;inset:0;background:rgba(0,0,0,0.82);display:none;align-items:center;justify-content:center;z-index:600;padding:20px}
+#AM.show{display:flex}
+.abox{background:var(--c1);border:1px solid var(--br2);border-radius:20px;padding:28px;width:100%;max-width:360px}
+.aseg{display:flex;background:var(--bg);border-radius:var(--r);padding:3px;margin-bottom:18px;gap:3px}
+.aseg button{flex:1;padding:8px;border:none;background:transparent;color:var(--tx2);font-family:inherit;font-size:13px;font-weight:700;border-radius:9px;cursor:pointer;transition:all .2s}
+.aseg button.on{background:var(--bl);color:#fff}
+.aerr{background:rgba(232,64,64,0.1);border:1px solid rgba(232,64,64,0.3);border-radius:var(--r);padding:9px 12px;font-size:12px;color:var(--rd);margin-bottom:12px;display:none}
+.aerr.show{display:block}
+.fl{font-size:11px;color:var(--tx2);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;display:block}
+.fi{width:100%;background:var(--c3);border:1px solid var(--br2);border-radius:var(--r);padding:10px 13px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;margin-bottom:12px;transition:border-color .2s}
+.fi:focus{border-color:var(--bl)}
+.fi::placeholder{color:var(--tx3)}
+select.fi{cursor:pointer}
+#CM{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:700;padding:16px}
+#CM.show{display:flex}
+.cbox{background:var(--c1);border:1px solid var(--br2);border-radius:20px;padding:20px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto}
+.cimg{width:100%;border-radius:var(--rl);margin-bottom:14px;max-height:300px;object-fit:contain}
+#PM{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:flex-start;justify-content:center;z-index:650;padding:16px;overflow-y:auto}
+#PM.show{display:flex}
+.pbox{background:var(--c1);border:1px solid var(--br2);border-radius:20px;padding:22px;width:100%;max-width:480px;margin:auto}
+.hdr{background:var(--c1);border-bottom:1px solid var(--br);padding:0 14px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hl{display:flex;align-items:center;gap:10px}
+.hico{width:40px;height:40px;background:linear-gradient(135deg,#2ecc71,#1a9e50);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.hnm{font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.15}
+.hph{font-size:11px;color:var(--tx2)}
+.hr{display:flex;align-items:center;gap:7px}
+.odot{width:9px;height:9px;border-radius:50%;background:var(--gn);box-shadow:0 0 8px var(--gn);flex-shrink:0}
+.pro{background:var(--bl);color:#fff;font-size:11px;font-weight:800;padding:4px 11px;border-radius:20px}
+.ibtn{width:40px;height:40px;border-radius:11px;border:1px solid var(--br2);background:var(--c2);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.ibtn:hover{background:var(--c3);color:var(--tx)}
+.ibtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2}
+.tabs{background:var(--c1);border-bottom:1px solid var(--br);display:flex;padding:0 14px}
+.tab{padding:13px 16px;font-size:13px;font-weight:600;color:var(--tx2);cursor:pointer;border-bottom:2.5px solid transparent;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap;user-select:none}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--tx);border-bottom-color:var(--bl)}
+.main{padding:14px;max-width:900px;width:100%;margin:0 auto}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.sc{background:var(--c1);border:1px solid var(--br);border-radius:var(--rl);padding:18px 16px}
+.sn{font-size:38px;font-weight:900;line-height:1;letter-spacing:-2px}
+.sl{font-size:12px;color:var(--tx2);margin-top:5px;display:flex;align-items:center;gap:5px;font-weight:500}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.cg{color:var(--gn)}.co{color:var(--or)}.cb{color:var(--bl)}.cp{color:var(--pu)}
+.tb{background:var(--c1);border:1px solid var(--br);border-radius:var(--rl);padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:10px}
+.sr{display:flex;gap:8px;align-items:center}
+.sw{flex:1;position:relative}
+.sw svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.35;pointer-events:none;width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.si{width:100%;background:var(--c3);border:1px solid var(--br2);border-radius:var(--r);padding:10px 12px 10px 35px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+.si:focus{border-color:var(--bl)}
+.si::placeholder{color:var(--tx3)}
+.xbtn{width:40px;height:40px;border-radius:var(--r);border:1px solid var(--br2);background:var(--c3);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.xbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5}
+.xbtn:hover{background:var(--c2);color:var(--tx)}
+.xbtn.add{background:var(--bl);border-color:var(--bl);color:#fff}
+.xbtn.del{background:rgba(232,64,64,0.1);border-color:rgba(232,64,64,0.3);color:var(--rd);display:none}
+.fr{display:flex;gap:6px;flex-wrap:wrap}
+.pill{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--br2);background:var(--c3);color:var(--tx2);transition:all .2s;white-space:nowrap;user-select:none}
+.pill.on{background:var(--bl);border-color:var(--bl);color:#fff}
+.pill.p1{border-color:rgba(245,158,11,.4);color:var(--yw)}.pill.p1.on{background:var(--yw);border-color:var(--yw);color:#000}
+.pill.p2{border-color:rgba(59,130,246,.4);color:var(--bl)}.pill.p2.on{background:var(--bl);color:#fff}
+.pill.p3{border-color:rgba(62,207,90,.4);color:var(--gn)}.pill.p3.on{background:var(--gn);color:#000}
+.pill.p4{border-color:rgba(232,64,64,.4);color:var(--rd)}.pill.p4.on{background:var(--rd);color:#fff}
+.gl{font-size:11px;font-weight:800;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;padding:10px 2px 4px;display:flex;align-items:center;gap:8px}
+.gl::before{content:'';display:block;width:3px;height:13px;border-radius:2px;background:var(--pu);flex-shrink:0}
+.gc{background:var(--c1);border:1px solid var(--br2);border-radius:20px;padding:2px 8px;font-size:11px}
+.pl{display:flex;flex-direction:column;gap:8px}
+.pc{background:var(--c1);border:1px solid var(--br);border-radius:var(--rl);padding:14px;transition:border-color .2s}
+.pc:hover{border-color:var(--br2)}
+.pc.sel{border-color:var(--bl);background:rgba(59,130,246,.04)}
+.pt{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:9px}
+.pck{width:22px;height:22px;border-radius:6px;border:2px solid var(--br2);background:var(--c3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;margin-top:1px;font-size:12px;font-weight:800;color:transparent}
+.pck.on{background:var(--bl);border-color:var(--bl);color:#fff}
+.pnm{font-weight:800;font-size:14px;letter-spacing:-.1px;flex:1;line-height:1.2}
+.wbtn{width:34px;height:34px;border-radius:50%;background:rgba(37,211,102,.1);border:none;color:#25d366;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.wbtn:hover{background:#25d366;color:#fff}
+.wbtn svg{width:18px;height:18px;fill:currentColor}
+.pm{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;margin-bottom:7px}
+.pm span{display:flex;align-items:center;gap:4px;font-weight:500}
+.mph{color:#5b9ef4}.mdt{color:var(--yw)}.mmn{color:var(--gn)}.mid{color:var(--tx2)}
+.pnt{font-size:12px;color:var(--pu);margin-bottom:7px;font-weight:700}
+.pnu{font-size:11px;color:var(--cy);font-weight:700;margin-bottom:6px}
+.pb{display:flex;gap:6px;align-items:center;margin-top:8px}
+.sbt{flex:1;border:none;border-radius:var(--r);padding:10px 8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .2s}
+.s0{background:rgba(245,158,11,.1);color:var(--yw);border:1px solid rgba(245,158,11,.25)}
+.s1{background:rgba(59,130,246,.1);color:var(--bl);border:1px solid rgba(59,130,246,.25)}
+.s2{background:rgba(34,211,238,.1);color:var(--cy);border:1px solid rgba(34,211,238,.25)}
+.s3{background:rgba(62,207,90,.1);color:var(--gn);border:1px solid rgba(62,207,90,.25)}
+.s4{background:rgba(232,64,64,.1);color:var(--rd);border:1px solid rgba(232,64,64,.25)}
+.pe{width:36px;height:36px;border-radius:var(--r);border:1px solid var(--br2);background:var(--c3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0;color:var(--tx2)}
+.pe:hover{background:var(--c2);color:var(--tx)}
+.pd{width:36px;height:36px;border-radius:var(--r);border:1px solid rgba(232,64,64,.25);background:rgba(232,64,64,.08);color:var(--rd);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0}
+.pd:hover{background:var(--rd);color:#fff;border-color:var(--rd)}
+.empty{text-align:center;padding:48px 16px;color:var(--tx2)}
+.empty div:first-child{font-size:40px;margin-bottom:10px;opacity:.25}
+.sh-card{background:var(--c1);border:1px solid var(--br);border-radius:var(--rl);padding:18px;margin-bottom:10px}
+.sh-t{font-size:11px;font-weight:700;color:var(--gn);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.sh-t svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.lrow{display:flex;gap:8px}
+.linp{flex:1;background:var(--c3);border:1px solid var(--br2);border-radius:var(--r);padding:10px 13px;color:var(--tx2);font-size:13px;font-family:inherit}
+.bcopy{background:var(--bl);color:#fff;border:none;border-radius:var(--r);padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;transition:opacity .2s}
+.bcopy:hover{opacity:.85}
+.bcopy svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.sg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sb2{border:none;border-radius:var(--r);padding:11px 14px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:inherit;color:#fff;transition:opacity .2s}
+.sb2:hover{opacity:.85}
+.qrbox{width:146px;height:146px;background:#fff;border-radius:var(--r);display:flex;align-items:center;justify-content:center;padding:8px}
+.bdl{background:var(--c3);border:1px solid var(--br2);color:var(--tx);border-radius:var(--r);padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .2s}
+.bdl:hover{background:var(--c2)}
+.bdl svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2}
+.cfg-card{background:var(--c1);border:1px solid var(--br);border-radius:var(--rl);padding:18px;margin-bottom:10px}
+.cfg-t{font-size:13px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.cfg-n{width:22px;height:22px;border-radius:50%;background:var(--bl);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fg{margin-bottom:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.pch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx2);font-weight:600}
+.pch input{width:16px;height:16px;accent-color:var(--gn)}
+.bsv{background:var(--gn);color:#000;border:none;border-radius:var(--r);padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:opacity .2s}
+.bsv:hover{opacity:.85}
+.bsv svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5}
+.nav-btns{display:flex;flex-direction:column;gap:8px}
+.nav-btn{background:var(--c3);border:1px solid var(--br2);border-radius:var(--r);padding:13px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--tx);display:flex;align-items:center;gap:10px;transition:all .2s;text-align:left;text-decoration:none}
+.nav-btn:hover{background:var(--c4)}
+.nav-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;opacity:.6;flex-shrink:0}
+.nav-btn .arr{opacity:.3;font-size:16px;margin-left:auto}
+#TOAST{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--gn);color:#000;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;transition:transform .3s;z-index:9999;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+@media(max-width:560px){.sg{grid-template-columns:1fr 1fr}.sg2,.g2,.g3{grid-template-columns:1fr}.sn{font-size:32px}}
+.abtn{background:var(--c3);border:1px solid var(--br2);border-radius:var(--r);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--tx2);transition:all .2s;white-space:nowrap}
+.abtn:hover{background:var(--c4);color:var(--tx)}
+.abtn-del{background:rgba(232,64,64,.1);border-color:rgba(232,64,64,.3);color:var(--rd)}
+/* MODALS SORTEO + STATS */
+#SM,#StM{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:800;padding:16px;overflow-y:auto}
+#SM.show,#StM.show{display:flex}
+.sm-box{background:var(--c1);border:1px solid var(--br2);border-radius:20px;padding:24px;width:100%;max-width:460px;margin:auto}
+.winner-card{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(156,89,232,.15));border:2px solid var(--yw);border-radius:var(--rl);padding:24px;text-align:center;margin:16px 0}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-box{background:var(--c3);border:1px solid var(--br2);border-radius:var(--r);padding:14px}
+.stat-box-n{font-size:24px;font-weight:900;line-height:1;letter-spacing:-1px}
+.stat-box-l{font-size:11px;color:var(--tx2);margin-top:3px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="LD">
+  <div style="font-size:36px">🎟️</div>
+  <div class="spin"></div>
+  <div style="font-size:13px;color:var(--tx2);font-weight:600;letter-spacing:.3px">TOOLWIN SORTEOS</div>
+</div>
+
+<div id="AM">
+  <div class="abox">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="width:42px;height:42px;background:linear-gradient(135deg,#2ecc71,#1a9e50);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px">🎟️</div>
+      <div><div style="font-weight:800;font-size:15px">TOOLWIN SORTEOS</div><div style="font-size:11px;color:var(--tx2)">Panel de administración</div></div>
+    </div>
+    <div class="aseg">
+      <button class="on" onclick="setAM('login')">Iniciar sesión</button>
+      <button onclick="setAM('reg')">Registrarse</button>
+    </div>
+    <div class="aerr" id="aerr"></div>
+    <label class="fl">Correo electrónico</label>
+    <input class="fi" type="email" id="aEm" placeholder="tu@email.com">
+    <label class="fl">Contraseña</label>
+    <input class="fi" type="password" id="aPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()">
+    <button style="width:100%;background:linear-gradient(135deg,var(--bl),var(--pu));color:#fff;border:none;border-radius:var(--rl);padding:14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:4px" id="aBt" onclick="doAuth()">Iniciar sesión</button>
+  </div>
+</div>
+
+<div id="CM" onclick="if(event.target===this)cClose()">
+  <div class="cbox">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-weight:800;font-size:15px">Comprobante de pago</div>
+      <button class="ibtn" onclick="cClose()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <img id="cImg" src="" class="cimg" style="display:none">
+    <div id="cInf" style="font-size:13px;color:var(--tx2);margin-bottom:14px;line-height:1.7"></div>
+    <div style="display:flex;gap:8px">
+      <button id="cVbtn" class="bsv" style="flex:1;justify-content:center" onclick="cVerif()"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Verificar</button>
+      <button id="cRbtn" style="flex:1;background:rgba(232,64,64,.1);color:var(--rd);border:1px solid rgba(232,64,64,.3);border-radius:var(--r);padding:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px" onclick="cRech()"><svg style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Rechazar</button>
+    </div>
+  </div>
+</div>
+
+<div id="PM" onclick="if(event.target===this)pClose()">
+  <div class="pbox">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-weight:800;font-size:15px" id="PMtit">Nuevo participante</div>
+      <button class="ibtn" onclick="pClose()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="fg"><label class="fl">Nombre completo</label><input class="fi" id="pN" type="text" placeholder="Nombre"></div>
+    <div class="fg"><label class="fl">Teléfono / WhatsApp</label><input class="fi" id="pPh" type="tel" placeholder="933724178"></div>
+    <div class="fg"><label class="fl">DNI</label><input class="fi" id="pDi" type="text" placeholder="12345678" maxlength="8"></div>
+    <div class="fg"><label class="fl">Ciudad / Dirección</label><input class="fi" id="pCi" type="text" placeholder="Lima"></div>
+    <div class="fg"><label class="fl">Cantidad de tickets</label><input class="fi" id="pQt" type="number" value="1" min="1"></div>
+    <div class="fg"><label class="fl">Nota (opcional)</label><input class="fi" id="pNo" type="text" placeholder="Ej. DEBE 100 SOLES"></div>
+    <div class="fg"><label class="fl">Estado</label>
+      <select class="fi" id="pSt">
+        <option value="pendiente">⏳ Pendiente / Nuevo</option>
+        <option value="proceso">🔄 En proceso</option>
+        <option value="enviado">📦 Enviado</option>
+        <option value="finalizado">✅ Finalizado</option>
+        <option value="rechazado">❌ Rechazado</option>
+      </select>
+    </div>
+    <button style="width:100%;background:linear-gradient(135deg,#2ecc71,#1a9e50);color:#000;border:none;border-radius:var(--rl);padding:14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:4px" onclick="pSave()">💾 Guardar</button>
+  </div>
+</div>
+
+<!-- PANEL ADMIN -->
+<div id="VA">
+  <div class="hdr">
+    <div class="hl">
+      <div class="hico">🎟️</div>
+      <div><div class="hnm">TOOLWIN SORTEOS</div><div class="hph">933724178</div></div>
+    </div>
+    <div class="hr">
+      <div class="odot"></div>
+      <span class="pro">PLAN PRO</span>
+      <button class="ibtn" style="background:rgba(232,64,64,.1);border-color:rgba(232,64,64,.3);color:var(--rd)" onclick="doLogout()" title="Cerrar sesión">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" id="tp" onclick="sTab('p')">🎫 Participantes</div>
+    <div class="tab" id="ts" onclick="sTab('s')">🔗 Compartir</div>
+    <div class="tab" id="tc" onclick="sTab('c')">⚙️ Config</div>
+  </div>
+  <div class="main">
+
+    <div id="tp-c">
+      <!-- STAT CARDS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="sc"><div class="sn cg" id="stT" style="font-size:30px;letter-spacing:-1px">0</div><div class="sl" style="margin-top:4px">🎟 Total participantes</div></div>
+        <div class="sc"><div class="sn co" id="stP" style="font-size:30px;letter-spacing:-1px">0</div><div class="sl" style="margin-top:4px"><span class="dot" style="background:var(--yw)"></span>Pendientes</div></div>
+        <div class="sc"><div class="sn cg" id="stPr" style="font-size:30px;letter-spacing:-1px">0</div><div class="sl" style="margin-top:4px"><span class="dot" style="background:var(--gn)"></span>Verificados</div></div>
+        <div class="sc"><div class="sn cr" id="stF" style="font-size:30px;letter-spacing:-1px">0</div><div class="sl" style="margin-top:4px"><span class="dot" style="background:var(--rd)"></span>Rechazados</div></div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="tb">
+        <div class="sr">
+          <div class="sw">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input class="si" type="text" id="srch" placeholder="Buscar nombre, teléfono o DNI..." oninput="rP()">
+          </div>
+          <button class="xbtn add" title="Nuevo participante" onclick="pOpen()">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <!-- FILTROS — solo 3 estados -->
+        <div class="fr">
+          <span class="pill on"  onclick="setF('todos',this)">TODOS</span>
+          <span class="pill p1" onclick="setF('pendiente',this)">⏳ PENDIENTES</span>
+          <span class="pill p3" onclick="setF('finalizado',this)">✅ VERIFICADOS</span>
+          <span class="pill p4" onclick="setF('rechazado',this)">❌ RECHAZADOS</span>
+        </div>
+        <!-- ACCIONES -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--br)">
+          <button class="abtn" onclick="exportExcel()">📊 Excel</button>
+          <button class="abtn" onclick="imprimirLista()">🖨️ Imprimir</button>
+          <button class="abtn" onclick="generarTickets()">🎟️ Tickets</button>
+          <button class="abtn" onclick="abrirSorteo()">🏆 Sorteo</button>
+          <button class="abtn" onclick="abrirStats()">📈 Stats</button>
+          <button class="abtn abtn-del" id="bDel" style="display:none" onclick="dSel()">🗑️ Eliminar</button>
+          <button class="abtn abtn-del" id="bDel2" style="display:none" onclick="dSel()">🗑️ Eliminar</button>
+        </div>
+      </div>
+
+      <!-- LISTA DE CARDS -->
+      <div id="PL"><div class="empty"><div>⏳</div>Conectando con Firebase...</div></div>
+
+      <!-- PAGINACIÓN -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 2px;margin-top:4px">
+        <div style="font-size:12px;color:var(--tx2)" id="pagInfo"></div>
+        <div style="display:flex;gap:4px;align-items:center" id="pagBtns"></div>
+      </div>
+    </div>
+
+    <div id="ts-c" style="display:none">
+      <div style="max-width:580px">
+        <div style="font-size:20px;font-weight:800;margin-bottom:4px;letter-spacing:-.3px">🔗 Compartir sorteo</div>
+        <div style="font-size:13px;color:var(--tx2);margin-bottom:16px">Comparte el link público para que los clientes se registren.</div>
+        <div class="sh-card">
+          <div class="sh-t"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Link del formulario público</div>
+          <div class="lrow">
+            <input class="linp" id="lnkInp" value="" readonly>
+            <button class="bcopy" onclick="cpLink()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copiar</button>
+          </div>
+        </div>
+        <div class="sh-card">
+          <div class="sh-t">📣 Redes sociales</div>
+          <div class="sg2">
+            <button class="sb2" style="background:#25D366" onclick="shN('wa')">💬 WhatsApp</button>
+            <button class="sb2" style="background:#1877F2" onclick="shN('fb')">📘 Facebook</button>
+            <button class="sb2" style="background:linear-gradient(135deg,#E1306C,#F77737)">📷 Instagram</button>
+            <button class="sb2" style="background:#0088CC" onclick="shN('tg')">✈️ Telegram</button>
+          </div>
+        </div>
+        <div class="sh-card">
+          <div class="sh-t">📱 Código QR</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div class="qrbox"><div id="qrc"></div></div>
+            <button class="bdl" onclick="dlQR()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Descargar QR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tc-c" style="display:none">
+      <div style="max-width:660px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <div style="font-size:20px;font-weight:800;letter-spacing:-.3px">⚙️ Configuración</div>
+          <button class="bsv" onclick="svCfg()"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar</button>
+        </div>
+        <div class="cfg-card" style="background:rgba(62,207,90,.04);border-color:rgba(62,207,90,.2)">
+          <div class="cfg-t"><span class="cfg-n" style="background:var(--gn);color:#000">↗</span> Formulario público (clientes)</div>
+          <div style="font-size:13px;color:var(--tx2);margin-bottom:12px">Este es el link que compartes con tus clientes para que se registren.</div>
+          <a class="nav-btn" id="linkSorteo" href="sorteo.html" target="_blank">
+            <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18.01"/></svg>
+            <span>📱 Abrir formulario público<br><small style="font-size:11px;color:var(--tx2);font-weight:500">sorteo.html — para tus clientes</small></span>
+            <span class="arr">›</span>
+          </a>
+        </div>
+        <div class="cfg-card">
+          <div class="cfg-t"><span class="cfg-n">1</span> Información del sorteo</div>
+          <div class="fg"><label class="fl">Nombre del sorteo</label><input class="fi" id="cN" type="text"></div>
+          <div class="fg"><label class="fl">Descripción</label><textarea class="fi" id="cD" style="resize:vertical;min-height:66px"></textarea></div>
+          <div class="fg"><label class="fl">Emoji del premio</label><input class="fi" id="cE" type="text" style="width:80px"></div>
+        </div>
+        <div class="cfg-card">
+          <div class="cfg-t"><span class="cfg-n" style="background:var(--pu)">2</span> Fechas</div>
+          <div class="g2">
+            <div class="fg"><label class="fl">Fecha del sorteo</label><input class="fi" id="cF" type="date"></div>
+            <div class="fg"><label class="fl">Hora</label><input class="fi" id="cH" type="time"></div>
+          </div>
+        </div>
+        <div class="cfg-card">
+          <div class="cfg-t"><span class="cfg-n" style="background:#0d9488">3</span> Participación</div>
+          <div class="g3">
+            <div class="fg"><label class="fl">Precio (S/)</label><input class="fi" id="cP" type="number"></div>
+            <div class="fg"><label class="fl">Mínimo</label><input class="fi" id="cMn" type="number"></div>
+            <div class="fg"><label class="fl">Máximo</label><input class="fi" id="cMx" type="number"></div>
+          </div>
+        </div>
+        <div class="cfg-card">
+          <div class="cfg-t"><span class="cfg-n" style="background:var(--yw);color:#000">4</span> Métodos de pago</div>
+          <div class="fg"><label class="fl">Número Yape / Plin</label><input class="fi" id="cY" type="text"></div>
+          <div class="fg"><label class="fl">Cuenta BCP</label><input class="fi" id="cB" type="text"></div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:6px">
+            <label class="pch"><input type="checkbox" id="cPY"> Yape</label>
+            <label class="pch"><input type="checkbox" id="cPP"> Plin</label>
+            <label class="pch"><input type="checkbox" id="cPB"> Transferencia BCP</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL SORTEO -->
+<div id="SM">
+  <div class="sm-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-weight:800;font-size:16px">🏆 Realizar sorteo</div>
+      <button class="ibtn" onclick="$('SM').classList.remove('show')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="font-size:13px;color:var(--tx2);margin-bottom:16px">Solo participantes con estado <b style="color:var(--gn)">FINALIZADO</b> entran al sorteo.</div>
+    <div id="sorteoInfo" style="font-size:13px;color:var(--tx2);margin-bottom:16px;background:var(--c3);border-radius:var(--r);padding:12px"></div>
+    <div id="winnerCard" style="display:none" class="winner-card">
+      <div style="font-size:40px;margin-bottom:8px">🎉</div>
+      <div style="font-size:12px;font-weight:700;color:var(--yw);letter-spacing:.5px;margin-bottom:6px">¡GANADOR!</div>
+      <div style="font-size:22px;font-weight:900;margin-bottom:4px" id="winnerNombre"></div>
+      <div style="font-size:14px;color:var(--tx2)" id="winnerTicket"></div>
+      <div style="font-size:13px;color:var(--tx2);margin-top:4px" id="winnerPhone"></div>
+    </div>
+    <button class="bsv" id="btnSortear" style="width:100%;justify-content:center;font-size:15px;padding:14px" onclick="ejecutarSorteo()">🎲 ¡Sortear ahora!</button>
+  </div>
+</div>
+
+<!-- MODAL ESTADÍSTICAS -->
+<div id="StM">
+  <div class="sm-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-weight:800;font-size:16px">📈 Estadísticas</div>
+      <button class="ibtn" onclick="$('StM').classList.remove('show')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-box-n cg" id="stETotal">0</div><div class="stat-box-l">Total participantes</div></div>
+      <div class="stat-box"><div class="stat-box-n" style="color:var(--yw)" id="stEPend">0</div><div class="stat-box-l">Pendientes</div></div>
+      <div class="stat-box"><div class="stat-box-n" style="color:var(--gn)" id="stEVerif">0</div><div class="stat-box-l">Verificados/Finalizados</div></div>
+      <div class="stat-box"><div class="stat-box-n" style="color:var(--rd)" id="stERech">0</div><div class="stat-box-l">Rechazados</div></div>
+      <div class="stat-box"><div class="stat-box-n" style="color:var(--cy)" id="stETickets">0</div><div class="stat-box-l">Tickets vendidos</div></div>
+      <div class="stat-box"><div class="stat-box-n" style="color:var(--pu)" id="stETotal$">S/ 0</div><div class="stat-box-l">Total recaudado</div></div>
+    </div>
+    <div style="background:var(--c3);border-radius:var(--r);padding:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Meta de recaudación</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input class="fi" type="number" id="metaInput" placeholder="Ej. 1000" style="flex:1;margin-bottom:0" oninput="calcMeta()">
+        <span style="font-size:12px;color:var(--tx2)">S/</span>
+      </div>
+      <div style="margin-top:10px;background:var(--c4);border-radius:8px;height:10px;overflow:hidden">
+        <div id="metaBar" style="height:100%;background:linear-gradient(90deg,var(--gn),var(--cy));border-radius:8px;width:0%;transition:width .5s"></div>
+      </div>
+      <div style="font-size:12px;color:var(--tx2);margin-top:6px;text-align:center" id="metaTxt">Ingresa tu meta para ver el progreso</div>
+    </div>
+  </div>
+</div>
+
+<div id="TOAST">✅ ¡Listo!</div>
+
+<!-- ESTILOS DE IMPRESIÓN -->
+<style>
+@media print {
+  body * { visibility: hidden !important; }
+  #printArea, #printArea * { visibility: visible !important; }
+  #printArea {
+    position: fixed !important; inset: 0 !important;
+    background: white !important; padding: 0 !important; margin: 0 !important;
+  }
+}
+</style>
+<div id="printArea" style="display:none"></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAuth,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getDatabase,ref,push,set,update,remove,onValue,get}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const FB={apiKey:"AIzaSyA-WAWBOfSKRvo22WC_ZJuxDCsS0f6UdI4",authDomain:"ganatools-ba222.firebaseapp.com",databaseURL:"https://ganatools-ba222-default-rtdb.firebaseio.com",projectId:"ganatools-ba222",storageBucket:"ganatools-ba222.firebasestorage.app",messagingSenderId:"67189049817",appId:"1:67189049817:web:7ad78735e2497faf1771c8"};
+const app=initializeApp(FB),auth=getAuth(app),db=getDatabase(app);
+
+let parts={},cfg={},filt='todos',cmpKey=null,editKey=null,selKeys=new Set();
+const $=id=>document.getElementById(id);
+
+window.showToast=(m,bg='#3ecf5a',c='#000')=>{const t=$('TOAST');t.textContent=m;t.style.background=bg;t.style.color=c;t.style.transform='translateX(-50%) translateY(0)';clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.transform='translateX(-50%) translateY(120px)',3200);};
+
+async function loadCfg(){
+  const s=await get(ref(db,'config'));
+  cfg=s.exists()?s.val():{nombre:'Sorteo: Taladro Inalámbrico Makita 18V',desc:'Sorteamos este increíble taladro inalámbrico Makita 18V con maletín y accesorios.',emoji:'🔧',fecha:'2026-06-30',hora:'20:00',precio:10,min:1,max:50,yape:'933 724 178',bcp:'191-12345678-0-12',payYape:true,payPlin:true,payBcp:true};
+  if(!s.exists())await set(ref(db,'config'),cfg);
+  fillCfgForm();
+}
+function fillCfgForm(){
+  if(!$('cN'))return;
+  $('cN').value=cfg.nombre||'';$('cD').value=cfg.desc||'';$('cE').value=cfg.emoji||'';
+  $('cF').value=cfg.fecha||'';$('cH').value=cfg.hora||'';
+  $('cP').value=cfg.precio||10;$('cMn').value=cfg.min||1;$('cMx').value=cfg.max||50;
+  $('cY').value=cfg.yape||'';$('cB').value=cfg.bcp||'';
+  $('cPY').checked=cfg.payYape!==false;$('cPP').checked=cfg.payPlin!==false;$('cPB').checked=cfg.payBcp!==false;
+}
+window.svCfg=async()=>{
+  cfg={nombre:$('cN').value,desc:$('cD').value,emoji:$('cE').value,fecha:$('cF').value,hora:$('cH').value,
+    precio:parseFloat($('cP').value)||10,min:parseInt($('cMn').value)||1,max:parseInt($('cMx').value)||50,
+    yape:$('cY').value,bcp:$('cB').value,
+    payYape:$('cPY').checked,payPlin:$('cPP').checked,payBcp:$('cPB').checked};
+  try{await set(ref(db,'config'),cfg);showToast('💾 Configuración guardada');}
+  catch(e){showToast('❌ '+e.message,'#e84040','#fff');}
+};
+
+let am='login';
+window.setAM=m=>{am=m;document.querySelectorAll('.aseg button').forEach((b,i)=>b.classList.toggle('on',(i===0&&m==='login')||(i===1&&m==='reg')));$('aBt').textContent=m==='login'?'Iniciar sesión':'Registrarse';$('aerr').classList.remove('show');};
+window.doAuth=async()=>{
+  const e=$('aEm').value.trim(),p=$('aPw').value,er=$('aerr');
+  if(!e||!p){er.textContent='Completa todos los campos.';er.classList.add('show');return;}
+  $('aBt').textContent='Cargando...';
+  try{am==='login'?await signInWithEmailAndPassword(auth,e,p):await createUserWithEmailAndPassword(auth,e,p);}
+  catch(err){const M={'auth/user-not-found':'Usuario no encontrado.','auth/wrong-password':'Contraseña incorrecta.','auth/email-already-in-use':'Correo ya registrado.','auth/weak-password':'Mínimo 6 caracteres.','auth/invalid-email':'Correo inválido.','auth/invalid-credential':'Correo o contraseña incorrectos.'};er.textContent=M[err.code]||err.message;er.classList.add('show');$('aBt').textContent=am==='login'?'Iniciar sesión':'Registrarse';}
+};
+window.doLogout=async()=>{await signOut(auth);location.reload();};
+
+onAuthStateChanged(auth,u=>{
+  $('LD').style.display='none';
+  if(u){$('AM').style.display='none';lParts();}
+  else{$('AM').classList.add('show');}
+});
+
+function lParts(){
+  onValue(ref(db,'participantes'),s=>{
+    parts=s.exists()?s.val():{};rP();uStats();
+  });
+}
+
+const SM={pendiente:{l:'⏳ PENDIENTE',c:'s0'},proceso:{l:'🔄 EN PROCESO',c:'s1'},enviado:{l:'📦 ENVIADO',c:'s2'},finalizado:{l:'🏁 FINALIZADO 🔒',c:'s3'},rechazado:{l:'❌ RECHAZADO',c:'s4'},verificado:{l:'✅ VERIFICADO',c:'s3'}};
+
+const COLORS=['#7C3AED','#0D9488','#e84040','#3b82f6','#f59e0b','#3ecf5a','#E11D48','#8B5CF6','#22d3ee','#F97316'];
+const gc=n=>COLORS[(n.charCodeAt(0)+(n.charCodeAt(1)||0))%COLORS.length];
+const gi=n=>n.split(' ').slice(0,2).map(w=>w[0]||'?').join('').toUpperCase();
+const fd=ts=>ts?new Date(ts).toLocaleString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+
+const PAGE_SIZE=10;
+let currentPage=1;
+let filteredEntries=[];
+
+const SM_TABLE={
+  pendiente:{l:'⏳ PENDIENTE', bg:'rgba(245,158,11,.12)', color:'#f59e0b', border:'rgba(245,158,11,.3)'},
+  finalizado:{l:'✅ VERIFICADO', bg:'rgba(62,207,90,.12)',  color:'#3ecf5a', border:'rgba(62,207,90,.3)'},
+  verificado:{l:'✅ VERIFICADO', bg:'rgba(62,207,90,.12)',  color:'#3ecf5a', border:'rgba(62,207,90,.3)'},
+  rechazado: {l:'❌ RECHAZADO', bg:'rgba(232,64,64,.12)',  color:'#e84040', border:'rgba(232,64,64,.3)'},
+};
+
+window.rP=()=>{
+  const sr=($('srch').value||'').toLowerCase();
+  filteredEntries=Object.entries(parts)
+    .sort((a,b)=>(b[1].createdAt||0)-(a[1].createdAt||0))
+    .filter(([k,p])=>{
+      const st=p.status||'pendiente';
+      const mF=filt==='todos'||st===filt||(filt==='finalizado'&&st==='verificado');
+      const mS=!sr||(p.nombre||'').toLowerCase().includes(sr)||(p.phone||'').includes(sr)||(p.dni||'').includes(sr);
+      return mF&&mS;
+    });
+  currentPage=1;
+  renderPage();
+};
+
+function renderPage(){
+  const el=$('PL');
+  if(!filteredEntries.length){
+    el.innerHTML='<div class="empty"><div>👥</div>No hay participantes aún</div>';
+    $('pagInfo').textContent=''; $('pagBtns').innerHTML=''; return;
+  }
+  const total=filteredEntries.length;
+  const pages=Math.ceil(total/PAGE_SIZE);
+  const start=(currentPage-1)*PAGE_SIZE;
+  const slice=filteredEntries.slice(start,start+PAGE_SIZE);
+
+  // Agrupar por estado
+  const G={pendiente:[],finalizado:[],rechazado:[]};
+  slice.forEach(e=>{
+    const st=e[1].status||'pendiente';
+    const g=st==='verificado'?'finalizado':st;
+    if(G[g])G[g].push(e); else G.pendiente.push(e);
+  });
+  const ORD=['pendiente','finalizado','rechazado'];
+  const GN={pendiente:'🆕 NUEVO PEDIDO',finalizado:'✅ VERIFICADOS',rechazado:'❌ RECHAZADOS'};
+
+  let h='';
+  ORD.forEach(g=>{
+    if(!G[g]?.length) return;
+    if(filt==='todos') h+=`<div class="gl">${GN[g]}<span class="gc">${G[g].length}</span></div>`;
+    G[g].forEach(([k,p])=>{
+      const col=gc(p.nombre||'A'), ini=gi(p.nombre||'?');
+      const sm=SM_TABLE[p.status]||SM_TABLE.pendiente;
+      const sel=selKeys.has(k);
+      const nums=p.tickets_nums?`<div style="font-size:12px;color:var(--cy);font-weight:700;margin-top:4px">🎫 ${p.tickets_nums}</div>`:'';
+      const nota=p.nota?`<div style="font-size:12px;color:var(--pu);font-weight:600;margin-top:2px">📝 ${p.nota}</div>`:'';
+      const isPend=!p.status||p.status==='pendiente';
+
+      h+=`<div style="background:var(--c1);border:1px solid ${sel?'var(--bl)':'var(--br)'};border-radius:var(--rl);padding:14px;margin-bottom:8px;transition:border-color .2s${sel?';background:rgba(59,130,246,.04)':''}">
+        <!-- top row -->
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+          <div class="pck${sel?' on':''}" onclick="tSel('${k}')" style="width:20px;height:20px;border-radius:5px;border:2px solid var(--br2);background:${sel?'var(--bl)':'var(--c3)'};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${sel?'#fff':'transparent'};flex-shrink:0;margin-top:2px">${sel?'✓':''}</div>
+          <div style="width:38px;height:38px;border-radius:50%;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${ini}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:800;font-size:14px;letter-spacing:-.1px">${p.nombre||'Sin nombre'}</div>
+            <div style="font-size:12px;color:var(--tx2);margin-top:1px">🪪 ${p.dni||'—'}</div>
+          </div>
+          <!-- botón WhatsApp -->
+          <button onclick="notifWA('${k}')" style="width:36px;height:36px;border-radius:50%;background:rgba(37,211,102,.12);border:none;color:#25d366;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s" title="Enviar WhatsApp">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.998 2C6.478 2 2 6.478 2 12c0 1.849.484 3.585 1.332 5.09L2 22l5.01-1.314A9.956 9.956 0 0 0 12 22c5.522 0 10-4.478 10-10S17.52 2 11.998 2z"/></svg>
+          </button>
+        </div>
+        <!-- meta row -->
+        <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;margin-bottom:8px">
+          <span style="color:#5b9ef4;font-weight:500">📞 ${p.phone||'—'}</span>
+          <span style="color:var(--yw)">📅 ${fd(p.createdAt)}</span>
+          <span style="color:var(--gn);font-weight:700">💰 S/ ${((p.cantidad||1)*(cfg.precio||10)).toFixed(2)}</span>
+          ${p.ciudad?`<span style="color:var(--tx2)">📍 ${p.ciudad}</span>`:''}
+        </div>
+        ${nota}${nums}
+        <!-- bottom row: estado + acciones -->
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
+          ${isPend
+            ? `<button onclick="setStatus('${k}','finalizado')" style="flex:1;background:rgba(62,207,90,.12);color:var(--gn);border:1px solid rgba(62,207,90,.3);border-radius:var(--r);padding:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">✅ Verificar</button>
+               <button onclick="setStatus('${k}','rechazado')" style="flex:1;background:rgba(232,64,64,.12);color:var(--rd);border:1px solid rgba(232,64,64,.3);border-radius:var(--r);padding:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">❌ Rechazar</button>`
+            : `<button onclick="cyc('${k}')" style="flex:1;background:${sm.bg};color:${sm.color};border:1px solid ${sm.border};border-radius:var(--r);padding:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">${sm.l}</button>`
+          }
+          <button onclick="pEdit('${k}')" style="width:36px;height:36px;border-radius:var(--r);background:var(--c3);border:1px solid var(--br2);color:var(--tx2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Editar">✏️</button>
+          <button onclick="pDel('${k}')" style="width:36px;height:36px;border-radius:var(--r);background:rgba(232,64,64,.08);border:1px solid rgba(232,64,64,.25);color:var(--rd);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Eliminar">🗑</button>
+        </div>
+      </div>`;
+    });
+  });
+  el.innerHTML=h;
+
+  // paginación
+  $('pagInfo').textContent=`Mostrando ${start+1}–${Math.min(start+PAGE_SIZE,total)} de ${total}`;
+  const mkBtn=(n,label,act)=>`<button onclick="goPage(${n})" style="min-width:30px;height:30px;padding:0 8px;border-radius:8px;border:1px solid ${act?'var(--bl)':'var(--br2)'};background:${act?'var(--bl)':'var(--c3)'};color:${act?'#fff':'var(--tx2)'};cursor:pointer;font-size:12px;font-weight:700;font-family:inherit">${label}</button>`;
+  let pg='';
+  if(pages<=6){for(let i=1;i<=pages;i++)pg+=mkBtn(i,i,i===currentPage);}
+  else{
+    pg+=mkBtn(1,1,currentPage===1);
+    if(currentPage>3)pg+=`<span style="color:var(--tx2);font-size:12px;padding:0 2px">…</span>`;
+    for(let i=Math.max(2,currentPage-1);i<=Math.min(pages-1,currentPage+1);i++)pg+=mkBtn(i,i,i===currentPage);
+    if(currentPage<pages-2)pg+=`<span style="color:var(--tx2);font-size:12px;padding:0 2px">…</span>`;
+    pg+=mkBtn(pages,pages,currentPage===pages);
+  }
+  $('pagBtns').innerHTML=
+    `<button onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''} style="min-width:30px;height:30px;border-radius:8px;border:1px solid var(--br2);background:var(--c3);color:var(--tx2);cursor:pointer;font-size:14px;font-family:inherit">‹</button>`+
+    pg+
+    `<button onclick="goPage(${currentPage+1})" ${currentPage===pages?'disabled':''} style="min-width:30px;height:30px;border-radius:8px;border:1px solid var(--br2);background:var(--c3);color:var(--tx2);cursor:pointer;font-size:14px;font-family:inherit">›</button>`;
+}
+
+window.goPage=n=>{const p=Math.ceil(filteredEntries.length/PAGE_SIZE);currentPage=Math.max(1,Math.min(p,n));renderPage();window.scrollTo(0,180);};
+
+/* ── WHATSAPP NOTIFICACIÓN ── */
+window.notifWA=k=>{
+  const p=parts[k]; if(!p||!p.phone) return;
+  const st=p.status||'pendiente';
+  const sorteoUrl=window.location.href.replace('index.html','').replace(/\/$/,'')+'/sorteo.html';
+  let msg='';
+  if(st==='finalizado'||st==='verificado'){
+    msg=`✅ *¡Hola ${p.nombre}!*\n\nTu pago ha sido *VERIFICADO* 🎉\n\n🎫 *Tus tickets:* ${p.tickets_nums||'(pendiente de asignar)'}\n🏆 *Sorteo:* ${cfg.nombre||'Sorteo'}\n📅 *Fecha:* ${cfg.fecha||'--'} a las ${cfg.hora||'--'}h\n\n📋 Ver lista de participantes verificados:\n${sorteoUrl}\n\n¡Mucha suerte! 🍀`;
+  } else if(st==='rechazado'){
+    msg=`❌ *Hola ${p.nombre}*\n\nLamentablemente tu pago no pudo ser verificado.\n\nSi crees que es un error, escríbenos para revisarlo.\n\n🔗 ${sorteoUrl}`;
+  } else {
+    msg=`⏳ *Hola ${p.nombre}!*\n\nHemos recibido tu participación en el sorteo: *${cfg.nombre||''}*\n\nEstamos verificando tu pago, te avisamos en breve ✅\n\n¡Gracias por participar! 🎟️`;
+  }
+  window.open(`https://wa.me/51${p.phone.replace(/\D/g,'')}?text=${encodeURIComponent(msg)}`,'_blank');
+};
+
+function uStats(){
+  const v=Object.values(parts);
+  $('stT').textContent=v.length;
+  $('stP').textContent=v.filter(p=>!p.status||p.status==='pendiente').length;
+  $('stPr').textContent=v.filter(p=>p.status==='finalizado'||p.status==='verificado').length;
+  $('stF').textContent=v.filter(p=>p.status==='rechazado').length;
+}
+window.setFilter=window.setF=(f,el)=>{filt=f;document.querySelectorAll('.fr .pill').forEach(p=>p.classList.remove('on'));el.classList.add('on');rP();};
+
+window.setStatus=async(k,st)=>{
+  const u={status:st};
+  if((st==='finalizado'||st==='verificado')&&!parts[k]?.tickets_nums){
+    const mx=Object.values(parts).filter(x=>x.tickets_nums).reduce((a,x)=>Math.max(a,parseInt((x.tickets_nums||'').split(' – ')[1]?.replace('#','')||'0')),0);
+    const fr=mx+1,cn=parts[k]?.cantidad||1;
+    u.tickets_nums=`#${String(fr).padStart(5,'0')} – #${String(fr+cn-1).padStart(5,'0')}`;
+  }
+  try{await update(ref(db,`participantes/${k}`),u);showToast('✅ '+st);}catch(e){showToast('❌ '+e.message,'#e84040','#fff');}
+};
+
+window.toggleSelAll=btn=>{
+  const allSel=filteredEntries.every(([k])=>selKeys.has(k));
+  filteredEntries.forEach(([k])=>{allSel?selKeys.delete(k):selKeys.add(k);});
+  btn.textContent=allSel?'☐ Seleccionar':'☑ Deseleccionar';
+  const show=selKeys.size>0?'flex':'none';
+  $('bDel').style.display=show;$('bDel2').style.display=show;
+  renderPage();
+};
+
+const CYC=['pendiente','proceso','enviado','finalizado'];
+window.cyc=async k=>{const p=parts[k];if(!p)return;const cur=p.status||'pendiente',next=CYC[(CYC.indexOf(cur)+1)%CYC.length];await setStatus(k,next);};
+window.pDel=async k=>{if(!confirm('¿Eliminar este participante?'))return;try{await remove(ref(db,`participantes/${k}`));showToast('🗑 Eliminado');}catch(e){showToast('❌ '+e.message,'#e84040','#fff');}};
+window.tSel=(k)=>{if(selKeys.has(k)){selKeys.delete(k);}else{selKeys.add(k);}const show=selKeys.size>0?'flex':'none';$('bDel').style.display=show;$('bDel2').style.display=show;renderPage();};
+window.dSel=async()=>{if(!selKeys.size)return;if(!confirm(`¿Eliminar ${selKeys.size} participante(s)?`))return;for(const k of selKeys)await remove(ref(db,`participantes/${k}`));selKeys.clear();$('bDel').style.display='none';$('bDel2').style.display='none';showToast('🗑 Eliminados');};
+window.goWA=ph=>{if(ph)window.open(`https://wa.me/51${ph.replace(/\D/g,'')}?text=Hola%2C+te+contactamos+por+el+sorteo.`,'_blank');};
+
+window.cOpen=k=>{const p=parts[k];if(!p)return;cmpKey=k;const i=$('cImg');i.src=p.comprobanteUrl||'';i.style.display=p.comprobanteUrl?'block':'none';$('cInf').innerHTML=`<b>${p.nombre}</b> | DNI: ${p.dni} | Tel: ${p.phone}<br>${p.cantidad||1} ticket(s) | ${fd(p.createdAt)}<br>Estado: <b>${p.status||'pendiente'}</b>`;const pnd=!p.status||p.status==='pendiente';$('cVbtn').style.display=pnd?'flex':'none';$('cRbtn').style.display=pnd?'flex':'none';$('CM').classList.add('show');};
+window.cClose=()=>{$('CM').classList.remove('show');cmpKey=null;};
+window.cVerif=async()=>{if(!cmpKey)return;const p=parts[cmpKey],u={status:'finalizado'};if(!p.tickets_nums){const mx=Object.values(parts).filter(x=>x.tickets_nums).reduce((a,x)=>Math.max(a,parseInt((x.tickets_nums||'').split(' – ')[1]?.replace('#','')||'0')),0);const fr=mx+1,cn=p.cantidad||1;u.tickets_nums=`#${String(fr).padStart(5,'0')} – #${String(fr+cn-1).padStart(5,'0')}`;}try{await update(ref(db,`participantes/${cmpKey}`),u);cClose();showToast('✅ Verificado');}catch(e){showToast('❌ '+e.message,'#e84040','#fff');}};
+window.cRech=async()=>{if(!cmpKey)return;try{await update(ref(db,`participantes/${cmpKey}`),{status:'rechazado'});cClose();showToast('❌ Rechazado','#e84040','#fff');}catch(e){showToast('❌ '+e.message,'#e84040','#fff');}};
+
+window.pOpen=()=>{editKey=null;$('PMtit').textContent='Nuevo participante';['pN','pPh','pDi','pCi','pNo'].forEach(i=>$(i).value='');$('pQt').value=1;$('pSt').value='pendiente';$('PM').classList.add('show');};
+window.pEdit=k=>{const p=parts[k];if(!p)return;editKey=k;$('PMtit').textContent='Editar participante';$('pN').value=p.nombre||'';$('pPh').value=p.phone||'';$('pDi').value=p.dni||'';$('pCi').value=p.ciudad||'';$('pQt').value=p.cantidad||1;$('pNo').value=p.nota||'';$('pSt').value=p.status||'pendiente';$('PM').classList.add('show');};
+window.pClose=()=>{$('PM').classList.remove('show');editKey=null;};
+window.pSave=async()=>{
+  const d={nombre:$('pN').value.trim(),phone:$('pPh').value.trim(),dni:$('pDi').value.trim(),ciudad:$('pCi').value.trim(),cantidad:parseInt($('pQt').value)||1,nota:$('pNo').value.trim(),status:$('pSt').value,createdAt:editKey?parts[editKey]?.createdAt:Date.now()};
+  if(!d.nombre){showToast('⚠️ Ingresa el nombre','#f59e0b','#000');return;}
+  try{editKey?await update(ref(db,`participantes/${editKey}`),d):await push(ref(db,'participantes'),d);pClose();showToast(editKey?'✏️ Actualizado':'✅ Agregado');}catch(e){showToast('❌ '+e.message,'#e84040','#fff');}
+};
+
+window.sTab=n=>{
+  ['p','s','c'].forEach(t=>{$('t'+t+'-c').style.display=t===n?'block':'none';$('t'+t).classList.toggle('on',t===n);});
+  if(n==='s')setTimeout(bQR,200);
+  if(n==='c')fillCfgForm();
+};
+
+const sorteoUrl=()=>window.location.href.replace('index.html','').replace(/\/$/,'')+'/sorteo.html';
+window.cpLink=()=>{navigator.clipboard.writeText(sorteoUrl()).catch(()=>{});showToast('✅ ¡Link copiado!');};
+window.shN=m=>{const u=encodeURIComponent(sorteoUrl()),T=encodeURIComponent('¡Participa en nuestro sorteo! '+sorteoUrl());window.open({wa:`https://wa.me/?text=${T}`,fb:`https://www.facebook.com/sharer/sharer.php?u=${u}`,tg:`https://t.me/share/url?url=${u}&text=${T}`}[m],'_blank');};
+let qrB=false;
+function bQR(){if(qrB)return;$('lnkInp').value=sorteoUrl();$('qrc').innerHTML='';try{new QRCode($('qrc'),{text:sorteoUrl(),width:128,height:128,colorDark:'#000',colorLight:'#fff'});qrB=true;}catch(e){}}
+window.dlQR=()=>{const c=document.querySelector('#qrc canvas');if(!c){showToast('⚠️ Activa pestaña Compartir primero','#f59e0b','#000');return;}const a=document.createElement('a');a.href=c.toDataURL();a.download='qr-sorteo.png';a.click();};
+
+/* ── EXPORTAR EXCEL ── */
+window.exportExcel=()=>{
+  const v=Object.values(parts);
+  if(!v.length){showToast('⚠️ No hay participantes','#f59e0b','#000');return;}
+  const rows=[['Nombre','Teléfono','DNI','Ciudad','Tickets','Total S/','Estado','Tickets Nums','Fecha']];
+  v.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(p=>{
+    rows.push([p.nombre||'',p.phone||'',p.dni||'',p.ciudad||'',p.cantidad||1,((p.cantidad||1)*(cfg.precio||10)).toFixed(2),p.status||'pendiente',p.tickets_nums||'',fd(p.createdAt)]);
+  });
+  let csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  // BOM para que Excel abra con tildes correctas
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`participantes_${new Date().toLocaleDateString('es-PE').replace(/\//g,'-')}.csv`;
+  a.click();showToast('📊 Excel exportado');
+};
+
+/* ── IMPRIMIR TICKETS ── */
+window.imprimirLista=()=>{
+  const v=Object.values(parts).filter(p=>p.status==='finalizado'||p.status==='verificado');
+  if(!v.length){showToast('⚠️ No hay participantes verificados','#f59e0b','#000');return;}
+  const fecha=cfg.fecha?new Date(cfg.fecha+'T12:00:00').toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'}):'--';
+  const tickets=v.map(p=>{
+    const nums=(p.tickets_nums||'').split(' – ');
+    return `
+    <div style="
+      width:280px;display:inline-block;margin:6px;
+      border:2px dashed #333;border-radius:12px;
+      padding:14px 16px;font-family:'Courier New',monospace;
+      background:#fff;vertical-align:top;page-break-inside:avoid;
+    ">
+      <div style="text-align:center;border-bottom:1px dashed #ccc;padding-bottom:10px;margin-bottom:10px">
+        <div style="font-size:20px;margin-bottom:2px">🎟️</div>
+        <div style="font-weight:900;font-size:13px;letter-spacing:1px">TOOLWIN SORTEOS</div>
+        <div style="font-size:10px;color:#666;margin-top:2px">${cfg.nombre||'Sorteo'}</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:4px">${(p.nombre||'').toUpperCase()}</div>
+      <div style="font-size:11px;color:#444;margin-bottom:2px">📞 ${p.phone||''}</div>
+      <div style="font-size:11px;color:#444;margin-bottom:8px">🪪 DNI: ${p.dni||''}</div>
+      <div style="text-align:center;background:#f5f5f5;border-radius:8px;padding:8px;margin-bottom:8px">
+        <div style="font-size:10px;color:#888;margin-bottom:3px">TICKET${p.cantidad>1?'S':''}</div>
+        <div style="font-size:18px;font-weight:900;letter-spacing:2px;color:#111">${p.tickets_nums||'#?????'}</div>
+      </div>
+      <div style="text-align:center;border-top:1px dashed #ccc;padding-top:8px">
+        <div style="font-size:10px;color:#888">Fecha del sorteo</div>
+        <div style="font-size:11px;font-weight:700;color:#333">${fecha} — ${cfg.hora||'--'}h</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const pa=$('printArea');
+  pa.style.display='block';
+  pa.innerHTML=`
+    <div style="padding:20px;background:white">
+      <div style="text-align:center;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid #eee">
+        <div style="font-size:22px;font-weight:900;font-family:'Courier New',monospace">🎟️ TOOLWIN SORTEOS</div>
+        <div style="font-size:13px;color:#666;margin-top:4px">${cfg.nombre||''} — Impreso el ${new Date().toLocaleDateString('es-PE')}</div>
+        <div style="font-size:12px;color:#888">Total verificados: ${v.length} participantes · ${v.reduce((a,p)=>a+(p.cantidad||1),0)} tickets</div>
+      </div>
+      <div style="text-align:center">${tickets}</div>
+    </div>`;
+  setTimeout(()=>{ window.print(); pa.style.display='none'; pa.innerHTML=''; },200);
+  showToast('🖨️ Abriendo impresión...');
+};
+
+/* ── GENERAR TICKETS a pendientes ── */
+window.generarTickets=async()=>{
+  const pendientes=Object.entries(parts).filter(([k,p])=>p.status==='finalizado'&&!p.tickets_nums);
+  if(!pendientes.length){showToast('✅ Todos los finalizados ya tienen tickets','#3ecf5a','#000');return;}
+  let mx=Object.values(parts).filter(x=>x.tickets_nums).reduce((a,x)=>Math.max(a,parseInt((x.tickets_nums||'').split(' – ')[1]?.replace('#','')||'0')),0);
+  let count=0;
+  for(const[k,p] of pendientes){
+    const fr=mx+1,cn=p.cantidad||1;
+    const nums=`#${String(fr).padStart(5,'0')} – #${String(fr+cn-1).padStart(5,'0')}`;
+    await update(ref(db,`participantes/${k}`),{tickets_nums:nums});
+    mx=fr+cn-1;count++;
+  }
+  showToast(`🎟️ ${count} ticket(s) generados`);
+};
+
+/* ── SORTEO ── */
+window.abrirSorteo=()=>{
+  const elegibles=Object.values(parts).filter(p=>p.status==='finalizado'||p.status==='verificado');
+  // expandir por cantidad de tickets
+  const pool=[];
+  elegibles.forEach(p=>{for(let i=0;i<(p.cantidad||1);i++)pool.push(p);});
+  $('sorteoInfo').innerHTML=`👥 <b>${elegibles.length}</b> participantes · 🎟️ <b>${pool.length}</b> tickets en el bombo`;
+  $('winnerCard').style.display='none';
+  $('btnSortear').textContent='🎲 ¡Sortear ahora!';
+  $('btnSortear').disabled=false;
+  $('SM').classList.add('show');
+};
+window.ejecutarSorteo=()=>{
+  const elegibles=Object.values(parts).filter(p=>p.status==='finalizado'||p.status==='verificado');
+  const pool=[];
+  elegibles.forEach(p=>{for(let i=0;i<(p.cantidad||1);i++)pool.push(p);});
+  if(!pool.length){showToast('⚠️ No hay participantes elegibles','#f59e0b','#000');return;}
+  const btn=$('btnSortear');
+  btn.textContent='🎰 Sorteando...';btn.disabled=true;
+  // animación de suspenso
+  let count=0;const max=20;
+  const iv=setInterval(()=>{
+    const tmp=pool[Math.floor(Math.random()*pool.length)];
+    $('winnerCard').style.display='block';
+    $('winnerNombre').textContent=tmp.nombre||'?';
+    $('winnerTicket').textContent=tmp.tickets_nums||'';
+    $('winnerPhone').textContent='📞 '+tmp.phone;
+    count++;
+    if(count>=max){
+      clearInterval(iv);
+      const winner=pool[Math.floor(Math.random()*pool.length)];
+      $('winnerNombre').textContent=winner.nombre||'?';
+      $('winnerTicket').textContent=winner.tickets_nums||'';
+      $('winnerPhone').textContent='📞 '+winner.phone;
+      btn.textContent='🎉 ¡Sorteo realizado!';
+      showToast('🏆 Ganador: '+winner.nombre,'#f59e0b','#000');
+    }
+  },120);
+};
+
+/* ── ESTADÍSTICAS ── */
+window.abrirStats=()=>{
+  const v=Object.values(parts);
+  const verif=v.filter(p=>p.status==='finalizado'||p.status==='verificado');
+  const tickets=v.reduce((a,p)=>a+(p.cantidad||1),0);
+  const total=verif.reduce((a,p)=>a+((p.cantidad||1)*(cfg.precio||10)),0);
+  $('stETotal').textContent=v.length;
+  $('stEPend').textContent=v.filter(p=>!p.status||p.status==='pendiente').length;
+  $('stEVerif').textContent=verif.length;
+  $('stERech').textContent=v.filter(p=>p.status==='rechazado').length;
+  $('stETickets').textContent=tickets;
+  $('stETotal$').textContent='S/ '+total.toFixed(2);
+  window._totalRecaudado=total;
+  $('StM').classList.add('show');
+};
+window.calcMeta=()=>{
+  const meta=parseFloat($('metaInput').value)||0;
+  const total=window._totalRecaudado||0;
+  if(!meta){$('metaTxt').textContent='Ingresa tu meta para ver el progreso';$('metaBar').style.width='0%';return;}
+  const pct=Math.min(100,(total/meta)*100);
+  $('metaBar').style.width=pct+'%';
+  $('metaTxt').textContent=`S/ ${total.toFixed(2)} de S/ ${meta.toFixed(2)} (${pct.toFixed(1)}%)`;
+};
+
+loadCfg();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</body>
+</html>
