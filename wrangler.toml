@@ -1,0 +1,17 @@
+name = "sorteos"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# ADMIN_PIN se configura como secreto: npx wrangler secret put ADMIN_PIN
+[vars]
+ALLOWED_ORIGIN = "https://jarryllanoski.github.io"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sorteos"
+database_id = "8a34493d-6223-4393-b2f6-861d09b801dd"
+
+# Opcional: fotos en R2 (sin esto se guardan en D1)
+# [[r2_buckets]]
+# binding = "IMG"
+# bucket_name = "sorteos-img"

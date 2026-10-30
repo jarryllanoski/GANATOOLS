@@ -225,8 +225,8 @@ canvas.tal{width:100%;border-radius:12px;border:1px solid var(--line);margin-top
    CONFIG — edita aquí
    ===================================================================== */
 const CONFIG = {
-  API: '',              // URL de tu Worker, ej: https://sorteos.tuusuario.workers.dev
-  PIN: '',              // Debe ser igual a la variable ADMIN_PIN del Worker
+  API: 'https://sorteos.jarryllanoski.workers.dev', // URL de tu Worker, ej: https://sorteos.tuusuario.workers.dev
+  PIN: '',              // Déjalo vacío: el panel lo pide en pantalla (el repo es público)
   FORM: '',             // URL pública de formulario.html (vacío = misma carpeta que este panel)
   NEGOCIO: 'TOTAL TOOLS',
   POLL_MS: 30000,       // cada cuánto revisa registros nuevos (campana)
@@ -300,7 +300,7 @@ const toLocalInput = t => t ? new Date(t - new Date(t).getTimezoneOffset() * 60e
    ESTADO
    ===================================================================== */
 const S = {
-  api: CONFIG.API, pin: CONFIG.PIN, form: lsGet('form', CONFIG.FORM),
+  api: CONFIG.API, pin: CONFIG.PIN || lsGet('pin', ''), form: lsGet('form', CONFIG.FORM),
   rifas: [], rid: lsGet('rid', ''), d: null, filtro: 'todos', q: '', vista: 'lista', tab: 'sorteo',
   act: null, nuevos: 0, imgs: new Map(),
 };
@@ -354,13 +354,18 @@ function vAviso(tit, msg) {
   document.body.appendChild(d);
 }
 async function iniciar() {
+  // Sin PIN en CONFIG se pide en pantalla y se recuerda solo en este dispositivo
+  if (!S.pin) S.pin = (prompt('PIN del panel') || '').trim();
+  if (!S.pin) return vAviso('Falta el PIN', 'Recarga la página e ingresa tu PIN del panel.');
   try {
     await cargarRifas();
+    if (!CONFIG.PIN) lsSet('pin', S.pin);
     $('#boot').hidden = true; $('#app').hidden = false;
     if (!S.rifas.find(r => r.id === S.rid)) S.rid = S.rifas[0]?.id || '';
     if (S.rid) await cargarDetalle(); else renderVacio();
     poll();
   } catch (e) {
+    if (e.status === 401 && !CONFIG.PIN) { lsSet('pin', ''); S.pin = ''; alert('PIN incorrecto'); return iniciar(); }
     if (e.status === 401) vAviso('PIN incorrecto', 'El PIN de CONFIG en index.html no coincide con ADMIN_PIN del Worker.');
     else vAviso('No se pudo conectar', e.message);
   }
