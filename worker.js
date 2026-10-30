@@ -516,9 +516,21 @@ async function adminDetalle(env, id) {
   return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, board: r.board, act: r.act }, parts: results });
 }
 
-async function accion(env, pid, { acc, nota }) {
+async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
   if (acc === 'nota') {
     await env.DB.prepare('UPDATE part SET nota=? WHERE id=?').bind(String(nota || '').slice(0, 200), pid).run();
+    return J({ ok: true });
+  }
+  if (acc === 'editar') {
+    const p = await env.DB.prepare('SELECT rifa FROM part WHERE id=?').bind(pid).first();
+    if (!p) err('Participante no encontrado', 404);
+    const nom = String(nombre || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    const c = String(cel || '').replace(/\D/g, '').slice(-9);
+    if (nom.length < 3) err('Escribe el nombre completo');
+    if (!/^9\d{8}$/.test(c)) err('Celular inválido: 9 dígitos y empieza con 9');
+    await env.DB.prepare('UPDATE part SET nombre=?, cel=?, dni=?, op=?, nota=? WHERE id=?')
+      .bind(nom, c, String(dni || '').replace(/\D/g, '').slice(0, 12), String(op || '').replace(/\s/g, '').slice(0, 30) || null, String(nota || '').slice(0, 200) || null, pid).run();
+    memDel(p.rifa);
     return J({ ok: true });
   }
   const MAP = { aprobar: ['P', '3'], revision: ['V', '2'], rechazar: ['X', '0'], liberar: ['X', '0'] };
