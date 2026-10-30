@@ -206,7 +206,7 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
 .cbtn.wa{background:#2ea0431a;border-color:#2ea04333}
 .card-meta{display:flex;gap:4px 10px;margin-bottom:5px;flex-wrap:wrap;font-size:11px}
 .card-meta .m{color:var(--ac);display:inline-flex;align-items:center;gap:3px;text-decoration:none}
-.card-meta .m.money{color:#f59e0b}
+.card-meta .m.amt{color:#f59e0b}
 .card-addr{font-size:11px;color:var(--mu);line-height:1.4}
 .card-note{font-size:11px;color:var(--pur);margin-top:3px}
 .card-actions{display:flex;gap:7px;margin-top:9px;align-items:center}
@@ -693,7 +693,7 @@ function cardHTML(p, c) {
       <button class="cbtn wa" data-a="wa" title="WhatsApp">💬</button>
       <button class="cbtn" data-a="mas" title="Más">⋯</button>
     </div>
-    <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m money">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
+    <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
     ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
@@ -909,7 +909,7 @@ body{--paper:#e9eef0;font-family:'DM Sans',Arial,sans-serif;background:var(--pap
 @media print{body{--paper:#fff;background:#fff;padding:0}.bar{display:none}}
 .tk{display:flex;width:186mm;height:62mm;margin:0 auto 5mm;border-radius:4mm;overflow:hidden;background:linear-gradient(115deg,#075b61 0%,#0b858b 55%,#14aaae 100%);color:#fff;position:relative;break-inside:avoid;page-break-inside:avoid}
 .ser{width:14mm;background:#05484d;display:flex;align-items:center;justify-content:center;flex:none}
-.ser span{writing-mode:vertical-rl;transform:rotate(180deg);font:800 14pt 'Syne',sans-serif;letter-spacing:2px;white-space:nowrap}
+.ser span{writing-mode:vertical-rl;transform:rotate(180deg);font:800 10.5pt 'Syne',sans-serif;letter-spacing:1.5px;white-space:nowrap}
 .main{flex:1;padding:4.5mm 5mm 4mm;display:flex;flex-direction:column;min-width:0}
 .hd{display:flex;align-items:center;justify-content:space-between;gap:3mm}
 .brand{background:#e30613;padding:1.2mm 4mm;transform:skewX(-14deg);font:italic 800 13pt 'Syne',sans-serif;letter-spacing:.5px;box-shadow:0 0 0 .6mm #fff;white-space:nowrap}
@@ -926,6 +926,7 @@ body{--paper:#e9eef0;font-family:'DM Sans',Arial,sans-serif;background:var(--pap
 .cut:before{top:-3.3mm}.cut:after{bottom:-3.3mm}
 .stub{width:46mm;flex:none;background:repeating-linear-gradient(-50deg,#e30613 0 5mm,#c3040f 5mm 10mm);display:flex;align-items:center;gap:2mm;padding:3mm 3mm 3mm 2.5mm}
 .stub-ser{writing-mode:vertical-rl;font:800 17pt 'Syne',sans-serif;letter-spacing:1px;white-space:nowrap;max-height:56mm;overflow:hidden}
+.stub-ser.cod{font-size:11pt}
 .stub-in{flex:1;min-width:0;background:#fff;color:#075b61;border-radius:2.5mm;padding:2mm;text-align:center;display:flex;flex-direction:column;align-items:center}
 .stub-in img{width:24mm;height:24mm;display:block}
 .stub-in small{font:800 6.5pt 'DM Sans',sans-serif;letter-spacing:1px;color:#e30613;margin-top:1mm}
@@ -939,8 +940,11 @@ function qrData(text) {
 // Abre la ventana en el mismo toque (si no, el celular bloquea la ventana emergente)
 function imprimirTickets(list) {
   if (!list.length) return;
-  const w = window.open('', '_blank');
-  if (!w) return toast('Permite las ventanas emergentes para imprimir', 'bad');
+  let w = window.open('', '_blank');
+  if (!w) { // ventana bloqueada: se imprime desde un marco oculto
+    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    document.body.appendChild(fr); w = fr.contentWindow; setTimeout(() => fr.remove(), 120000);
+  }
   const c = cfg(), neg = (c.negocio || CONFIG.NEGOCIO || 'TOTAL TOOLS').toUpperCase();
   const f = t => new Date(t).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
   const tks = list.map(p => {
@@ -956,7 +960,7 @@ function imprimirTickets(list) {
         <div class="ft"><span>Registro: ${f(p.creado)}</span><span>${c.modo === 'pago' ? fmtS(p.monto) : 'GRATIS'}</span>${c.cierre ? `<span>Sorteo: ${f(c.cierre)}</span>` : ''}</div>
       </div>
       <div class="cut"></div>
-      <div class="stub"><div class="stub-ser">${ns.length === 1 ? ns[0] : cod}</div>
+      <div class="stub"><div class="stub-ser${ns.length === 1 ? '' : ' cod'}">${ns.length === 1 ? ns[0] : cod}</div>
         <div class="stub-in">${qr ? `<img src="${qr}" alt="QR">` : ''}<small>TALÓN · ${ns.length} N°</small><b>${esc(p.nombre.split(' ')[0])}</b></div></div>
     </div>`;
   }).join('');
