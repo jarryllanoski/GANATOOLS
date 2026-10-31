@@ -1,0 +1,1424 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<title>Sorteos · Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<style>
+/* Paleta y medidas de Total-Tools (panel.css) */
+:root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--card:#1c2333;--card2:#1c2333;--line:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#388bfd;--ac2:#1a5fbf;--ok:#2ea043;--wa:#2ea043;--warn:#d29922;--bad:#f78166;--org:#db6d28;--pur:#a371f7;--r:11px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{overflow-x:clip}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:13px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+a{color:var(--ac)}
+.syne,h1,h2,h3{font-family:'Syne',sans-serif}
+[hidden]{display:none!important}
+.wrap{max-width:480px;margin:0 auto;padding:0 0 90px}
+.wrap>section{padding:0 14px}
+.mu{color:var(--mu)} .sm{font-size:12px} .xs{font-size:11px}
+.row{display:flex;align-items:center;gap:7px} .row.wrapf{flex-wrap:wrap} .sp{flex:1}
+.card{background:var(--bg3);border:1px solid var(--line);border-radius:11px;padding:14px;margin:0 0 12px}
+.card h3{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:7px;margin-bottom:12px;font-family:'DM Sans',sans-serif}
+/* header (.hdr) */
+.top{display:flex;align-items:center;gap:10px;height:60px;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--ok),#1a7f37);display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.top h1{font-size:16px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top .sub{display:flex;gap:8px;align-items:center;margin-top:1px}
+.top .sub .mu{font-size:11px}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid;white-space:nowrap}
+.p-pur{color:var(--pur);background:#a371f726;border-color:#a371f759}
+.p-ok{color:var(--ok);background:#2ea0431f;border-color:#2ea04366}
+.p-warn{color:var(--warn);background:#d299221f;border-color:#d2992266}
+.p-ac{color:var(--ac);background:#1a3a6b;border-color:var(--ac)}
+.p-bad{color:var(--bad);background:#f781661f;border-color:#f7816666}
+.ibtn{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--bg3);border:1px solid var(--line);color:var(--mu);flex:none}
+.ibtn:active{opacity:.75}
+.ibtn.out{background:#2d1b1b;border-color:var(--bad);color:var(--bad)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.dot.off{background:var(--bad);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.bell.ring{animation:ring .9s ease 3;border-color:var(--warn)}
+@keyframes ring{0%,100%{transform:rotate(0)}20%{transform:rotate(16deg)}40%{transform:rotate(-14deg)}60%{transform:rotate(9deg)}80%{transform:rotate(-6deg)}}
+.badge-n{position:absolute;top:-5px;right:-5px;background:var(--bad);color:#fff;font-size:9px;font-weight:700;border-radius:20px;padding:1px 5px}
+/* barra de sorteos (chips) */
+.rbar{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:var(--bg2);scrollbar-width:none}
+.rbar::-webkit-scrollbar{display:none}
+.rchip{white-space:nowrap;padding:6px 13px;border-radius:20px;background:var(--bg2);border:1.5px solid var(--line);color:var(--mu);font-weight:700;font-size:11px;flex:none}
+.rchip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.rchip.add{border-style:dashed;border-color:#388bfd4d;background:#388bfd14;color:var(--ac)}
+/* tabs */
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--line);position:sticky;top:60px;z-index:40;margin-bottom:14px}
+.tab{flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:500;color:var(--mu);border-bottom:2px solid transparent}
+.tab.on{color:var(--ac);border-bottom-color:var(--ac)}
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat{background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.stat b{display:block;font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1.15}
+.stat span{display:block;font-size:10px;color:var(--mu);margin-top:2px}
+.c-ok{color:var(--ok)} .c-org{color:var(--org)} .c-ac{color:var(--ac)} .c-pur{color:var(--pur)} .c-warn{color:var(--warn)} .c-bad{color:var(--bad)}
+.money{margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:10px;background:#2ea0431a;border:1px solid #2ea04359;font-size:12px;font-weight:600}
+.money b{font-family:'Syne',sans-serif;font-size:18px;color:var(--ok)}
+/* toolbar: buscador + chips */
+.search{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--line);border-radius:7px;padding:7px 10px}
+.search input{flex:1;background:none;border:0;outline:0;font-size:12px;width:100%}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 4px;scrollbar-width:none;scroll-snap-type:x proximity}
+.chips::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;padding:6px 13px;border-radius:20px;font-weight:700;font-size:11px;background:var(--bg2);border:1.5px solid var(--line);color:var(--mu);flex:none;scroll-snap-align:start}
+.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.tools{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.tools .ibtn{width:36px;height:36px;background:var(--bg2);font-size:14px}
+.ibtn.pri{background:var(--ac)!important;border-color:var(--ac);color:#fff}
+.ibtn.gold{background:#d299221f!important;border-color:var(--warn);color:var(--warn)}
+/* tarjetas de participantes (.card de Total-Tools) */
+.pname{font-weight:600;font-size:14px;line-height:1.3;padding-right:70px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin:5px 0;font-size:11px;color:var(--ac);padding-right:70px}
+.meta a,.meta span{display:inline-flex;align-items:center;gap:4px}
+.lnk{color:var(--ac);font-weight:700}
+.nums{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
+.num{font-family:'Syne',sans-serif;font-weight:800;padding:3px 9px;border-radius:7px;background:#388bfd1f;border:1px solid #388bfd59;color:#79c0ff;font-size:12px}
+.comp{display:flex;gap:10px;align-items:center;margin:7px 0;padding:9px;border-radius:9px;background:var(--bg2);border:1px solid var(--line)}
+.thumb{width:64px;height:84px;border-radius:9px;object-fit:cover;background:var(--bg);border:1px solid var(--line);flex:none}
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 12px;border-radius:8px;font-weight:700;font-size:12px;border:1.5px solid var(--line);background:var(--bg2);color:var(--tx)}
+.btn:active{opacity:.75}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn.ac{background:linear-gradient(135deg,var(--ac),#1a5fbf);border-color:transparent;color:#fff;font-family:'Syne',sans-serif}
+.btn.ok{background:#2ea0431f;border-color:#2ea04366;color:var(--ok)}
+.btn.wa{background:#2ea0431f;border-color:#2ea04366;color:var(--ok)}
+.btn.bad{background:#f781661f;border-color:#f7816666;color:var(--bad)}
+.btn.warn{background:#d299221f;border-color:#d2992266;color:var(--warn)}
+.btn.pur{background:#a371f71f;border-color:#a371f766;color:var(--pur)}
+.btn.full{width:100%;padding:13px;font-size:14px;border-radius:10px} .btn.sm{padding:7px 11px;font-size:11px;border-radius:7px}
+.mini{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--line);font-size:13px}
+.mini.wa{background:#2ea0431a;border-color:#2ea04333;color:var(--ok)}
+.pacts{position:absolute;top:10px;right:12px;display:flex;gap:5px}
+.empty{text-align:center;padding:36px 16px;color:var(--mu);font-size:13px}
+.empty b{display:block;font-size:40px;margin-bottom:8px}
+/* talonario */
+.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:5px;margin-top:10px}
+.nb{padding:9px 0;border-radius:7px;font-family:'Syne',sans-serif;font-weight:800;font-size:12px;text-align:center;background:var(--bg2);border:1px solid var(--line);color:var(--tx)}
+.nb.s1{background:#d299221f;border-color:#d2992266;color:#e3b341}
+.nb.s2{background:#388bfd1f;border-color:#388bfd66;color:#79c0ff}
+.nb.s3{background:#2ea0431f;border-color:#2ea04366;color:#56d364}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--mu);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid var(--line)}
+/* formularios (.fg/.fl/.fi) */
+.fld{display:block;margin:0 0 11px}
+.fld>span{display:block;font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.in,.fld input:not([type=checkbox]),.fld textarea,.fld select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;outline:0;-webkit-appearance:none}
+.in:focus,.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--ac)}
+.fld textarea,textarea.in{min-height:84px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 9px}
+.pre{display:flex}
+.pre>b{display:flex;align-items:center;padding:0 11px;background:var(--bg3);border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;font-weight:600;font-size:12px;color:var(--mu)}
+.pre input{border-radius:0 8px 8px 0!important}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:7px 13px;border-radius:20px;border:1.5px solid var(--line);background:var(--bg2);color:var(--mu);font-weight:600;font-size:12px}
+.seg button.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.sw{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.sw:first-of-type{border-top:0}
+.sw .t{flex:1;font-size:13px;font-weight:600}
+.sw .t small{display:block;color:var(--mu);font-size:11px;font-weight:400}
+.tog{appearance:none;-webkit-appearance:none;width:36px;height:22px;border-radius:11px;background:var(--line);position:relative;flex:none;transition:background .2s;cursor:pointer}
+.tog::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.tog:checked{background:var(--ac)} .tog:checked::after{transform:translateX(14px)}
+.imgup{display:flex;gap:10px;align-items:center}
+.imgup img{width:72px;height:72px;object-fit:cover;border-radius:9px;background:var(--bg2);border:1px solid var(--line)}
+.savebar{position:sticky;top:101px;z-index:15;display:flex;align-items:center;justify-content:space-between;padding:10px 0;margin-top:-14px;background:var(--bg)}
+.savebar h2{font-size:17px;font-weight:700}
+.hint{font-size:11px;color:var(--mu);margin-top:5px}
+.lnkbox{display:flex;gap:7px;margin:8px 0}
+.lnkbox input{flex:1;min-width:0;background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-family:monospace;font-size:11px;color:var(--ac)}
+.qr{display:flex;justify-content:center;padding:14px;background:#fff;border-radius:11px;width:max-content;margin:10px auto}
+canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top:10px}
+/* hoja inferior (.overlay/.sheet) */
+.mod{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:400;display:flex;align-items:flex-end;justify-content:center}
+.mod .box{background:var(--bg2);border:1px solid var(--line);border-radius:16px 16px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:up .2s ease}
+.mod .box::before{content:'';display:block;width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 14px}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mod h2{font-size:17px;font-weight:700;margin-bottom:10px}
+.mod .x{position:absolute;right:14px;top:14px}
+.mod .fld input:not([type=checkbox]),.mod .fld textarea,.mod .fld select,.mod .in{background:var(--bg3)}
+.bigimg{width:100%;border-radius:9px;background:#000}
+/* toast */
+.toast{position:fixed;left:50%;bottom:65px;transform:translateX(-50%);opacity:0;background:var(--bg3);border:1px solid var(--ok);color:var(--tx);padding:9px 18px;border-radius:20px;font-size:12px;font-weight:500;z-index:999;transition:opacity .3s;max-width:92vw;text-align:center;pointer-events:none}
+.toast.on{opacity:1}
+.toast.bad{border-color:var(--bad)} .toast.ok{border-color:var(--ok)}
+/* PIN (teclado de Total-Tools) */
+.pinbox{width:100%;max-width:340px;margin:0 auto;padding:0 18px;text-align:center}
+.pin-dots{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:14px;margin:16px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);transition:background .15s}
+.pin-dot.filled{background:var(--ac);border-color:var(--ac)}
+.pin-dots.error .pin-dot{background:var(--bad);border-color:var(--bad)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-btn{padding:16px;border-radius:12px;border:1px solid var(--line);background:var(--bg3);color:var(--tx);font-size:20px;font-weight:700;transition:all .15s}
+.pin-btn:active{background:var(--ac);border-color:var(--ac);color:#fff}
+.pin-btn-del{background:var(--bg2);color:var(--mu)}
+.pin-btn-ok{background:#2ea0431f;color:var(--ok);border-color:#2ea0434d}
+/* en vivo */
+.live{position:fixed;inset:0;z-index:500;background:radial-gradient(900px 600px at 50% 30%,#1c2333,#0d1117 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;overflow:hidden}
+.live .lt{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(18px,4vw,30px);color:#e6edf3}
+.live .lp{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(22px,5vw,40px);color:var(--warn);margin:10px 0 6px}
+.live .ln{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(90px,26vw,220px);line-height:1;color:#fff;text-shadow:0 0 40px #388bfdaa;margin:18px 0;font-variant-numeric:tabular-nums}
+.live .ln.win{color:var(--ok);text-shadow:0 0 60px #2ea043cc;animation:pop .5s}
+.live .lw{font-size:clamp(20px,4.5vw,34px);font-weight:700;min-height:1.4em}
+.live .lf{position:absolute;bottom:20px;left:0;right:0;font-size:11px;color:var(--mu);padding:0 16px;word-break:break-all}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.conf{position:fixed;top:-12px;width:10px;height:14px;border-radius:2px;z-index:550;animation:fall linear forwards;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.list-res{display:grid;gap:8px;margin:12px 0}
+.res{display:flex;align-items:center;gap:10px;padding:11px;border-radius:10px;background:var(--bg3);border:1px solid var(--line)}
+.res .n{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--ok);min-width:56px;text-align:center}
+.res.sup .n{color:var(--mu)}
+.spin{width:18px;height:18px;border:2.5px solid #fff5;border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loadfull{display:grid;place-items:center;min-height:70vh}
+.loadfull .spin{width:34px;height:34px;border-color:#388bfd44;border-top-color:var(--ac)}
+.powered{text-align:center;padding:18px;font-size:10px;color:var(--line);letter-spacing:1px}
+/* grupos por estado (.cgroup de Total-Tools) */
+.cgroup{background:var(--bg3);border-radius:11px;border:1px solid var(--line);margin-bottom:10px}
+.cgroup-hdr{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:var(--bg3);position:sticky;top:101px;z-index:5;border-radius:10px 10px 0 0}
+.cgroup-bar{width:3px;height:20px;border-radius:2px;background:var(--pur);flex:none}
+.cgroup-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;white-space:nowrap}
+.cgroup-sp{flex:1;min-width:6px}
+.cgroup-btn{font-size:14px;line-height:1;padding:4px 5px;border-radius:6px;color:var(--mu)}
+.cgroup-btn:active{background:rgba(255,255,255,.1)}
+.cgroup-cnt{background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 7px;font-size:11px;flex:none}
+.pc{padding:12px 14px;border-bottom:1px solid var(--line)}
+.pc:last-child{border-bottom:0}
+.pc.hl{animation:hlc .6s ease 5}
+@keyframes hlc{50%{box-shadow:inset 0 0 0 3px rgba(163,113,247,.8)}}
+.card-top{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.chk{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex:none;cursor:pointer}
+.chk.on{background:var(--ac);border-color:var(--ac)}
+.cname{font-weight:600;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cbtn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex:none;background:var(--bg2);border:1px solid var(--line)}
+.cbtn.pr{border:2px solid var(--ac);background:#388bfd1a}
+.cbtn.pr.done{border-color:var(--ok);background:#2ea0431a}
+.cbtn.wa{background:#2ea0431a;border-color:#2ea04333}
+.card-meta{display:flex;gap:4px 10px;margin-bottom:5px;flex-wrap:wrap;font-size:11px}
+.card-meta .m{color:var(--ac);display:inline-flex;align-items:center;gap:3px;text-decoration:none}
+.card-meta .m.amt{color:#f59e0b}
+.card-addr{font-size:11px;color:var(--mu);line-height:1.4}
+.card-note{font-size:11px;color:var(--pur);margin-top:3px}
+.card-actions{display:flex;gap:7px;margin-top:9px;align-items:center}
+.btn-st{flex:1;padding:9px 6px;border-radius:8px;border:1.5px solid;font-size:12px;font-weight:700}
+.btn-st:active,.sopt:active{opacity:.75}
+.st-N{background:rgba(247,129,102,.12);border-color:rgba(247,129,102,.4);color:var(--bad)}
+.st-C{background:rgba(46,160,67,.12);border-color:rgba(46,160,67,.4);color:var(--ok)}
+.st-X{background:rgba(139,148,158,.1);border-color:rgba(139,148,158,.35);color:var(--mu)}
+.btn-edit,.btn-del{width:34px;height:34px;border-radius:7px;font-size:15px;display:flex;align-items:center;justify-content:center;flex:none}
+.btn-edit{border:1px solid var(--line);background:var(--bg2);color:var(--mu)}
+.btn-del{background:rgba(247,129,102,.12);border:1px solid rgba(247,129,102,.3);color:var(--bad)}
+.btn-del[disabled]{opacity:.35;pointer-events:none}
+.sopts{display:flex;flex-direction:column;gap:9px;width:100%}
+.sopt{padding:14px 16px;border-radius:11px;border:1.5px solid;font-size:14px;font-weight:700;text-align:left;width:100%;display:flex;justify-content:space-between;align-items:center;position:relative}
+.sopt-m{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#f59e0b}
+/* píldoras con flechas (floatpanel.js de Total-Tools) */
+.chiprow{display:flex;align-items:center;gap:7px;margin-top:8px}
+.chiprow>.chip{flex:none}
+.chipsnav{position:relative;flex:1;min-width:0;display:flex}
+.chipsnav .chips{flex:1;min-width:0;padding:0}
+.carr{position:absolute;top:0;bottom:0;z-index:2;font-size:22px;font-weight:900;line-height:1;display:none;align-items:center}
+.carr.l{left:0;padding:0 8px 0 2px;background:linear-gradient(to right,var(--bg3) 60%,transparent);color:var(--mu)}
+.carr.r{right:0;padding:0 2px 0 8px;background:linear-gradient(to left,var(--bg3) 60%,transparent);color:var(--tx)}
+.ibtn.sel-on{border-color:var(--ac);box-shadow:0 0 0 2px rgba(56,139,253,.45);color:var(--ac)}
+/* selección */
+.selbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:calc(100% - 28px);max-width:452px;z-index:60;display:flex;align-items:center;gap:7px;padding:9px 10px 9px 14px;border-radius:12px;background:#1a3a6b;border:1px solid var(--ac);font-size:12px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.selbar .btn{padding:7px 10px;font-size:11px}
+/* búsqueda avanzada */
+.advb{font-size:15px;padding:0 2px;color:var(--mu);filter:grayscale(1)}
+.advb.on{filter:none}
+.advbar{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.aft{display:inline-flex;align-items:center;gap:5px;background:rgba(56,139,253,.15);border:1px solid rgba(56,139,253,.3);color:var(--ac);border-radius:14px;padding:3px 9px;font-size:10px;font-weight:700}
+.aft.x{background:rgba(247,129,102,.12);border-color:rgba(247,129,102,.3);color:var(--bad)}
+.as-opts{display:flex;gap:6px;flex-wrap:wrap}
+.as-opt{padding:7px 13px;border-radius:20px;border:1.5px solid var(--line);background:var(--bg3);color:var(--mu);font-size:12px;font-weight:600}
+.as-opt.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.btn-pri{width:100%;padding:13px;background:linear-gradient(135deg,var(--ac),#1a5fbf);border-radius:10px;color:#fff;font-weight:700;font-size:14px;font-family:'Syne',sans-serif;margin-top:4px}
+.btn-sec{width:100%;padding:12px;background:var(--bg3);border:1px solid var(--line);border-radius:10px;color:var(--mu);font-weight:600;font-size:13px;margin-top:7px}
+/* campana (notify.js de Total-Tools) */
+.nbtn{position:relative;font-size:18px;padding:2px 4px;line-height:1;display:flex;align-items:center;flex:none}
+.nbadge{position:absolute;top:-3px;right:-3px;background:var(--pur);color:#fff;font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.npanel{position:fixed;top:60px;right:max(8px,calc(50% - 232px));width:310px;max-width:calc(100vw - 16px);background:var(--bg2);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.5);z-index:450;display:flex;flex-direction:column;overflow:hidden;max-height:80vh}
+.nhdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border-bottom:1px solid rgba(163,113,247,.6)}
+.nhdr b{font-size:13px}
+.nclr{font-size:11px;color:var(--mu)}
+.nlist{overflow-y:auto;flex:1}
+.nitem{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(48,54,61,.5)}
+.nitem:last-child{border-bottom:0}
+.nic{font-size:17px;flex:none;margin-top:2px}
+.ncont{flex:1;min-width:0}
+.ntit{font-size:12px;font-weight:700;margin-bottom:2px}
+.nsub{font-size:11px;color:var(--mu);line-height:1.4;margin-bottom:7px}
+.nacts{display:flex;gap:6px}
+.nb-ver,.nb-pr,.nb-ok{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700}
+.nb-ver{background:rgba(56,139,253,.15);border:1px solid rgba(56,139,253,.3);color:var(--ac)}
+.nb-pr{background:rgba(163,113,247,.15);border:1px solid rgba(163,113,247,.3);color:var(--pur)}
+.nb-ok{background:rgba(46,160,67,.1);border:1px solid rgba(46,160,67,.25);color:var(--ok);cursor:default}
+.ntime{font-size:10px;color:var(--mu);flex:none;margin-top:2px}
+.ndot{width:6px;height:6px;border-radius:50%;background:var(--pur);margin-top:6px}
+.nempty{text-align:center;padding:24px;color:var(--mu);font-size:12px}
+/* compartir y config (.cfg-sec de Total-Tools) */
+.hero{text-align:center;padding:10px 16px 18px}
+.hero b{display:block;font-size:40px;margin-bottom:10px}
+.hero h2{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px}
+.hero p{font-size:13px;color:var(--mu);line-height:1.6}
+.cfg-sec{background:var(--bg3);border-radius:11px;border:1px solid var(--line);padding:14px;margin-bottom:12px}
+.cfg-ttl{font-size:10px;font-weight:700;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+#t-config .card h3{color:var(--ac)}
+.ay{font-size:11px;color:var(--mu);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;font-family:'DM Sans',sans-serif}
+.cfg-sub{font-size:11px;color:var(--mu);margin-bottom:12px;line-height:1.5}
+.sec-hdr{font-size:11px;font-weight:700;color:var(--ac);letter-spacing:1px;text-transform:uppercase;padding:4px 0 10px;display:flex;align-items:center;gap:6px}
+.sec-hdr.pur{color:var(--pur);border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.link-box{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-family:monospace;font-size:11px;color:var(--ac);word-break:break-all;cursor:pointer;margin-bottom:10px}
+.fi{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;outline:0;margin-bottom:8px}
+.fi:focus{border-color:var(--ac)} .fi::placeholder{color:var(--mu)}
+.frow{display:flex;gap:9px} .frow>*{flex:1;min-width:0}
+.bt-dark{width:100%;padding:13px 8px;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px}
+.bt-dark.mu{color:var(--mu)}
+.bt-blue{width:100%;padding:15px;background:var(--ac);border-radius:12px;color:#fff;font-weight:700;font-size:15px}
+.bt-wa{width:100%;padding:14px;background:rgba(37,211,102,.15);border:1.5px solid rgba(37,211,102,.35);border-radius:12px;color:#25d366;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.cfg-ptl{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}
+.cfg-save{background:linear-gradient(135deg,var(--ok),#1a7f37);border-radius:9px;color:#fff;font-weight:700;font-size:13px;font-family:'Syne',sans-serif;padding:10px 18px;flex:none}
+#t-config .seg button{border-radius:9px;padding:10px 14px;font-size:13px;font-weight:700;min-width:52px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- ============ APP ============ -->
+<div id="app" class="wrap" hidden>
+  <header class="top">
+    <div class="logo">🎟️</div>
+    <div class="sp" style="min-width:0">
+      <div class="row" style="gap:6px"><h1 id="hNeg" style="min-width:0">SORTEOS</h1><span class="dot" id="hDot" title="Conexión"></span></div>
+      <div class="sub"><span class="mu" id="hWa"></span><span class="pill p-pur" id="hEst">Panel</span></div>
+    </div>
+    <button class="nbtn bell" id="hBell" title="Nuevos registros">🔔<span class="nbadge" id="nBadge" hidden>0</span></button>
+    <button class="ibtn out" id="hOut" title="Cerrar sesión">↪</button>
+  </header>
+
+  <div class="rbar" id="rbar"></div>
+
+  <nav class="tabs">
+    <button class="tab on" data-tab="sorteo">🎟️ Sorteo</button>
+    <button class="tab" data-tab="compartir">🔗 Compartir</button>
+    <button class="tab" data-tab="config">⚙️ Config</button>
+  </nav>
+
+  <!-- TAB SORTEO -->
+  <section id="t-sorteo">
+    <div class="stats" id="stats"></div>
+    <div class="money" id="money"></div>
+    <div class="card" style="padding:10px">
+      <div class="search"><span>🔍</span><input id="q" placeholder="Buscar nombre, celular, N° op, número…"><button id="qx" class="mu" hidden>✕</button><button class="advb" id="bAdv" title="Búsqueda avanzada">⚙️</button></div>
+      <div class="advbar" id="advBar" hidden></div>
+      <div class="chiprow">
+        <button class="chip on" id="chipTodos" data-f="todos" title="Doble toque: todas las etiquetas">TODOS</button>
+        <div class="chipsnav"><div class="chips" id="chips"></div><button class="carr l" id="chL" aria-label="Etiqueta anterior">&#8249;</button><button class="carr r" id="chR" aria-label="Etiqueta siguiente">&#8250;</button></div>
+      </div>
+      <div class="tools">
+        <button class="ibtn" id="bSelAll" title="Seleccionar / deseleccionar todo">☑️</button>
+        <button class="ibtn" id="bPrint" title="Imprimir tickets seleccionados">🖨️</button>
+        <button class="ibtn" id="bCsv" title="Exportar CSV">📊</button>
+        <button class="ibtn" id="bRef" title="Actualizar">🔄</button>
+        <button class="ibtn" id="bVista" title="Grilla / lista">▦</button>
+        <button class="ibtn" id="bRes" title="Resultado">🏆</button>
+        <button class="ibtn gold" id="bSort" title="Sortear">🎲</button>
+      </div>
+    </div>
+    <div id="lista"></div>
+    <div class="selbar" id="selbar" hidden></div>
+  </section>
+
+  <!-- TAB COMPARTIR -->
+  <section id="t-compartir" hidden></section>
+
+  <!-- TAB CONFIG -->
+  <section id="t-config" hidden></section>
+</div>
+
+<div id="boot" class="loadfull"><div class="spin"></div></div>
+<div id="live" class="live" hidden></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* =====================================================================
+   CONFIG — edita aquí
+   ===================================================================== */
+const CONFIG = {
+  API: 'https://sorteos.jarryllanoski.workers.dev', // URL de tu Worker, ej: https://sorteos.tuusuario.workers.dev
+  PIN: '',              // Déjalo vacío: el panel lo pide en pantalla (el repo es público)
+  FORM: '',             // URL pública de formulario.html (vacío = misma carpeta que este panel)
+  NEGOCIO: 'TOTAL TOOLS',
+  POLL_MS: 30000,       // cada cuánto revisa registros nuevos (campana)
+};
+
+/* =====================================================================
+   UTILIDADES
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const lsGet = (k, d) => { try { const v = localStorage.getItem('sxa_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem('sxa_' + k, JSON.stringify(v)); } catch (e) {} };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmtS = n => 'S/ ' + (+n || 0).toFixed(2);
+const baseOf = c => (c.base === 0 ? 0 : 1);
+const digs = c => String((c.cantidad || 1) - 1 + baseOf(c)).length;
+const fmtN = (c, i) => String(i + baseOf(c)).padStart(digs(c), '0');
+const splitN = s => String(s || '').split(',').filter(x => x !== '').map(Number);
+const fecha = t => t ? new Date(t).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+const fechaL = t => t ? new Date(t).toLocaleString('es-PE', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+const EST = { R: { t: 'Reservado', p: 'p-warn', i: '⏳' }, V: { t: 'En revisión', p: 'p-ac', i: '🔎' }, P: { t: 'Pagado', p: 'p-ok', i: '✅' }, X: { t: 'Anulado', p: 'p-bad', i: '✖️' } };
+const ESTR = { activa: ['🟢 Activa', 'p-ok'], pausada: ['⏸️ Pausada', 'p-warn'], cerrada: ['🔒 Cerrada', 'p-bad'], sorteada: ['🏆 Sorteada', 'p-pur'] };
+// En el panel solo hay 3 estados (como Total-Tools); R y V del servidor se muestran como NUEVO
+const GRP = { N: { t: 'NUEVO', i: '🆕', bar: 'var(--bad)' }, C: { t: 'CONFIRMADO', i: '✅', bar: 'var(--ok)' }, X: { t: 'ANULADO', i: '🚫', bar: 'var(--mu)' } };
+const GORD = ['N', 'C', 'X'], FILT = ['todos', ...GORD];
+const ACC = { N: 'revision', C: 'aprobar', X: 'liberar' };
+const grp = p => p.est === 'P' ? 'C' : p.est === 'X' ? 'X' : 'N';
+const ADV0 = { desde: '', hasta: '', comp: 'any', origen: 'any', min: '', max: '', cant: '', imp: 'any', orden: 'nuevo' };
+const impresos = new Set(lsGet('impresos', []));
+const marcarImpresos = l => { l.forEach(p => impresos.add(p.id)); lsSet('impresos', [...impresos].slice(-3000)); };
+
+function toast(msg, tipo = '') {
+  const t = $('#toast'); t.textContent = msg; t.className = 'toast on ' + tipo;
+  clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2800);
+}
+function modal(html) {
+  const m = document.createElement('div'); m.className = 'mod';
+  m.innerHTML = `<div class="box" style="position:relative"><button class="mini x" data-x>✕</button>${html}</div>`;
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-x]')) cerrar(); });
+  const cerrar = () => { m.remove(); if (m._onclose) m._onclose(); };
+  m.close = cerrar; document.body.appendChild(m); return m;
+}
+async function copiar(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+  toast('📋 Copiado');
+}
+function waURL(num, text) {
+  let n = String(num || '').replace(/\D/g, '');
+  if (n.length === 9) n = '51' + n;
+  return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text);
+}
+const abrir = u => window.open(u, '_blank', 'noopener');
+function precioTotal(c, k) {
+  const pu = +c.precio || 0, promos = (c.promos || []).filter(p => p.n > 1), best = [0];
+  for (let i = 1; i <= k; i++) { let v = best[i - 1] + pu; for (const p of promos) if (i >= p.n) v = Math.min(v, best[i - p.n] + p.p); best[i] = v; }
+  return Math.round(best[k] * 100) / 100;
+}
+async function comprimir(file, max = 1280, q = 0.78) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const cv = document.createElement('canvas'); cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    let b = await new Promise(r => cv.toBlob(r, 'image/webp', q));
+    if (!b || b.type !== 'image/webp') b = await new Promise(r => cv.toBlob(r, 'image/jpeg', q));
+    return b;
+  } finally { URL.revokeObjectURL(url); }
+}
+function descargar(blob, nombre) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+const toLocalInput = t => t ? new Date(t - new Date(t).getTimezoneOffset() * 60e3).toISOString().slice(0, 16) : '';
+
+/* =====================================================================
+   ESTADO
+   ===================================================================== */
+const S = {
+  api: CONFIG.API, pin: CONFIG.PIN || lsGet('pin', ''), form: lsGet('form', CONFIG.FORM),
+  rifas: [], rid: lsGet('rid', ''), d: null, filtro: 'todos', q: '', vista: 'lista', tab: 'sorteo',
+  act: null, imgs: new Map(), sel: new Set(), adv: { ...ADV0 },
+};
+const formURL = () => (S.form || new URL('formulario.html', location.href).href).split('?')[0];
+const linkSorteo = id => `${formURL()}?r=${id}`;
+const linkPart = id => `${formURL()}?r=${id}&v=p`;
+const linkBoleto = tok => `${formURL()}?t=${tok}`;
+const pubImg = k => k ? S.api.replace(/\/$/, '') + '/pub/' + k : '';
+
+/* =====================================================================
+   API
+   ===================================================================== */
+
+const API = {
+  async req(path, opt = {}) {
+    const h = { 'x-pin': S.pin, ...(opt.headers || {}) };
+    let body = opt.body;
+    if (body && !(body instanceof Blob) && !(body instanceof FormData)) { body = JSON.stringify(body); h['content-type'] = 'application/json'; }
+    let r;
+    try { r = await fetch(S.api.replace(/\/$/, '') + path, { method: opt.method || (body ? 'POST' : 'GET'), headers: h, body }); }
+    catch (e) { setDot(false); throw new Error('Sin conexión con el servidor'); }
+    let j; try { j = await r.json(); } catch (e) { throw new Error('Respuesta inválida (' + r.status + ')'); }
+    setDot(true);
+    if (!r.ok || j.ok === false) { const e = new Error(j.error || 'Error ' + r.status); e.status = r.status; throw e; }
+    return j;
+  },
+  rifas: () => API.req('/api/admin/rifas'),
+  guardar: (id, cfg) => API.req('/api/admin/rifas', { body: { id, cfg } }),
+  borrar: id => API.req('/api/admin/rifas/' + id, { method: 'DELETE' }),
+  detalle: id => API.req('/api/admin/r/' + id + '/part'),
+  accion: (pid, acc, extra = {}) => API.req('/api/admin/part/' + pid, { body: { acc, ...extra } }),
+  sortear: (id, g, s, force) => API.req('/api/admin/r/' + id + '/sortear', { body: { g, s, force } }),
+  subir: blob => API.req('/api/admin/upload', { body: blob, headers: { 'content-type': blob.type } }),
+  link: d => API.req('/api/admin/links', { body: d }),
+  async img(key) {
+    if (S.imgs.has(key)) return S.imgs.get(key);
+    const r = await fetch(S.api.replace(/\/$/, '') + '/api/admin/img/' + key.split('/').map(encodeURIComponent).join('/'), { headers: { 'x-pin': S.pin } });
+    if (!r.ok) throw new Error('No se pudo cargar la imagen');
+    const u = URL.createObjectURL(await r.blob()); S.imgs.set(key, u); return u;
+  },
+};
+function setDot(ok) { const d = $('#hDot'); if (d) d.classList.toggle('off', !ok); }
+
+/* =====================================================================
+   ARRANQUE / LOGIN
+   ===================================================================== */
+function vAviso(tit, msg) {
+  $('#boot').hidden = true; $('#app').hidden = true;
+  const d = document.createElement('div'); d.className = 'loadfull';
+  d.innerHTML = `<div class="card" style="max-width:380px;text-align:center"><div class="logo" style="margin:0 auto 12px">🎟️</div><h2 class="syne">${esc(tit)}</h2><p class="mu sm" style="margin:8px 0 14px">${esc(msg)}</p><button class="btn ac full" onclick="location.reload()">🔄 Reintentar</button></div>`;
+  document.body.appendChild(d);
+}
+// Teclado PIN (mismo diseño que Total-Tools); resuelve con el PIN escrito
+function pedirPin(error) {
+  return new Promise(res => {
+    $('#boot').hidden = true;
+    const d = document.createElement('div'); d.className = 'loadfull';
+    const teclas = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="pin-btn" data-pin="${n}">${n}</button>`).join('');
+    d.innerHTML = `<div class="pinbox"><div class="logo" style="margin:0 auto 12px">🎟️</div>
+      <h2 style="font-size:17px;font-weight:700">🔐 Clave requerida</h2>
+      <p class="mu" style="margin-top:6px">${error ? 'PIN incorrecto, intenta de nuevo' : 'Ingresa tu PIN del panel'}</p>
+      <div class="pin-dots${error ? ' error' : ''}"></div>
+      <div class="pin-grid">${teclas}<button class="pin-btn pin-btn-del" data-pin="del">⌫</button><button class="pin-btn" data-pin="0">0</button><button class="pin-btn pin-btn-ok" data-pin="ok">✓</button></div></div>`;
+    document.body.appendChild(d);
+    const dots = $('.pin-dots', d);
+    let v = '';
+    const pinta = () => { dots.classList.remove('error'); dots.innerHTML = v ? '<div class="pin-dot filled"></div>'.repeat(v.length) : '<div class="pin-dot"></div>'.repeat(4); };
+    const tecla = k => {
+      if (k === 'ok') { if (!v) return; d.remove(); document.removeEventListener('keydown', kb); $('#boot').hidden = false; return res(v); }
+      if (k === 'del') v = v.slice(0, -1); else if (v.length < 12) v += k;
+      pinta();
+    };
+    const kb = e => { if (/^\d$/.test(e.key)) tecla(e.key); else if (e.key === 'Backspace') tecla('del'); else if (e.key === 'Enter') tecla('ok'); };
+    d.addEventListener('click', e => { const b = e.target.closest('[data-pin]'); if (b) tecla(b.dataset.pin); });
+    document.addEventListener('keydown', kb);
+    dots.innerHTML = '<div class="pin-dot"></div>'.repeat(4);
+  });
+}
+async function iniciar(error) {
+  // Sin PIN en CONFIG se pide en pantalla y se recuerda solo en este dispositivo
+  if (!S.pin) S.pin = await pedirPin(error);
+  try {
+    await cargarRifas();
+    if (!CONFIG.PIN) lsSet('pin', S.pin);
+    $('#boot').hidden = true; $('#app').hidden = false;
+    if (!S.rifas.find(r => r.id === S.rid)) S.rid = S.rifas[0]?.id || '';
+    if (S.rid) await cargarDetalle(); else renderVacio();
+    poll();
+  } catch (e) {
+    if (e.status === 401 && !CONFIG.PIN) { lsSet('pin', ''); S.pin = ''; return iniciar(true); }
+    if (e.status === 401) vAviso('PIN incorrecto', 'El PIN de CONFIG en index.html no coincide con ADMIN_PIN del Worker.');
+    else vAviso('No se pudo conectar', e.message);
+  }
+}
+
+/* =====================================================================
+   DATOS
+   ===================================================================== */
+async function cargarRifas() {
+  const j = await API.rifas(); S.rifas = j.rifas;
+  const tot = j.rifas.reduce((a, r) => a + (r.act || 0), 0);
+  if (S.act != null && tot > S.act) avisoNuevo(tot - S.act);
+  S.act = tot; renderRBar();
+}
+async function cargarDetalle(silent) {
+  if (!S.rid) return renderVacio();
+  try { S.d = await API.detalle(S.rid); lsSet('rid', S.rid); renderTodo(); }
+  catch (e) { if (e.status === 404) { S.rid = ''; lsSet('rid', ''); await cargarRifas(); S.rid = S.rifas[0]?.id || ''; return S.rid ? cargarDetalle() : renderVacio(); } if (!silent) toast(e.message, 'bad'); }
+}
+let pollT;
+function poll() {
+  clearTimeout(pollT);
+  pollT = setTimeout(async () => {
+    if (document.visibilityState === 'visible') {
+      const prev = S.act;
+      try { await cargarRifas(); if (S.act !== prev && S.rid) await cargarDetalle(true); } catch (e) {}
+    }
+    poll();
+  }, CONFIG.POLL_MS);
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !$('#app').hidden) cargarRifas().then(() => cargarDetalle(true)).catch(() => {}); });
+
+function avisoNuevo(n) {
+  const b = $('#hBell'); b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring');
+  toast(`🔔 ${n} movimiento(s) nuevo(s)`, 'ok');
+  try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {}
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination); o.frequency.value = 880; g.gain.setValueAtTime(.15, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + .4); o.start(); o.stop(ac.currentTime + .4);
+  } catch (e) {}
+}
+
+/* =====================================================================
+   RENDER GENERAL
+   ===================================================================== */
+const cfg = () => S.d?.rifa.cfg || {};
+function renderRBar() {
+  $('#rbar').innerHTML = S.rifas.map(r => `<button class="rchip ${r.id === S.rid ? 'on' : ''}" data-rid="${r.id}">${r.estado === 'sorteada' ? '🏆 ' : r.modo === 'gratis' ? '🎁 ' : '🎟️ '}${esc(r.titulo)}</button>`).join('') + `<button class="rchip add" id="bNueva">＋ Nuevo sorteo</button>`;
+}
+function renderHeader() {
+  const c = cfg();
+  $('#hNeg').textContent = (c.negocio || CONFIG.NEGOCIO || 'SORTEOS').toUpperCase();
+  $('#hWa').textContent = c.wa || '';
+  const e = ESTR[c.estado] || ESTR.activa; $('#hEst').textContent = e[0]; $('#hEst').className = 'pill ' + e[1];
+}
+function renderVacio() {
+  S.d = null; renderRBar();
+  $('#hNeg').textContent = CONFIG.NEGOCIO; $('#stats').innerHTML = ''; $('#money').hidden = true;
+  $('#lista').innerHTML = `<div class="empty"><b>🎟️</b>Aún no tienes sorteos.<br><br><button class="btn ac" onclick="nuevaRifa()">＋ Crear mi primer sorteo</button></div>`;
+  $('#t-compartir').innerHTML = $('#t-config').innerHTML = `<div class="empty">Crea un sorteo primero</div>`;
+}
+function renderTodo() {
+  const ids = new Set(S.d.parts.map(p => p.id)); S.sel.forEach(id => ids.has(id) || S.sel.delete(id));
+  renderRBar(); renderHeader(); renderStats(); renderChips(); renderAdvBar(); renderLista(); renderBell();
+  if (S.tab === 'compartir') renderCompartir(); if (S.tab === 'config') renderConfig();
+}
+
+function stats() {
+  const b = S.d.rifa.board, s = { total: b.length, libres: 0, r: 0, v: 0, p: 0 };
+  for (const ch of b) { if (ch === '0') s.libres++; else if (ch === '1') s.r++; else if (ch === '2') s.v++; else s.p++; }
+  return s;
+}
+function renderStats() {
+  const s = stats(), c = cfg(), ps = S.d.parts;
+  const conf = ps.filter(p => grp(p) === 'C'), nue = ps.filter(p => grp(p) === 'N');
+  $('#stats').innerHTML = `
+    <div class="stat"><b class="c-ok">${s.total}</b><span>🎟️ Total números</span></div>
+    <div class="stat"><b class="c-bad">${nue.length}</b><span>🆕 Nuevos</span></div>
+    <div class="stat"><b class="c-ac">${conf.length}</b><span>✅ Confirmados</span></div>
+    <div class="stat"><b class="c-pur">${s.libres}</b><span>🔓 Números disponibles</span></div>`;
+  const m = $('#money'); m.hidden = false;
+  m.innerHTML = c.modo === 'gratis'
+    ? `<span>👥 ${ps.filter(p => p.est !== 'X').length} participantes</span><b>🎁 Gratis</b>`
+    : `<span>💰 Confirmado <small class="mu">(${conf.length} confirmados · ${nue.length} nuevos)</small></span><b>${fmtS(conf.reduce((a, p) => a + (+p.monto || 0), 0))}</b>`;
+}
+
+/* Píldoras: TODOS aparte (doble toque = todas las etiquetas) y carrusel con flechas
+   que cambian la etiqueta activa, igual que floatpanel.js de Total-Tools */
+function renderChips() {
+  const ps = S.d.parts, n = g => ps.filter(p => grp(p) === g).length;
+  $('#chipTodos').className = 'chip' + (S.filtro === 'todos' ? ' on' : '');
+  $('#chips').innerHTML = GORD.map(g => `<button class="chip ${S.filtro === g ? 'on' : ''}" data-f="${g}">${GRP[g].i} ${GRP[g].t} (${n(g)})</button>`).join('');
+  const i = FILT.indexOf(S.filtro);
+  $('#chL').style.display = i > 0 ? 'flex' : 'none';
+  $('#chR').style.display = i < FILT.length - 1 ? 'flex' : 'none';
+  verActivo();
+}
+function verActivo() {
+  const car = $('#chips'), a = $('.chip.on', car); if (!a) return;
+  const r = a.getBoundingClientRect(), c = car.getBoundingClientRect();
+  const d = r.left < c.left ? r.left - c.left - 8 : r.right > c.right ? r.right - c.right + 8 : 0;
+  if (d) car.scrollBy({ left: d, behavior: 'smooth' });
+}
+function setFiltro(f) { if (S.filtro === f) return; S.filtro = f; if (S.vista === 'grilla') S.vista = 'lista'; renderChips(); renderLista(); }
+function navFiltro(d) { const i = FILT.indexOf(S.filtro) + d; if (i >= 0 && i < FILT.length) setFiltro(FILT[i]); }
+function todasEtiquetas() {
+  const ps = S.d.parts, c = cfg();
+  const m = modal(`<h2>🏷️ Todas las etiquetas</h2><div class="sopts">
+    <button class="sopt" style="background:rgba(56,139,253,.1);border-color:rgba(56,139,253,.4);color:var(--ac)" data-go="todos">📋 TODOS<span class="xs" style="opacity:.6">${ps.length}</span></button>
+    ${GORD.map(g => { const l = ps.filter(p => grp(p) === g); return `<button class="sopt st-${g}" data-go="${g}">${GRP[g].i} ${GRP[g].t}${c.modo === 'pago' ? `<span class="sopt-m">${fmtS(l.reduce((a, p) => a + (+p.monto || 0), 0))}</span>` : ''}<span class="xs" style="opacity:.6">${l.length}</span></button>`; }).join('')}
+  </div>`);
+  m.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; m.close(); setFiltro(b.dataset.go); });
+}
+
+/* =====================================================================
+   LISTA DE PARTICIPANTES
+   ===================================================================== */
+function filtrados() {
+  const c = cfg(), q = S.q.trim().toLowerCase(), A = S.adv;
+  const d0 = A.desde ? new Date(A.desde + 'T00:00').getTime() : 0, d1 = A.hasta ? new Date(A.hasta + 'T23:59:59').getTime() : 0;
+  const l = S.d.parts.filter(p => {
+    if (S.filtro !== 'todos' && grp(p) !== S.filtro) return false;
+    if ((d0 && p.creado < d0) || (d1 && p.creado > d1)) return false;
+    if ((A.comp === 'si' && !p.img) || (A.comp === 'no' && p.img)) return false;
+    const lk = !!p.nota?.startsWith('link:');
+    if ((A.origen === 'link' && !lk) || (A.origen === 'form' && lk)) return false;
+    if ((A.min !== '' && (+p.monto || 0) < +A.min) || (A.max !== '' && (+p.monto || 0) > +A.max)) return false;
+    if (A.cant && splitN(p.nums).length < +A.cant) return false;
+    if ((A.imp === 'si' && !impresos.has(p.id)) || (A.imp === 'no' && impresos.has(p.id))) return false;
+    if (!q) return true;
+    const nums = splitN(p.nums).map(i => fmtN(c, i)).join(' ');
+    return [p.nombre, p.cel, p.op, p.dni, p.id, nums].join(' ').toLowerCase().includes(q) || splitN(p.nums).some(i => String(i + baseOf(c)) === q.replace(/^0+/, ''));
+  });
+  const primero = p => splitN(p.nums)[0] ?? 1e9;
+  const ORD = { nuevo: (a, b) => b.creado - a.creado, viejo: (a, b) => a.creado - b.creado, az: (a, b) => a.nombre.localeCompare(b.nombre, 'es'), monto: (a, b) => (+b.monto || 0) - (+a.monto || 0), num: (a, b) => primero(a) - primero(b) };
+  return l.sort(ORD[A.orden] || ORD.nuevo);
+}
+// Agrupado por estado con encabezado fijo (como los grupos de courier de Total-Tools)
+function renderLista() {
+  renderSelBar();
+  if (S.vista === 'grilla') return renderGrilla();
+  const ps = filtrados(), c = cfg();
+  if (!ps.length) { $('#lista').innerHTML = `<div class="empty"><b>📭</b>${S.d.parts.length ? 'Nada con ese filtro' : 'Aún no hay participantes.<br>Comparte el link desde la pestaña 🔗 Compartir.'}</div>`; return; }
+  $('#lista').innerHTML = GORD.map(g => [g, ps.filter(p => grp(p) === g)]).filter(([, l]) => l.length).map(([g, l]) => `
+    <div class="cgroup">
+      <div class="cgroup-hdr"><div class="cgroup-bar" style="background:${GRP[g].bar}"></div><span>${GRP[g].i}</span><div class="cgroup-name">${GRP[g].t}</div><div class="cgroup-sp"></div><button class="cgroup-btn" data-gp="${g}" title="Imprimir seleccionados de ${GRP[g].t}">🖨️</button><div class="cgroup-sp"></div><button class="cgroup-btn" data-sc="-1" title="Tarjeta anterior">▲</button><button class="cgroup-btn" data-sc="1" title="Tarjeta siguiente">▼</button><div class="cgroup-cnt">${l.length}</div></div>
+      ${l.map(p => cardHTML(p, c)).join('')}
+    </div>`).join('');
+  observarThumbs();
+}
+function cardHTML(p, c) {
+  const g = grp(p), nums = splitN(p.nums), sel = S.sel.has(p.id), imp = impresos.has(p.id), lk = !!p.nota?.startsWith('link:');
+  const info = p.est === 'R' ? `<div class="card-addr c-warn">⏳ Sin comprobante${p.vence ? ' · la reserva vence ' + fecha(p.vence) : ''}</div>`
+    : p.est === 'V' ? '<div class="card-addr">🔎 Con comprobante · verifica el pago antes de confirmar</div>' : '';
+  return `<div class="pc" data-pid="${p.id}">
+    <div class="card-top">
+      <div class="chk ${sel ? 'on' : ''}" data-a="sel">${sel ? '✓' : ''}</div>
+      <div class="cname">${esc(p.nombre)}</div>
+      <button class="cbtn pr ${imp ? 'done' : ''}" data-a="print" title="${imp ? 'Ya impreso · imprimir otra vez' : 'Imprimir ticket'}">🖨️</button>
+      <button class="cbtn wa" data-a="wa" title="WhatsApp">💬</button>
+      <button class="cbtn" data-a="mas" title="Más">⋯</button>
+    </div>
+    <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
+    <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
+    ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
+    ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
+    <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="Anular" ${g === 'X' ? 'disabled' : ''}>🗑️</button></div>
+  </div>`;
+}
+// ▲▼: una tarjeta a la vez, alineada bajo los encabezados fijos (scrollCard de Total-Tools)
+function scrollCard(dir) {
+  const cards = $$('#lista .pc'); if (!cards.length) return;
+  const gh = $('.cgroup-hdr'), off = $('.top').offsetHeight + $('.tabs').offsetHeight + (gh ? gh.offsetHeight : 44) + 6;
+  let cur = 0, best = Infinity;
+  cards.forEach((c, i) => { const d = Math.abs(c.getBoundingClientRect().top - off); if (d < best) { best = d; cur = i; } });
+  const t = Math.max(0, Math.min(cards.length - 1, cur + dir));
+  window.scrollTo({ top: Math.max(0, scrollY + cards[t].getBoundingClientRect().top - off), behavior: 'smooth' });
+}
+let thumbObs;
+function observarThumbs() {
+  thumbObs?.disconnect();
+  thumbObs = new IntersectionObserver(es => es.forEach(async en => {
+    if (!en.isIntersecting) return; const im = en.target; thumbObs.unobserve(im);
+    try { im.src = await API.img(im.dataset.img); } catch (e) { im.alt = '⚠️'; }
+  }), { rootMargin: '200px' });
+  $$('img[data-img]').forEach(i => thumbObs.observe(i));
+}
+function renderGrilla() {
+  const c = cfg(), b = S.d.rifa.board;
+  let h = `<div class="card"><h3>▦ Talonario</h3><div class="legend"><span><i></i>Libre</span><span><i style="background:#d2992255"></i>Nuevo sin pago</span><span><i style="background:#388bfd55"></i>Nuevo con pago</span><span><i style="background:#2ea04355"></i>Confirmado</span></div><div class="ngrid">`;
+  for (let i = 0; i < b.length; i++) h += `<button class="nb s${b[i]}" data-n="${i}">${fmtN(c, i)}</button>`;
+  $('#lista').innerHTML = h + '</div></div>';
+}
+function dueño(i) { return S.d.parts.find(p => p.est !== 'X' && splitN(p.nums).includes(i)); }
+
+async function accion(pid, acc) {
+  const p = S.d.parts.find(x => x.id === pid); if (!p) return;
+  const c = cfg();
+  if (acc === 'wa') return abrir(waURL(p.cel, msgCliente(p, c)));
+  if (acc === 'mas') return menuMas(p);
+  if (acc === 'print') return imprimirTickets([p]);
+  if (acc === 'estado') return hojaEstado([p]);
+  if (acc === 'editar') return editarPart(p);
+  if (acc === 'anular') { if (confirm(`¿Anular el registro de ${p.nombre}? Sus números quedarán libres.`)) cambiarEstado([p], 'X'); return; }
+  if (acc === 'sel') {
+    const on = !S.sel.has(pid); on ? S.sel.add(pid) : S.sel.delete(pid);
+    const ck = $(`.pc[data-pid="${pid}"] .chk`); ck.classList.toggle('on', on); ck.textContent = on ? '✓' : '';
+    return renderSelBar();
+  }
+}
+// Cambia el estado de uno o varios (selección) usando las acciones del Worker
+async function cambiarEstado(list, g) {
+  const todo = list.filter(p => grp(p) !== g);
+  if (!todo.length) return toast(`Ya está en ${GRP[g].t}`);
+  let ok = 0; const fallos = [];
+  for (const p of todo) { try { await API.accion(p.id, ACC[g]); ok++; S.sel.delete(p.id); } catch (e) { fallos.push(`${p.nombre.split(' ')[0]}: ${e.message}`); } }
+  if (ok) toast(`${GRP[g].i} ${ok > 1 ? ok + ' registros' : 'Registro'} → ${GRP[g].t}`, 'ok');
+  if (fallos.length) setTimeout(() => toast(fallos[0], 'bad'), ok ? 1600 : 0);
+  await cargarDetalle();
+  if (g === 'C' && ok === 1 && todo.length === 1) {
+    const np = S.d.parts.find(x => x.id === todo[0].id) || todo[0];
+    const m = modal(`<h2>✅ ¡Confirmado!</h2><p class="mu" style="margin-bottom:14px">Avísale a ${esc(np.nombre.split(' ')[0])} que sus números están confirmados.</p><button class="bt-wa" id="mAv">💬 Enviar confirmación por WhatsApp</button><button class="btn-sec" id="mTk">🖨️ Imprimir su ticket</button>`);
+    $('#mAv', m).onclick = () => { abrir(waURL(np.cel, msgCliente(np, cfg()))); m.close(); };
+    $('#mTk', m).onclick = () => { imprimirTickets([np]); m.close(); };
+  }
+}
+// Hoja de estados (STATUS SHEET de Total-Tools): NUEVO / CONFIRMADO / ANULADO
+function hojaEstado(list) {
+  const uno = list.length === 1 ? list[0] : null, act = uno ? grp(uno) : '';
+  const m = modal(`<h2>🔄 ${uno ? 'Cambiar estado' : `Estado de ${list.length} seleccionados`}</h2>
+    <p class="mu sm" style="margin-bottom:14px">${uno ? esc(uno.nombre) : 'Se aplica a todos los seleccionados'}</p>
+    <div class="sopts">${GORD.map(g => `<button class="sopt st-${g}" data-st="${g}"><span>${GRP[g].i} ${GRP[g].t}</span>${g === act ? '<span>✓</span>' : ''}</button>`).join('')}</div>
+    <p class="xs mu" style="margin-top:12px;line-height:1.6">🆕 Nuevo: registro por revisar · ✅ Confirmado: pago verificado, entra al sorteo · 🚫 Anulado: sus números quedan libres</p>`);
+  m.addEventListener('click', e => {
+    const b = e.target.closest('[data-st]'); if (!b) return;
+    const g = b.dataset.st; m.close();
+    if (g === act) return;
+    if (g === 'X' && !confirm(uno ? `¿Anular el registro de ${uno.nombre}? Sus números quedarán libres.` : `¿Anular ${list.length} registros? Sus números quedarán libres.`)) return;
+    cambiarEstado(list, g);
+  });
+}
+// Hoja de edición (como "Editar envío" de Total-Tools)
+function editarPart(p) {
+  const c = cfg(), lk = !!p.nota?.startsWith('link:');
+  const m = modal(`<h2>✏️ Editar participante</h2>
+    <div class="grid2"><label class="fld"><span>Nombre *</span><input id="eN" maxlength="60" value="${esc(p.nombre)}"></label><label class="fld"><span>Celular *</span><input id="eC" inputmode="numeric" maxlength="9" value="${esc(p.cel)}"></label></div>
+    <div class="grid2"><label class="fld"><span>DNI</span><input id="eD" inputmode="numeric" maxlength="12" value="${esc(p.dni || '')}"></label><label class="fld"><span>N° operación</span><input id="eO" maxlength="30" value="${esc(p.op || '')}"></label></div>
+    <div class="fld"><span>Números</span><div class="nums" style="margin:0">${splitN(p.nums).map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div><p class="hint">Para cambiar números, anula este registro y envíale un link personalizado.</p></div>
+    <label class="fld"><span>Nota interna</span><textarea id="eT" rows="2" placeholder="Solo la ves tú">${esc(lk ? '' : p.nota || '')}</textarea></label>
+    <button class="btn-pri" id="eG">💾 Guardar cambios</button><button class="btn-sec" data-x>Cancelar</button>`);
+  $('#eG', m).onclick = async () => {
+    const nota = $('#eT', m).value.trim(), b = $('#eG', m);
+    b.disabled = true;
+    try {
+      await API.accion(p.id, 'editar', { nombre: $('#eN', m).value, cel: $('#eC', m).value, dni: $('#eD', m).value, op: $('#eO', m).value, nota: lk && !nota ? p.nota : nota });
+      toast('💾 Cambios guardados', 'ok'); m.close(); cargarDetalle();
+    } catch (e) { toast(e.message, 'bad'); b.disabled = false; }
+  };
+}
+
+/* =====================================================================
+   SELECCIÓN, BÚSQUEDA AVANZADA, CAMPANA E IMPRESIÓN
+   ===================================================================== */
+function renderSelBar() {
+  const b = $('#selbar'), n = S.sel.size;
+  $('#bSelAll').classList.toggle('sel-on', n > 0);
+  b.hidden = !n || S.tab !== 'sorteo';
+  if (n) b.innerHTML = `<span class="sp">☑️ ${n} seleccionado${n > 1 ? 's' : ''}</span><button class="btn sm" id="sbPr">🖨️ Imprimir</button><button class="btn sm" id="sbSt">🔄 Estado</button><button class="btn sm" id="sbX">✕</button>`;
+}
+const selList = () => S.d.parts.filter(p => S.sel.has(p.id));
+function selTodo() {
+  const vis = filtrados(), todos = vis.length && vis.every(p => S.sel.has(p.id));
+  vis.forEach(p => todos ? S.sel.delete(p.id) : S.sel.add(p.id));
+  renderLista();
+}
+function imprimirSel(g) {
+  const l = selList().filter(p => !g || grp(p) === g);
+  if (!l.length) return toast(g ? `Selecciona participantes de ${GRP[g].t} para imprimir 🖨️` : 'Selecciona participantes para imprimir 🖨️');
+  imprimirTickets(l);
+}
+
+const advOn = () => Object.keys(ADV0).some(k => S.adv[k] !== ADV0[k]);
+function abrirAvanzada() {
+  const A = { ...S.adv }, c = cfg();
+  const op = (k, v, t) => `<button class="as-opt ${A[k] === v ? 'on' : ''}" data-ak="${k}" data-av="${v}">${t}</button>`;
+  const m = modal(`<h2>⚙️ Búsqueda avanzada</h2>
+    <div class="fld"><span>📅 Fecha de registro</span><div class="grid2"><input type="date" id="aD" value="${A.desde}"><input type="date" id="aH" value="${A.hasta}"></div></div>
+    <div class="fld"><span>🧾 Comprobante</span><div class="as-opts">${op('comp', 'any', 'Todos')}${op('comp', 'si', '📸 Con foto')}${op('comp', 'no', 'Sin foto')}</div></div>
+    <div class="fld"><span>🔗 Origen</span><div class="as-opts">${op('origen', 'any', 'Todos')}${op('origen', 'link', '🔗 Link personal')}${op('origen', 'form', '📝 Formulario')}</div></div>
+    ${c.modo === 'pago' ? `<div class="fld"><span>💰 Monto S/</span><div class="grid2"><input type="number" id="aMin" min="0" inputmode="decimal" placeholder="Mínimo" value="${A.min}"><input type="number" id="aMax" min="0" inputmode="decimal" placeholder="Máximo" value="${A.max}"></div></div>` : ''}
+    <label class="fld"><span>🔢 Mínimo de números</span><input type="number" id="aC" min="1" inputmode="numeric" placeholder="Ej: 3" value="${A.cant}"></label>
+    <div class="fld"><span>🖨️ Impresión</span><div class="as-opts">${op('imp', 'any', 'Todos')}${op('imp', 'no', 'Sin imprimir')}${op('imp', 'si', '✅ Impresos')}</div></div>
+    <div class="fld"><span>↕️ Ordenar por</span><div class="as-opts">${op('orden', 'nuevo', '🕐 Más nuevo')}${op('orden', 'viejo', '📅 Más antiguo')}${op('orden', 'az', '🔤 A-Z')}${c.modo === 'pago' ? op('orden', 'monto', '💰 Mayor monto') : ''}${op('orden', 'num', '🔢 Número')}</div></div>
+    <button class="btn-pri" id="aOk">🔍 Aplicar filtros</button><button class="btn-sec" id="aCl">Limpiar</button>`);
+  m.addEventListener('click', e => {
+    const b = e.target.closest('[data-ak]'); if (!b) return;
+    A[b.dataset.ak] = b.dataset.av; $$(`[data-ak="${b.dataset.ak}"]`, m).forEach(x => x.classList.toggle('on', x === b));
+  });
+  $('#aOk', m).onclick = () => {
+    A.desde = $('#aD', m).value; A.hasta = $('#aH', m).value; A.cant = $('#aC', m).value;
+    if ($('#aMin', m)) { A.min = $('#aMin', m).value; A.max = $('#aMax', m).value; }
+    S.adv = A; m.close(); if (S.vista === 'grilla') S.vista = 'lista'; renderAdvBar(); renderLista();
+  };
+  $('#aCl', m).onclick = () => { m.close(); limpiarAvanzada(); };
+}
+function limpiarAvanzada() { S.adv = { ...ADV0 }; renderAdvBar(); renderLista(); }
+function renderAdvBar() {
+  const A = S.adv, b = $('#advBar'), on = advOn();
+  $('#bAdv').classList.toggle('on', on); b.hidden = !on; if (!on) return;
+  const t = [];
+  if (A.desde || A.hasta) t.push(`📅 ${A.desde || '…'} → ${A.hasta || '…'}`);
+  if (A.comp !== 'any') t.push(A.comp === 'si' ? '📸 Con foto' : 'Sin foto');
+  if (A.origen !== 'any') t.push(A.origen === 'link' ? '🔗 Link personal' : '📝 Formulario');
+  if (A.min !== '' || A.max !== '') t.push(`💰 S/${A.min || 0}–${A.max || '∞'}`);
+  if (A.cant) t.push(`🔢 ≥ ${A.cant} números`);
+  if (A.imp !== 'any') t.push(A.imp === 'si' ? '✅ Impresos' : '🖨️ Sin imprimir');
+  if (A.orden !== 'nuevo') t.push({ viejo: '📅 Más antiguo', az: '🔤 A-Z', monto: '💰 Mayor monto', num: '🔢 Número' }[A.orden]);
+  b.innerHTML = t.map(x => `<span class="aft">${x}</span>`).join('') + '<button class="aft x" id="advX">✕ Limpiar</button>';
+}
+
+// Campana de nuevos registros (notify.js de Total-Tools): últimas 48 h, badge = sin imprimir
+const ntKey = () => 'nt_' + S.rid;
+function notifs() {
+  if (!S.d) return [];
+  const desde = Math.max(Date.now() - 48 * 3600e3, lsGet(ntKey(), {}).limpio || 0);
+  return S.d.parts.filter(p => p.creado > desde && p.est !== 'X').sort((a, b) => b.creado - a.creado).slice(0, 40);
+}
+function renderBell() {
+  const n = notifs().filter(p => !impresos.has(p.id)).length, bd = $('#nBadge');
+  bd.textContent = n; bd.hidden = !n;
+  renderNPanel();
+}
+function abrirNotis() {
+  if ($('#nPanel')) return cerrarNotis();
+  const pn = document.createElement('div'); pn.id = 'nPanel'; pn.className = 'npanel';
+  document.body.appendChild(pn); renderNPanel();
+}
+function cerrarNotis() {
+  const pn = $('#nPanel'); if (!pn) return;
+  pn.remove(); lsSet(ntKey(), { ...lsGet(ntKey(), {}), visto: Date.now() });
+}
+function renderNPanel() {
+  const pn = $('#nPanel'); if (!pn) return;
+  const l = notifs(), c = cfg(), visto = lsGet(ntKey(), {}).visto || 0;
+  const hace = t => { const m = Math.floor((Date.now() - t) / 6e4); return m < 1 ? 'ahora' : m < 60 ? m + 'min' : m < 1440 ? Math.floor(m / 60) + 'h' : Math.floor(m / 1440) + 'd'; };
+  pn.innerHTML = `<div class="nhdr"><b>🔔 Nuevos registros</b><button class="nclr" id="nClr">Limpiar todo</button></div>
+    <div class="nlist">${l.length ? l.map(p => {
+      const g = grp(p), k = splitN(p.nums).length;
+      return `<div class="nitem"><div class="nic">${GRP[g].i}</div><div class="ncont">
+        <div class="ntit">${esc(p.nombre)}</div>
+        <div class="nsub">${k} número${k > 1 ? 's' : ''}${c.modo === 'pago' ? ' · ' + fmtS(p.monto) : ''} · ${GRP[g].t}${p.img ? ' · 📸 con comprobante' : ''}</div>
+        <div class="nacts"><button class="nb-ver" data-nv="${p.id}">👁 Ver</button>${impresos.has(p.id) ? '<button class="nb-ok" disabled>✅ Impreso</button>' : `<button class="nb-pr" data-np="${p.id}">🖨️ Imprimir</button>`}</div>
+      </div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><div class="ntime">${hace(p.creado)}</div>${p.creado > visto ? '<div class="ndot"></div>' : ''}</div></div>`;
+    }).join('') : '<div class="nempty">Sin registros nuevos</div>'}</div>`;
+}
+// Lleva a la etiqueta donde vive el registro, quita lo que lo ocultaría y lo resalta
+function irAlRegistro(id) {
+  const p = S.d.parts.find(x => x.id === id); if (!p) return;
+  cerrarNotis(); irTab('sorteo');
+  S.filtro = grp(p); S.vista = 'lista'; S.q = ''; $('#q').value = ''; $('#qx').hidden = true; S.adv = { ...ADV0 };
+  renderChips(); renderAdvBar(); renderLista();
+  setTimeout(() => {
+    const el = $(`.pc[data-pid="${id}"]`); if (!el) return;
+    window.scrollTo({ top: scrollY + el.getBoundingClientRect().top - 160, behavior: 'smooth' });
+    el.classList.add('hl'); setTimeout(() => el.classList.remove('hl'), 3200);
+  }, 120);
+}
+
+// Ticket estilo boleto de cine con los colores de TOTAL (turquesa, rojo y blanco)
+const TK_CSS = `@page{size:A4;margin:10mm}
+*{box-sizing:border-box;margin:0;padding:0}
+body{--paper:#e9eef0;font-family:'DM Sans',Arial,sans-serif;background:var(--paper);padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:14px;font:600 13px 'DM Sans',sans-serif;color:#08646a}
+.bar button{background:#e30613;color:#fff;border:0;border-radius:8px;padding:10px 18px;font:700 14px 'DM Sans',sans-serif;cursor:pointer}
+.wrap{overflow-x:auto}
+@media print{body{--paper:#fff;background:#fff;padding:0}.bar{display:none}}
+.tk{display:flex;width:186mm;height:62mm;margin:0 auto 5mm;border-radius:4mm;overflow:hidden;background:linear-gradient(115deg,#075b61 0%,#0b858b 55%,#14aaae 100%);color:#fff;position:relative;break-inside:avoid;page-break-inside:avoid}
+.ser{width:14mm;background:#05484d;display:flex;align-items:center;justify-content:center;flex:none}
+.ser span{writing-mode:vertical-rl;transform:rotate(180deg);font:800 10.5pt 'Syne',sans-serif;letter-spacing:1.5px;white-space:nowrap}
+.main{flex:1;padding:4.5mm 5mm 4mm;display:flex;flex-direction:column;min-width:0}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:3mm}
+.brand{background:#e30613;padding:1.2mm 4mm;transform:skewX(-14deg);font:italic 800 13pt 'Syne',sans-serif;letter-spacing:.5px;box-shadow:0 0 0 .6mm #fff;white-space:nowrap}
+.st{font:800 7.5pt 'DM Sans',sans-serif;padding:1mm 3mm;border-radius:10mm;border:.35mm solid #fff;letter-spacing:1px;white-space:nowrap}
+.st-C{background:#fff;color:#0b7a80}.st-N{background:rgba(255,255,255,.15)}.st-X{background:#e30613}
+.tit{font:800 14pt 'Syne',sans-serif;margin-top:3mm;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who{font:700 11pt 'DM Sans',sans-serif;text-transform:uppercase;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cel{font-size:8.5pt;opacity:.85}
+.nums{display:flex;flex-wrap:wrap;gap:1.5mm;margin-top:2.5mm;max-height:15mm;overflow:hidden}
+.nums b{background:#fff;color:#075b61;font:800 12.5pt 'Syne',sans-serif;padding:.5mm 2.6mm;border-radius:1.6mm}
+.ft{margin-top:auto;display:flex;flex-wrap:wrap;gap:1mm 4mm;font-size:7.5pt;opacity:.92;border-top:.3mm dashed rgba(255,255,255,.55);padding-top:1.5mm}
+.cut{width:0;border-left:.7mm dashed rgba(255,255,255,.95);position:relative;flex:none}
+.cut:before,.cut:after{content:'';position:absolute;left:-3.6mm;width:6.5mm;height:6.5mm;border-radius:50%;background:var(--paper)}
+.cut:before{top:-3.3mm}.cut:after{bottom:-3.3mm}
+.stub{width:46mm;flex:none;background:repeating-linear-gradient(-50deg,#e30613 0 5mm,#c3040f 5mm 10mm);display:flex;align-items:center;gap:2mm;padding:3mm 3mm 3mm 2.5mm}
+.stub-ser{writing-mode:vertical-rl;font:800 17pt 'Syne',sans-serif;letter-spacing:1px;white-space:nowrap;max-height:56mm;overflow:hidden}
+.stub-ser.cod{font-size:11pt}
+.stub-in{flex:1;min-width:0;background:#fff;color:#075b61;border-radius:2.5mm;padding:2mm;text-align:center;display:flex;flex-direction:column;align-items:center}
+.stub-in img{width:24mm;height:24mm;display:block}
+.stub-in small{font:800 6.5pt 'DM Sans',sans-serif;letter-spacing:1px;color:#e30613;margin-top:1mm}
+.stub-in b{font:700 8pt 'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}`;
+function qrData(text) {
+  if (!window.QRCode) return '';
+  const d = document.createElement('div');
+  new QRCode(d, { text, width: 180, height: 180, colorDark: '#062e33', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  const cv = $('canvas', d); return cv ? cv.toDataURL('image/png') : ($('img', d)?.src || '');
+}
+// Abre la ventana en el mismo toque (si no, el celular bloquea la ventana emergente)
+function imprimirTickets(list) {
+  if (!list.length) return;
+  let w = window.open('', '_blank');
+  if (!w) { // ventana bloqueada: se imprime desde un marco oculto
+    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    document.body.appendChild(fr); w = fr.contentWindow; setTimeout(() => fr.remove(), 120000);
+  }
+  const c = cfg(), neg = (c.negocio || CONFIG.NEGOCIO || 'TOTAL TOOLS').toUpperCase();
+  const f = t => new Date(t).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const tks = list.map(p => {
+    const g = grp(p), ns = splitN(p.nums).map(i => fmtN(c, i)), cod = p.id.toUpperCase(), qr = qrData(linkBoleto(p.tok));
+    return `<div class="tk">
+      <div class="ser"><span>N° ${cod}</span></div>
+      <div class="main">
+        <div class="hd"><span class="brand">${esc(neg)}</span><span class="st st-${g}">${GRP[g].t}</span></div>
+        <div class="tit">${esc(c.titulo || 'Sorteo')}</div>
+        <div class="who">${esc(p.nombre)}</div>
+        <div class="cel">📞 ${esc(p.cel)}${p.dni ? ' · DNI ' + esc(p.dni) : ''}</div>
+        <div class="nums">${ns.map(n => `<b>${n}</b>`).join('')}</div>
+        <div class="ft"><span>Registro: ${f(p.creado)}</span><span>${c.modo === 'pago' ? fmtS(p.monto) : 'GRATIS'}</span>${c.cierre ? `<span>Sorteo: ${f(c.cierre)}</span>` : ''}</div>
+      </div>
+      <div class="cut"></div>
+      <div class="stub"><div class="stub-ser${ns.length === 1 ? '' : ' cod'}">${ns.length === 1 ? ns[0] : cod}</div>
+        <div class="stub-in">${qr ? `<img src="${qr}" alt="QR">` : ''}<small>TALÓN · ${ns.length} N°</small><b>${esc(p.nombre.split(' ')[0])}</b></div></div>
+    </div>`;
+  }).join('');
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tickets · ${esc(c.titulo || 'Sorteo')}</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet"><style>${TK_CSS}</style></head>
+    <body><div class="bar"><button onclick="print()">🖨️ Imprimir</button><span>${list.length} ticket${list.length > 1 ? 's' : ''}</span></div><div class="wrap">${tks}</div>
+    <script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { print(); }, 350); });<\/script></body></html>`);
+  w.document.close();
+  marcarImpresos(list);
+  renderLista(); renderBell();
+}
+function msgCliente(p, c) {
+  const nums = splitN(p.nums).map(i => fmtN(c, i)).join(', '), nom = p.nombre.split(' ')[0];
+  const pie = `\n\n🔗 Tu boleto: ${linkBoleto(p.tok)}\n👥 Participantes: ${linkPart(S.rid)}`;
+  if (p.est === 'P') return `✅ *¡Pago confirmado!* – ${c.titulo}\n\nHola ${nom}, tus números ya están registrados:\n🎟️ *${nums}*${c.cierre ? `\n📅 Sorteo: ${fechaL(c.cierre)}` : ''}${pie}\n\n¡Mucha suerte! 🍀`;
+  if (p.est === 'V') return `🔎 Hola ${nom}, recibimos tu comprobante para *${c.titulo}* (números ${nums}). Lo estamos verificando y te confirmamos en breve.${pie}`;
+  if (p.est === 'R') return `⏳ Hola ${nom}, tienes reservados los números *${nums}* en *${c.titulo}*.\n💰 Total: ${fmtS(p.monto)}${c.yape ? `\n📲 Yape: ${c.yape}${c.titular ? ' (' + c.titular + ')' : ''}` : ''}\n\nSube tu comprobante aquí antes de que venza la reserva:${pie}`;
+  return `Hola ${nom}, te escribimos sobre tu registro en *${c.titulo}* (números ${nums}).${pie}`;
+}
+function menuMas(p) {
+  const c = cfg();
+  const m = modal(`<h2>${esc(p.nombre)}</h2><p class="mu sm">Código ${p.id.toUpperCase()} · ${fecha(p.creado)}</p>
+    <div style="display:grid;gap:8px;margin-top:14px">
+      <button class="btn full" data-m="bol">🎟️ Abrir su boleto</button>
+      <button class="btn full" data-m="cop">🔗 Copiar link de su boleto</button>
+      <button class="btn full" data-m="dat">📋 Copiar sus datos</button>
+      <button class="btn full" data-m="nota">📝 ${p.nota && !p.nota.startsWith('link:') ? 'Editar' : 'Agregar'} nota interna</button>
+    </div>`);
+  m.addEventListener('click', async e => {
+    const k = e.target.closest('[data-m]')?.dataset.m; if (!k) return;
+    if (k === 'bol') abrir(linkBoleto(p.tok));
+    if (k === 'cop') copiar(linkBoleto(p.tok));
+    if (k === 'dat') copiar(`${p.nombre}\n${p.cel}${p.dni ? '\nDNI ' + p.dni : ''}\nNúmeros: ${splitN(p.nums).map(i => fmtN(c, i)).join(', ')}\n${GRP[grp(p)].t}${p.op ? '\nOp: ' + p.op : ''}`);
+    if (k === 'nota') { const n = prompt('Nota interna (solo la ves tú):', p.nota && !p.nota.startsWith('link:') ? p.nota : ''); if (n == null) return; try { await API.accion(p.id, 'nota', { nota: n }); toast('📝 Nota guardada', 'ok'); m.close(); cargarDetalle(); } catch (er) { toast(er.message, 'bad'); } return; }
+    m.close();
+  });
+}
+function exportarCSV() {
+  const c = cfg(), rows = [['Fecha', 'Nombre', 'Celular', 'DNI', 'Números', 'Monto', 'N° operación', 'Estado', 'Nota', 'Código']];
+  for (const p of S.d.parts) rows.push([new Date(p.creado).toLocaleString('es-PE'), p.nombre, p.cel, p.dni || '', splitN(p.nums).map(i => fmtN(c, i)).join(' '), (+p.monto || 0).toFixed(2), p.op || '', GRP[grp(p)].t, p.nota || '', p.id]);
+  const csv = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  descargar(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `sorteo-${(c.titulo || 'datos').replace(/\W+/g, '-').toLowerCase()}.csv`);
+  toast('📊 CSV descargado');
+}
+
+/* =====================================================================
+   SORTEO EN VIVO
+   ===================================================================== */
+function abrirSorteo() {
+  const c = cfg(), s = stats();
+  if (c.resultado) return verResultado();
+  const g = Math.max(1, (c.premios || []).length || 1);
+  const m = modal(`<h2>🎲 Realizar sorteo</h2>
+    <p class="mu sm">Participan solo los números <b class="c-ok">pagados (${s.p})</b>. ${s.v + s.r ? `<br>⚠️ Tienes ${s.v + s.r} número(s) sin aprobar: revísalos antes.` : ''}</p>
+    <div class="grid2" style="margin-top:8px">
+      <label class="fld"><span>Ganadores</span><input id="sG" type="number" min="1" max="50" value="${g}" inputmode="numeric"></label>
+      <label class="fld"><span>Suplentes</span><input id="sS" type="number" min="0" max="20" value="1" inputmode="numeric"></label>
+    </div>
+    <label class="sw"><span class="t">📺 Pantalla completa<small>Ideal para grabar o transmitir en vivo</small></span><input type="checkbox" class="tog" id="sF" checked></label>
+    <p class="xs mu" style="margin:8px 0 14px;word-break:break-all">🔐 Compromiso publicado: ${esc(c.seedHash || '')}</p>
+    <button class="btn ac full" id="sGo">🎲 ¡Sortear ahora!</button>`);
+  $('#sGo', m).onclick = async () => {
+    const gN = +$('#sG', m).value || 1, sN = +$('#sS', m).value || 0, fs = $('#sF', m).checked;
+    if (s.p < gN) return toast(`Necesitas al menos ${gN} número(s) pagado(s)`, 'bad');
+    if (!confirm(`¿Sortear ${gN} ganador(es) y ${sN} suplente(s)? El resultado queda publicado.`)) return;
+    $('#sGo', m).disabled = true; $('#sGo', m).innerHTML = '<span class="spin"></span> Sorteando…';
+    try { const j = await API.sortear(S.rid, gN, sN, false); m.close(); await enVivo(j.resultado, fs); await cargarDetalle(); verResultado(); }
+    catch (e) { toast(e.message, 'bad'); $('#sGo', m).disabled = false; $('#sGo', m).textContent = '🎲 ¡Sortear ahora!'; }
+  };
+}
+async function enVivo(res, fs) {
+  const c = cfg(), ov = $('#live'), pool = [];
+  for (let i = 0; i < res.snap.length; i++) if (res.snap[i] === '1') pool.push(i);
+  ov.hidden = false;
+  if (fs) try { await ov.requestFullscreen?.(); } catch (e) {}
+  for (let k = 0; k < res.picks.length; k++) {
+    const pk = res.picks[k], sup = k >= res.g;
+    const lbl = sup ? `Suplente ${k - res.g + 1}` : `${k + 1}° premio`;
+    const prem = sup ? '' : ((c.premios || [])[k] || '');
+    ov.innerHTML = `<div class="lt">${esc(c.titulo)}</div><div class="lp">${sup ? '🎗️' : '🏆'} ${esc(lbl)}${prem ? ' · ' + esc(prem) : ''}</div>
+      <div class="ln" id="lvN">${fmtN(c, pool[0] || 0)}</div><div class="lw" id="lvW"></div>
+      <button class="btn ac" id="lvB" style="margin-top:22px;visibility:hidden">${k < res.picks.length - 1 ? 'Siguiente ➜' : 'Ver resultado ✔'}</button>
+      <div class="lf">🔐 Sorteo verificable · ${pool.length} números pagados · drand #${res.round || '—'}</div>`;
+    await sleep(500);
+    const el = $('#lvN'); let d = 45; const t0 = performance.now();
+    while (performance.now() - t0 < 3200) { el.textContent = fmtN(c, pool[Math.floor(Math.random() * pool.length)]); await sleep(d); d = Math.min(d * 1.07, 260); }
+    el.textContent = fmtN(c, pk.n); el.classList.add('win');
+    $('#lvW').textContent = '🎉 ' + pk.nom;
+    if (!sup) confeti();
+    const b = $('#lvB'); b.style.visibility = 'visible';
+    await new Promise(r => b.onclick = r);
+  }
+  ov.hidden = true; ov.innerHTML = '';
+  if (document.fullscreenElement) try { await document.exitFullscreen(); } catch (e) {}
+}
+function confeti() {
+  const cols = ['#2ea043', '#388bfd', '#d29922', '#a371f7', '#f78166', '#fff'];
+  for (let i = 0; i < 90; i++) {
+    const p = document.createElement('div'); p.className = 'conf';
+    p.style.left = Math.random() * 100 + 'vw'; p.style.background = cols[i % cols.length];
+    p.style.animationDuration = 1.8 + Math.random() * 2 + 's'; p.style.animationDelay = Math.random() * .5 + 's';
+    document.body.appendChild(p); setTimeout(() => p.remove(), 4600);
+  }
+}
+function verResultado() {
+  const c = cfg(), R = c.resultado;
+  if (!R) return toast('Aún no se realiza el sorteo. Usa 🎲 para sortear.');
+  const rows = R.picks.map((pk, k) => {
+    const p = dueño(pk.n), sup = k >= R.g;
+    return `<div class="res ${sup ? 'sup' : ''}"><div class="n">${fmtN(c, pk.n)}</div><div class="sp"><b>${sup ? `🎗️ Suplente ${k - R.g + 1}` : `🏆 ${k + 1}° ${esc((c.premios || [])[k] || 'premio')}`}</b><br><span class="sm">${esc(p ? p.nombre : pk.nom)}${p ? ' · ' + esc(p.cel) : ''}</span></div>${p ? `<button class="mini wa" data-wa="${p.id}" data-k="${k}">💬</button>` : ''}</div>`;
+  }).join('');
+  const m = modal(`<h2>🏆 Resultado</h2><p class="mu sm">${fechaL(R.t)} · ${R.total} números participaron${R.resets ? ` · <span class="c-warn">repetido ${R.resets} vez(ces)</span>` : ''}</p>
+    <div class="list-res">${rows}</div>
+    <div style="display:grid;gap:8px">
+      <button class="btn wa full" id="rDif">📣 Compartir resultado por WhatsApp</button>
+      <button class="btn full" id="rPub">👥 Ver página pública (verificación)</button>
+      <button class="btn bad full" id="rRep">♻️ Repetir sorteo (queda registrado)</button>
+    </div>`);
+  m.addEventListener('click', e => {
+    const w = e.target.closest('[data-wa]'); if (!w) return;
+    const p = S.d.parts.find(x => x.id === w.dataset.wa), k = +w.dataset.k, sup = k >= R.g;
+    abrir(waURL(p.cel, sup ? `Hola ${p.nombre.split(' ')[0]} 👋 Quedaste como *suplente ${k - R.g + 1}* en el sorteo *${c.titulo}* con el número *${fmtN(c, R.picks[k].n)}*. Te avisaremos si el premio pasa a ti.` : `🎉 *¡FELICIDADES ${p.nombre.split(' ')[0].toUpperCase()}!* 🎉\n\nGanaste el *${k + 1}° premio${(c.premios || [])[k] ? ': ' + c.premios[k] : ''}* en *${c.titulo}* con el número *${fmtN(c, R.picks[k].n)}* 🏆\n\nEscríbenos para coordinar la entrega.\n🔍 Verificación: ${linkPart(S.rid)}`));
+  });
+  $('#rDif', m).onclick = () => abrir(waURL('', `🏆 *RESULTADO – ${c.titulo}*\n\n${R.picks.slice(0, R.g).map((pk, k) => `${k + 1}° ${(c.premios || [])[k] || 'premio'}: *${fmtN(c, pk.n)}* – ${pk.nom}`).join('\n')}\n\n🔍 Sorteo verificable: ${linkPart(S.rid)}\n¡Gracias a todos por participar! 🙌`));
+  $('#rPub', m).onclick = () => abrir(linkPart(S.rid));
+  $('#rRep', m).onclick = async () => {
+    if (!confirm('Repetir el sorteo cambia los ganadores y queda registrado públicamente como "repetido". ¿Seguro?')) return;
+    if (prompt('Escribe REPETIR para confirmar') !== 'REPETIR') return;
+    try { const j = await API.sortear(S.rid, R.g, R.s, true); m.close(); await enVivo(j.resultado, true); await cargarDetalle(); verResultado(); } catch (e) { toast(e.message, 'bad'); }
+  };
+}
+
+/* =====================================================================
+   COMPARTIR
+   ===================================================================== */
+function renderCompartir() {
+  if (!S.d) return;
+  const c = cfg(), L = linkSorteo(S.rid), P = linkPart(S.rid), ps = S.d.parts;
+  const nC = ps.filter(p => grp(p) === 'C').length, nP = ps.filter(p => grp(p) !== 'X' && !impresos.has(p.id)).length;
+  $('#t-compartir').innerHTML = `
+    <div class="hero"><b>🔑</b><h2>Links para clientes</h2><p>Comparte el sorteo o genera un link único por cliente.<br>El link personalizado se bloquea tras un uso.</p></div>
+
+    <div class="cfg-sec"><div class="cfg-ttl">🎟️ Link del sorteo</div>
+      <div class="cfg-sub">Los clientes eligen números, pagan y suben su comprobante.</div>
+      <div class="link-box" data-c="${esc(L)}" title="Toca para copiar">${esc(L)}</div>
+      <div class="frow"><button class="bt-dark" data-c="${esc(L)}">📋 Copiar link</button><button class="bt-dark mu" data-o="${esc(L)}">↗ Abrir</button></div>
+      <button class="bt-wa" id="cWa" style="margin-top:8px">💬 Compartir por WhatsApp</button>
+    </div>
+
+    <div class="cfg-sec"><div class="cfg-ttl">✨ Link personalizado <button class="ay" id="lkAy">📖 Ayuda</button></div>
+      <div class="cfg-sub">Genera un link único con datos del cliente. Se bloquea tras un uso.</div>
+      <div class="frow"><input class="fi" id="lkN" placeholder="Nombre del cliente" maxlength="60" autocomplete="off"><input class="fi" id="lkC" inputmode="numeric" maxlength="9" placeholder="Celular (opcional)" autocomplete="off"></div>
+      ${c.elegir !== false ? '<input class="fi" id="lkU" inputmode="numeric" placeholder="🔢 Números separados por coma — opcional" autocomplete="off">' : ''}
+      <button class="bt-dark" id="lkCp" style="margin:6px 0 8px">📋 Generar y copiar link</button>
+      <button class="bt-blue" id="lkWa">🔑 Generar y compartir link</button>
+    </div>
+
+    <div class="cfg-sec"><div class="cfg-ttl">👥 Participantes (transparencia)</div>
+      <div class="cfg-sub">Lista pública con nombres y celulares ocultos, talonario y verificación del sorteo.</div>
+      <div class="link-box" data-c="${esc(P)}" title="Toca para copiar">${esc(P)}</div>
+      <div class="frow"><button class="bt-dark" data-c="${esc(P)}">📋 Copiar link</button><button class="bt-dark mu" data-o="${esc(P)}">↗ Abrir</button></div>
+      <button class="bt-wa" id="cWaP" style="margin-top:8px">💬 Compartir por WhatsApp</button>
+    </div>
+
+    <div class="sec-hdr pur">🧰 Nuevas funciones</div>
+    <div class="cfg-sec"><div class="cfg-ttl">🖨️ Tickets impresos</div>
+      <div class="cfg-sub">Tickets estilo boleto con los colores de TOTAL: números, datos del cliente y QR de su boleto. Para imprimir solo algunos, márcalos en la lista y toca 🖨️.</div>
+      <div class="frow"><button class="bt-dark" id="cTkC">✅ Confirmados (${nC})</button><button class="bt-dark" id="cTkP">🆕 Sin imprimir (${nP})</button></div>
+    </div>
+    <div class="cfg-sec"><div class="cfg-ttl">🔳 Código QR del sorteo</div>
+      <div class="cfg-sub">Para tu tienda, tus volantes o tus publicaciones.</div>
+      <button class="bt-dark" id="cQr">🔳 Ver / ocultar QR</button><div id="qrBox"></div>
+    </div>
+    <div class="cfg-sec"><div class="cfg-ttl">🖼️ Imagen del talonario</div>
+      <div class="cfg-sub">Para tus estados: muestra qué números quedan libres.</div>
+      <button class="bt-dark" id="cTal">🎨 Generar imagen</button><div id="talBox"></div>
+    </div>
+    <div class="cfg-sec"><div class="cfg-ttl">📣 Mensaje de difusión</div>
+      <textarea class="fi" id="dif" rows="8" style="resize:vertical">${esc(msgDifusion(c, stats()))}</textarea>
+      <div class="frow"><button class="bt-dark" id="difC">📋 Copiar</button><button class="bt-wa" id="difW">💬 WhatsApp</button></div>
+    </div>`;
+}
+function msgDifusion(c, s) {
+  const prem = (c.premios || []).map((p, i) => `${['🥇', '🥈', '🥉'][i] || '🎁'} ${p}`).join('\n');
+  return `🎉 *${c.titulo}* 🎉\n\n${prem}\n\n${c.modo === 'gratis' ? '🎁 ¡Participa GRATIS!' : `🎟️ Número a solo *${fmtS(c.precio)}*${(c.promos || []).map(p => `\n🔥 ${p.n} números x ${fmtS(p.p)}`).join('')}`}\n✅ Quedan *${s.libres}* de ${s.total} números${c.cierre ? `\n📅 Sorteo: ${fechaL(c.cierre)}` : ''}\n\n👉 Elige tus números aquí:\n${linkSorteo(S.rid)}\n\n🔍 Sorteo 100% verificable y transparente`;
+}
+async function crearLinkPers(enviar) {
+  const n = $('#lkN').value.trim(), cel = $('#lkC').value.replace(/\D/g, ''), nums = $('#lkU')?.value || '';
+  if (cel && !/^9\d{8}$/.test(cel)) return toast('Celular inválido (9 dígitos)', 'bad');
+  if (enviar && !cel) return toast('Escribe el celular para enviarlo', 'bad');
+  try {
+    const j = await API.link({ rifa: S.rid, nombre: n, cel, nums });
+    const url = `${formURL()}?l=${j.code}`;
+    if (enviar) abrir(waURL(cel, `Hola${n ? ' ' + n.split(' ')[0] : ''} 👋 Aquí tu link personal para *${cfg().titulo}*:\n${url}\n\n(Es de un solo uso)`));
+    else copiar(url);
+    $('#lkN').value = $('#lkC').value = ''; if ($('#lkU')) $('#lkU').value = '';
+  } catch (e) { toast(e.message, 'bad'); }
+}
+function talonarioPNG() {
+  const c = cfg(), b = S.d.rifa.board, n = b.length;
+  if (n > 1000) return toast('Para más de 1000 números comparte el link del sorteo', 'bad');
+  const cols = n <= 50 ? 5 : n <= 100 ? 10 : n <= 300 ? 15 : 20, cell = n <= 100 ? 96 : n <= 300 ? 70 : 54, gap = 8, pad = 40;
+  const rows = Math.ceil(n / cols), W = pad * 2 + cols * cell + (cols - 1) * gap, head = 210, H = head + rows * (cell + gap) + 120;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0d1117'); g.addColorStop(1, '#0d1117'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#2ea043'; x.font = `800 ${Math.round(W / 26)}px Syne, sans-serif`; x.textAlign = 'center';
+  x.fillText((c.negocio || CONFIG.NEGOCIO || '').toUpperCase(), W / 2, 60);
+  x.fillStyle = '#fff'; x.font = `800 ${Math.round(W / 18)}px Syne, sans-serif`; x.fillText(c.titulo.slice(0, 40), W / 2, 120);
+  const s = stats(); x.fillStyle = '#388bfd'; x.font = `700 ${Math.round(W / 34)}px DM Sans, sans-serif`;
+  x.fillText(`✅ Disponibles: ${s.libres} de ${s.total}${c.modo === 'pago' ? '  ·  ' + fmtS(c.precio) + ' c/u' : ''}`, W / 2, 168);
+  const COL = { 0: ['#1c2333', '#e6edf3'], 1: ['#3a2f14', '#7a6a40'], 2: ['#14324a', '#4f7590'], 3: ['#173a2c', '#4a8a6c'] };
+  x.font = `800 ${Math.round(cell / 2.6)}px Syne, sans-serif`; x.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const r = Math.floor(i / cols), cc = i % cols, X = pad + cc * (cell + gap), Y = head + r * (cell + gap), [bg, fg] = COL[b[i]];
+    x.fillStyle = bg; rr(x, X, Y, cell, cell, 12); x.fill();
+    if (b[i] === '0') { x.strokeStyle = '#388bfd88'; x.lineWidth = 2; x.stroke(); }
+    x.fillStyle = fg; x.fillText(fmtN(c, i), X + cell / 2, Y + cell / 2 + 2);
+    if (b[i] !== '0') { x.strokeStyle = fg; x.lineWidth = 3; x.beginPath(); x.moveTo(X + 14, Y + 14); x.lineTo(X + cell - 14, Y + cell - 14); x.stroke(); }
+  }
+  x.textBaseline = 'alphabetic'; x.fillStyle = '#8b949e'; x.font = `600 ${Math.round(W / 40)}px DM Sans, sans-serif`;
+  x.fillText('Números tachados ya fueron tomados · Elige el tuyo en el link 👇', W / 2, H - 70);
+  x.fillStyle = '#388bfd'; x.fillText(linkSorteo(S.rid).replace(/^https?:\/\//, '').slice(0, 70), W / 2, H - 34);
+  const box = $('#talBox'); box.innerHTML = ''; cv.className = 'tal'; box.appendChild(cv);
+  const bt = document.createElement('div'); bt.className = 'row wrapf'; bt.style.marginTop = '10px';
+  bt.innerHTML = `<button class="btn sm" id="talD">💾 Descargar</button>${navigator.canShare ? '<button class="btn wa sm" id="talS">📤 Compartir</button>' : ''}`;
+  box.appendChild(bt);
+  cv.toBlob(bl => {
+    $('#talD').onclick = () => descargar(bl, 'talonario.png');
+    const f = new File([bl], 'talonario.png', { type: 'image/png' });
+    if ($('#talS')) $('#talS').onclick = () => navigator.share({ files: [f], text: linkSorteo(S.rid) }).catch(() => {});
+  }, 'image/png');
+}
+function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+function mostrarQR() {
+  const box = $('#qrBox'); if (box.innerHTML) { box.innerHTML = ''; return; }
+  if (!window.QRCode) return toast('Cargando QR, intenta otra vez', 'bad');
+  box.innerHTML = '<div class="qr" id="qrIn"></div><div class="row" style="justify-content:center"><button class="btn sm" id="qrD">💾 Descargar QR</button></div>';
+  new QRCode($('#qrIn'), { text: linkSorteo(S.rid), width: 220, height: 220, colorDark: '#0d1117', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  $('#qrD').onclick = () => { const cv = $('#qrIn canvas'); cv && cv.toBlob(b => descargar(b, 'qr-sorteo.png')); };
+}
+
+/* =====================================================================
+   CONFIGURACIÓN
+   ===================================================================== */
+const F = (k, label, attrs = '', t = 'text') => `<label class="fld"><span>${label}</span><input data-k="${k}" type="${t}" ${attrs}></label>`;
+const TA = (k, label, ph = '', t = 'text') => `<label class="fld"><span>${label}</span><textarea data-k="${k}" data-t="${t}" placeholder="${esc(ph)}"></textarea></label>`;
+const SW = (k, t, sub) => `<label class="sw"><span class="t">${t}<small>${sub}</small></span><input type="checkbox" class="tog" data-k="${k}" data-t="bool"></label>`;
+const IMG = (k, label) => `<div class="fld"><span>${label}</span><div class="imgup"><img data-prev="${k}" alt=""><input type="hidden" data-k="${k}"><div style="display:grid;gap:6px"><label class="btn sm">📷 Subir<input type="file" accept="image/*" data-up="${k}" hidden></label><button class="btn sm bad" data-rm="${k}">Quitar</button></div></div></div>`;
+
+function renderConfig() {
+  if (!S.d) return;
+  $('#t-config').innerHTML = `
+  <div class="savebar"><div class="cfg-ptl">⚙️ Configuración <button class="ay" id="cfgAy">📖 Ayuda</button></div><button class="cfg-save" id="cfgSave">💾 Guardar</button></div>
+
+  <div class="sec-hdr">📋 Formulario del cliente</div>
+  <div class="card"><h3>🎁 Sorteo</h3>
+    ${F('titulo', 'Título', 'maxlength="120" placeholder="Ej: Gran sorteo Taladro TOTAL"')}
+    ${TA('desc', 'Descripción', 'Detalles del premio, condiciones…')}
+    ${IMG('foto', 'Foto del premio')}
+    ${TA('premios', 'Premios (uno por línea, en orden)', '1° Taladro percutor\n2° Juego de brocas', 'lines')}
+    <div class="fld"><span>Tipo</span><div class="seg" data-k="modo" data-t="seg"><button data-v="pago">💰 Rifa pagada</button><button data-v="gratis">🎁 Sorteo gratis</button></div></div>
+    <div class="fld"><span>Estado</span><div class="seg" data-k="estado" data-t="seg"><button data-v="activa">🟢 Activa</button><button data-v="pausada">⏸️ Pausada</button><button data-v="cerrada">🔒 Cerrada</button>${cfg().resultado ? '<button data-v="sorteada">🏆 Sorteada</button>' : ''}</div></div>
+  </div>
+
+  <div class="card"><h3>🔢 Números</h3>
+    <div class="grid2">${F('cantidad', 'Cantidad', 'min="1" max="10000" inputmode="numeric" data-t="num"', 'number')}
+    <div class="fld"><span>Empieza en</span><div class="seg" data-k="base" data-t="segn"><button data-v="0">0</button><button data-v="1">1</button></div></div></div>
+    <div class="grid2">${F('maxSel', 'Máx. por registro', 'min="1" max="500" inputmode="numeric" data-t="num"', 'number')}${F('maxPer', 'Máx. por persona (0 = sin límite)', 'min="0" inputmode="numeric" data-t="num"', 'number')}</div>
+    ${SW('elegir', '👆 El cliente elige sus números', 'Si lo apagas, se asignan al azar')}
+    ${SW('aprobar', '✋ Aprobar manualmente (sorteo gratis)', 'Cada registro gratis queda en revisión')}
+  </div>
+
+  <div class="card"><h3>📅 Fechas y reservas</h3>
+    ${F('cierre', 'Fecha y hora del sorteo', 'data-t="date"', 'datetime-local')}
+    <div class="grid2">${F('bloqueoH', 'Cerrar venta (horas antes)', 'min="0" inputmode="numeric" data-t="num"', 'number')}${F('reservaMin', 'Reserva sin pago (minutos)', 'min="5" inputmode="numeric" data-t="num"', 'number')}</div>
+    <p class="hint">* Si un cliente reserva sin subir comprobante, sus números se liberan solos al vencer la reserva.</p>
+  </div>
+
+  <div class="card"><h3>💳 Datos de pago</h3>
+    <div class="grid2">${F('precio', 'Precio por número S/', 'min="0" step="0.5" inputmode="decimal" data-t="num"', 'number')}<div></div></div>
+    ${TA('promos', 'Promociones (cantidad=precio, una por línea)', '3=12\n5=18', 'promos')}
+    <div class="grid2">${F('yape', 'Número Yape', 'inputmode="numeric" placeholder="9xxxxxxxx"')}${F('plin', 'Número Plin', 'inputmode="numeric" placeholder="opcional"')}</div>
+    ${F('titular', 'Titular (como aparece en Yape)', 'placeholder="Ej: Herracast S.A.C."')}
+    ${IMG('qr', 'QR de Yape / Plin')}
+    ${TA('bancos', 'Cuentas bancarias', 'BCP Soles: 191-xxxxxxx-0-xx\nCCI: 002-191-xxxxxxxxxxxx-xx')}
+    ${TA('instr', 'Instrucciones de pago', 'Envía el monto exacto y sube la captura con el N° de operación visible.')}
+    ${SW('compObl', '📸 Comprobante obligatorio', 'Si lo apagas, el cliente puede reservar y pagar después')}
+    ${SW('opObl', '🧾 Pedir N° de operación', 'Evita que reutilicen la misma captura')}
+  </div>
+
+  <div class="card"><h3>📲 Contacto</h3>
+    ${F('negocio', 'Nombre del negocio', 'placeholder="TOTAL TOOLS"')}
+    <label class="fld"><span>WhatsApp que recibe los registros</span><div class="pre"><b>+51</b><input data-k="wa" inputmode="numeric" placeholder="9xxxxxxxx"></div></label>
+  </div>
+
+  <div class="card"><h3>📜 Bases del sorteo</h3>
+    ${TA('bases', 'Bases y términos', 'Organizador, premio, fecha, cómo se elige al ganador, plazo para reclamar, uso de datos…')}
+    <button class="btn sm" id="basesTpl">✍️ Usar plantilla</button>
+  </div>
+
+  <div class="sec-hdr pur">⚙️ Configuración avanzada</div>
+  <div class="card"><h3>🛡️ Sistema</h3>
+    ${F('tsKey', 'Turnstile Site Key (antispam, opcional)', 'placeholder="0x4AAAA…"')}
+    <label class="fld"><span>URL de formulario.html</span><input id="sysForm" placeholder="${esc(new URL('formulario.html', location.href).href)}"></label>
+    <p class="hint">🔐 Compromiso de semilla: <span style="word-break:break-all">${esc(cfg().seedHash || '')}</span></p>
+    <div style="display:grid;gap:8px;margin-top:12px"><button class="btn bad full" id="cfgDel">🗑️ Eliminar este sorteo</button></div>
+  </div>`;
+  const c = cfg();
+  $$('[data-k]', $('#t-config')).forEach(el => {
+    const k = el.dataset.k, t = el.dataset.t, v = c[k];
+    if (t === 'seg' || t === 'segn') $$('button', el).forEach(b => b.classList.toggle('on', String(b.dataset.v) === String(t === 'segn' ? baseOf(c) : v)));
+    else if (t === 'bool') el.checked = k === 'elegir' || k === 'opObl' ? v !== false : !!v;
+    else if (t === 'lines') el.value = (v || []).join('\n');
+    else if (t === 'promos') el.value = (v || []).map(p => `${p.n}=${p.p}`).join('\n');
+    else if (t === 'date') el.value = toLocalInput(v);
+    else el.value = v ?? '';
+  });
+  $$('[data-prev]').forEach(im => { const k = c[im.dataset.prev]; im.src = k ? pubImg(k) : ''; im.style.visibility = k ? 'visible' : 'hidden'; });
+  $('#sysForm').value = S.form || '';
+}
+function leerCfg() {
+  const o = {};
+  $$('[data-k]', $('#t-config')).forEach(el => {
+    const k = el.dataset.k, t = el.dataset.t;
+    if (t === 'seg') o[k] = $('button.on', el)?.dataset.v;
+    else if (t === 'segn') o[k] = +($('button.on', el)?.dataset.v ?? 1);
+    else if (t === 'bool') o[k] = el.checked;
+    else if (t === 'num') o[k] = el.value === '' ? 0 : +el.value;
+    else if (t === 'lines') o[k] = el.value.split('\n').map(s => s.trim()).filter(Boolean);
+    else if (t === 'promos') o[k] = el.value.split('\n').map(s => s.split(/[=:x]/i).map(z => +z.replace(',', '.').replace(/[^\d.]/g, ''))).filter(a => a[0] > 1 && a[1] >= 0).map(a => ({ n: a[0], p: a[1] }));
+    else if (t === 'date') o[k] = el.value ? new Date(el.value).getTime() : 0;
+    else o[k] = el.value.trim();
+  });
+  o.wa = (o.wa || '').replace(/\D/g, ''); o.yape = (o.yape || '').replace(/\D/g, ''); o.plin = (o.plin || '').replace(/\D/g, '');
+  return o;
+}
+async function guardarCfg() {
+  const o = leerCfg(), b = $('#cfgSave');
+  if (!o.titulo) return toast('Escribe un título', 'bad');
+  if (o.modo === 'pago' && !o.yape && !o.plin && !o.bancos && !o.qr) toast('💡 Agrega al menos un dato de pago', 'bad');
+  const f = $('#sysForm').value.trim(); S.form = f; lsSet('form', f);
+  b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+  try { await API.guardar(S.rid, o); toast('✅ Guardado', 'ok'); await cargarRifas(); await cargarDetalle(); }
+  catch (e) { toast(e.message, 'bad'); }
+  finally { b.disabled = false; b.innerHTML = '💾 Guardar'; }
+}
+async function subirImg(k, file) {
+  const im = $(`[data-prev="${k}"]`); im.style.visibility = 'visible'; im.style.opacity = .4;
+  try { const bl = await comprimir(file, 1400, .82); const j = await API.subir(bl); $(`[data-k="${k}"]`).value = j.key; im.src = pubImg(j.key); toast('📷 Imagen lista. Toca Guardar.'); }
+  catch (e) { toast(e.message, 'bad'); }
+  finally { im.style.opacity = 1; }
+}
+function plantillaBases() {
+  const c = leerCfg();
+  return `BASES DEL SORTEO "${c.titulo}"\n\n1. ORGANIZADOR: ${c.negocio || CONFIG.NEGOCIO}.\n2. PREMIO(S): ${(c.premios || []).join('; ')}.\n3. PARTICIPACIÓN: ${c.modo === 'gratis' ? 'Gratuita, registrándose en el formulario.' : `Cada número cuesta S/ ${(+c.precio || 0).toFixed(2)}. Solo participan los números con pago verificado.`}\n4. FECHA: El sorteo se realizará el ${c.cierre ? new Date(c.cierre).toLocaleString('es-PE') : '[fecha]'} y se transmitirá en vivo.\n5. MECÁNICA: El ganador se elige con un sistema aleatorio verificable. La semilla se publica comprometida desde el inicio y el resultado puede comprobarse en la página de participantes.\n6. SUPLENTES: Si el ganador no responde en 72 horas, el premio pasa al suplente.\n7. ENTREGA: Coordinada con el ganador presentando su DNI.\n8. DATOS PERSONALES: Los datos se usan solo para este sorteo (Ley 29733). En la lista pública el nombre y el celular aparecen parcialmente ocultos.\n9. Al participar aceptas estas bases.`;
+}
+async function eliminarRifa() {
+  if (!confirm('¿Eliminar este sorteo con TODOS sus participantes y comprobantes? No se puede deshacer.')) return;
+  if (prompt('Escribe ELIMINAR para confirmar') !== 'ELIMINAR') return;
+  try { await API.borrar(S.rid); toast('🗑️ Eliminado'); S.rid = ''; lsSet('rid', ''); await cargarRifas(); S.rid = S.rifas[0]?.id || ''; S.rid ? await cargarDetalle() : renderVacio(); irTab('sorteo'); }
+  catch (e) { toast(e.message, 'bad'); }
+}
+function nuevaRifa() {
+  const m = modal(`<h2>＋ Nuevo sorteo</h2>
+    ${F('titulo', 'Título', 'id="nT" placeholder="Ej: Sorteo Amoladora TOTAL"')}
+    <div class="fld"><span>Tipo</span><div class="seg" id="nM"><button data-v="pago" class="on">💰 Rifa pagada</button><button data-v="gratis">🎁 Sorteo gratis</button></div></div>
+    <div class="grid2"><label class="fld"><span>Cantidad de números</span><input id="nC" type="number" value="100" min="1" max="10000" inputmode="numeric"></label><label class="fld"><span>Precio S/</span><input id="nP" type="number" value="5" min="0" step="0.5" inputmode="decimal"></label></div>
+    <button class="btn ac full" id="nGo" style="margin-top:8px">Crear sorteo</button>`);
+  $('#nM', m).onclick = e => { const b = e.target.closest('button'); if (!b) return; $$('#nM button', m).forEach(x => x.classList.toggle('on', x === b)); $('#nP', m).closest('.fld').hidden = b.dataset.v === 'gratis'; };
+  $('#nGo', m).onclick = async () => {
+    const t = $('#nT', m).value.trim(); if (!t) return toast('Escribe un título', 'bad');
+    const modo = $('#nM button.on', m).dataset.v, prev = cfg();
+    const base = { titulo: t, modo, cantidad: +$('#nC', m).value || 100, precio: +$('#nP', m).value || 0, maxPer: modo === 'gratis' ? 1 : 0, maxSel: modo === 'gratis' ? 1 : 20 };
+    for (const k of ['negocio', 'wa', 'yape', 'plin', 'titular', 'qr', 'bancos', 'instr', 'tsKey']) if (prev[k]) base[k] = prev[k];
+    $('#nGo', m).disabled = true;
+    try { const j = await API.guardar(null, base); m.close(); S.rid = j.id; await cargarRifas(); await cargarDetalle(); irTab('config'); toast('🎉 Sorteo creado. Completa los datos y guarda.', 'ok'); }
+    catch (e) { toast(e.message, 'bad'); $('#nGo', m).disabled = false; }
+  };
+}
+
+/* =====================================================================
+   EVENTOS
+   ===================================================================== */
+function irTab(t) {
+  S.tab = t;
+  $$('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  ['sorteo', 'compartir', 'config'].forEach(k => $('#t-' + k).hidden = k !== t);
+  if (t === 'compartir') renderCompartir();
+  if (t === 'config') renderConfig();
+  if (S.d) renderSelBar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+let tTodos = 0;
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if ($('#nPanel') && !t.closest('#nPanel') && !t.closest('#hBell')) cerrarNotis();
+  const tab = t.closest('.tab'); if (tab) return irTab(tab.dataset.tab);
+  const rc = t.closest('[data-rid]'); if (rc) { S.rid = rc.dataset.rid; S.filtro = 'todos'; S.q = ''; $('#q').value = ''; S.sel.clear(); S.adv = { ...ADV0 }; renderRBar(); return cargarDetalle(); }
+  if (t.closest('#bNueva')) return nuevaRifa();
+  if (t.closest('#chipTodos')) { const ahora = Date.now(), doble = ahora - tTodos < 400; tTodos = doble ? 0 : ahora; return doble ? todasEtiquetas() : setFiltro('todos'); }
+  const f = t.closest('[data-f]'); if (f) return setFiltro(f.dataset.f);
+  const a = t.closest('[data-a]'); if (a) return accion(a.closest('[data-pid]').dataset.pid, a.dataset.a);
+  const gp = t.closest('[data-gp]'); if (gp) return imprimirSel(gp.dataset.gp);
+  const sc = t.closest('[data-sc]'); if (sc) return scrollCard(+sc.dataset.sc);
+  const nv = t.closest('[data-nv]'); if (nv) return irAlRegistro(nv.dataset.nv);
+  const np = t.closest('[data-np]'); if (np) { const p = S.d.parts.find(x => x.id === np.dataset.np); return p && imprimirTickets([p]); }
+  const im = t.closest('img[data-img]'); if (im && im.src) return modal(`<h2>🧾 Comprobante</h2><img class="bigimg" src="${im.src}"><a class="btn full" style="margin-top:10px" href="${im.src}" download="comprobante.webp">💾 Descargar</a>`);
+  const nb = t.closest('.nb[data-n]');
+  if (nb) { const i = +nb.dataset.n, p = dueño(i), c = cfg(); if (!p) return toast(`Número ${fmtN(c, i)} disponible`); S.vista = 'lista'; S.filtro = 'todos'; S.q = p.cel; $('#q').value = p.cel; $('#qx').hidden = false; renderChips(); return renderLista(); }
+  const cp = t.closest('[data-c]'); if (cp) return copiar(cp.dataset.c);
+  const op = t.closest('[data-o]'); if (op) return abrir(op.dataset.o);
+  const sg = t.closest('.seg[data-k] button'); if (sg) { $$('button', sg.parentElement).forEach(b => b.classList.toggle('on', b === sg)); return; }
+  const rm = t.closest('[data-rm]'); if (rm) { const k = rm.dataset.rm; $(`[data-k="${k}"]`).value = ''; const p = $(`[data-prev="${k}"]`); p.src = ''; p.style.visibility = 'hidden'; return; }
+  switch (t.closest('button')?.id) {
+    case 'hOut': if (!confirm('¿Cerrar sesión en este dispositivo?')) return; lsSet('pin', ''); return location.reload();
+    case 'hBell': return S.d && ($('#nPanel') ? cerrarNotis() : abrirNotis());
+    case 'nClr': lsSet(ntKey(), { ...lsGet(ntKey(), {}), limpio: Date.now() }); return renderBell();
+    case 'chL': return navFiltro(-1);
+    case 'chR': return navFiltro(1);
+    case 'bAdv': return S.d && abrirAvanzada();
+    case 'advX': return limpiarAvanzada();
+    case 'bSelAll': return S.d && selTodo();
+    case 'bPrint': return S.d && imprimirSel();
+    case 'sbPr': return imprimirSel();
+    case 'sbSt': return hojaEstado(selList());
+    case 'sbX': S.sel.clear(); return renderLista();
+    case 'cTkC': return imprimirTickets(S.d.parts.filter(p => grp(p) === 'C'));
+    case 'cTkP': return imprimirTickets(S.d.parts.filter(p => grp(p) !== 'X' && !impresos.has(p.id)));
+    case 'lkAy': return modal(`<h2>📖 Link personalizado</h2><p class="mu" style="line-height:1.6">Crea un link para <b>un cliente específico</b>. Al abrirlo, su nombre, celular y números ya vienen llenos.<br><br>🔒 Se puede usar <b>una sola vez</b>: después de registrarse, el link queda bloqueado.<br><br>💡 Útil para clientes que te piden números por WhatsApp o por llamada.</p>`);
+    case 'cfgAy': return modal(`<h2>📖 Configuración</h2><p class="mu" style="line-height:1.6"><b>📋 Formulario del cliente</b>: lo que ve el cliente al participar (premios, números, fechas, pagos y contacto).<br><br><b>⚙️ Configuración avanzada</b>: antispam, dirección del formulario y eliminar el sorteo.<br><br>Toca <b>💾 Guardar</b> para aplicar los cambios.</p>`);
+    case 'bRef': toast('🔄 Actualizando…'); await cargarRifas().catch(() => {}); return cargarDetalle();
+    case 'bVista': S.vista = S.vista === 'lista' ? 'grilla' : 'lista'; return renderLista();
+    case 'bCsv': return exportarCSV();
+    case 'bSort': return abrirSorteo();
+    case 'bRes': return verResultado();
+    case 'cWa': return abrir(waURL('', msgDifusion(cfg(), stats())));
+    case 'cWaP': return abrir(waURL('', `👥 Mira la lista de participantes y el talonario de *${cfg().titulo}*:\n${linkPart(S.rid)}`));
+    case 'cQr': return mostrarQR();
+    case 'lkCp': return crearLinkPers(false);
+    case 'lkWa': return crearLinkPers(true);
+    case 'cTal': return talonarioPNG();
+    case 'difC': return copiar($('#dif').value);
+    case 'difW': return abrir(waURL('', $('#dif').value));
+    case 'cfgSave': return guardarCfg();
+    case 'cfgDel': return eliminarRifa();
+    case 'basesTpl': { const ta = $('[data-k="bases"]'); if (ta.value && !confirm('¿Reemplazar las bases actuales?')) return; ta.value = plantillaBases(); return; }
+    case 'qx': S.q = ''; $('#q').value = ''; $('#qx').hidden = true; return renderLista();
+  }
+});
+document.addEventListener('change', e => { const u = e.target.closest('[data-up]'); if (u && u.files[0]) subirImg(u.dataset.up, u.files[0]); });
+let qT;
+// La rueda del ratón desplaza las píldoras sin cambiar el filtro
+$('#chips').addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); $('#chips').scrollLeft += e.deltaY; } }, { passive: false });
+$('#q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { S.q = e.target.value; $('#qx').hidden = !S.q; if (S.vista === 'grilla') S.vista = 'lista'; renderLista(); }, 180); });
+
+/* ===================================================================== */
+if (!S.api) vAviso('Falta configurar', 'Abre index.html y pon la URL de tu Worker en CONFIG.API y tu PIN en CONFIG.PIN.');
+else iniciar();
+</script>
+</body>
+</html>

@@ -9,13 +9,14 @@ Todo vive en **Cloudflare**, en un solo Worker llamado `sorteos`:
 | Estado de la API | https://sorteos.jarryllanoski.workers.dev/api → `{"ok":true,"app":"sorteos","v":1}` |
 
 ## Qué hay en el repositorio
-- **index.html** → panel admin.
-- **formulario.html** → página pública para participar.
+- **public/index.html** → panel admin.
+- **public/formulario.html** → página pública para participar.
 - **worker.js** → la API (rutas `/api/*` y fotos `/pub/*`).
-- **wrangler.toml** → configuración: base D1, variables y páginas.
+- **wrangler.toml** → configuración: base D1, fotos R2, variables y páginas.
+- **index.html / formulario.html** (en la raíz) → solo redirigen los links viejos
+  de GitHub Pages a Cloudflare. **No editar**: los cambios van en `public/`.
 
-Al desplegar, solo `index.html` y `formulario.html` se publican como páginas
-(se copian a la carpeta temporal `public/`). El resto del código no es visible.
+Solo lo que está en `public/` se publica como página. El resto del código no es visible.
 
 ## Cómo desplegar
 Desde la carpeta del proyecto:
@@ -26,6 +27,7 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
 
 ## Configuración en Cloudflare (ya hecha)
 - Base D1 `sorteos` (las tablas se crean solas).
+- Bucket R2 `sorteos-img` → fotos de premios (`p/…`, públicas) y comprobantes (`c/…`, solo con PIN).
 - Secreto `ADMIN_PIN` → PIN del panel. Para cambiarlo: `npx wrangler secret put ADMIN_PIN`.
 - `ALLOWED_ORIGIN` → la dirección del Worker (en `wrangler.toml`).
 
