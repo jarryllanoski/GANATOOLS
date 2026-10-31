@@ -707,7 +707,7 @@ function cardHTML(p, c) {
     <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
-    ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
+    ${info}${p.dni ? `<div class="card-addr">🪪 ${esc(documentoDe(p.dni))}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
     <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="${g === 'F' ? 'Ya participó del sorteo' : 'Mandar a la papelera (toca 2 veces)'}" ${g === 'F' ? 'disabled' : ''}>🗑️</button></div>
   </div>`;
 }
@@ -1020,6 +1020,7 @@ function menuMas(p) {
   });
 }
 // Envío del premio que eligió el cliente (los registros viejos solo traen agencia Shalom)
+const documentoDe = dni => dni.startsWith('CE ') ? 'Carnet ext. ' + dni.slice(3) : 'DNI ' + dni;
 function agDe(p) { try { const a = p.agencia ? JSON.parse(p.agencia) : null; if (a && !a.courier) { a.courier = 'SHALOM'; a.tipo = 'agencia'; } return a; } catch (e) { return null; } }
 const ENV_IC = { SHALOM: '🚌', 'OLVA COURIER': '📦', MARVISUR: '🚐', DELIVERY: '🛵', 'OTRAS AGENCIAS': '🏢', 'RETIRO EN TIENDA': '🏪' };
 function envTexto(a) {

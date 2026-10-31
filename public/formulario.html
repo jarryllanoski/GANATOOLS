@@ -93,10 +93,20 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif}
 pre.bank{white-space:pre-wrap;font:inherit;font-size:13px;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);margin-top:9px}
 .drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px 14px;border:2px dashed #388bfd4d;border-radius:11px;background:#388bfd14;text-align:center;margin-top:12px;cursor:pointer;color:var(--ac)}
 .drop b{font-size:28px}
-.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .drop.has{border-style:solid;border-color:#2ea04366;background:#2ea0431a;color:var(--ok)}
 .prev{display:flex;gap:10px;align-items:center;margin-top:10px}
-.prev img{width:72px;height:96px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
+.prev-ver{position:relative;flex:none;padding:0;border-radius:9px}
+.prev-ver img{display:block;width:72px;height:96px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
+.prev-ver span{position:absolute;right:-6px;bottom:-6px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--ac);font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.comp-grande{display:block;width:100%;max-height:60vh;object-fit:contain;border-radius:12px;background:#fff}
+.subir{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:6px 0 2px}
+.subir .btn{padding:9px 14px;font-size:13px;border-radius:10px;background:var(--bg2)}
+.drop.encima{border-style:solid;border-color:var(--ac);background:#4f8ef72e}
+.doc{display:flex;gap:8px;align-items:stretch;margin-bottom:11px}
+.doc .in{flex:1;min-width:0}
+.doc-tipo{flex:none;display:flex;flex-direction:column;gap:4px}
+.doc-tipo button{flex:1;padding:0 10px;border-radius:9px;border:1.5px solid var(--line2);background:var(--bg2);color:var(--mu);font-size:11px;font-weight:800;white-space:nowrap}
+.doc-tipo button.on{border-color:var(--ac);background:#4f8ef71f;color:var(--ac)}
 .warnbox{padding:11px 12px;border-radius:10px;background:#d299221a;border:1px solid #d2992259;font-size:12px;margin-top:12px}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;cursor:pointer}
 .chk input{width:20px;height:20px;flex:none;margin-top:1px;accent-color:var(--ac)}
@@ -241,6 +251,7 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .rv-caja{width:100%;max-width:420px;text-align:center}
 .rv-t{font-size:22px;font-weight:900;margin-bottom:22px}
 .revela.fin .rv-t{color:var(--ok);animation:latido .5s ease}
+.revela{cursor:pointer;transition:opacity .35s}.revela.sale{opacity:0}
 .rv-nums{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:22px}
 .rv-num{display:flex;gap:3px;padding:8px 10px;border-radius:14px;background:#0b1020;border:2px solid #2b4c86;box-shadow:inset 0 0 18px #000}
 .rv-num span{display:inline-block;width:30px;padding:6px 0;border-radius:7px;background:linear-gradient(#fff,#d6dbe6);color:#0b1020;font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
@@ -407,7 +418,7 @@ async function drawPicks(seed, snap, beacon, k) {
    ESTADO + ARRANQUE
    ===================================================================== */
 const P = new URLSearchParams(location.search);
-const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', qty: 0, maxTickets: 1, fijos: [], file: null, ih: '', link: null, ts: '' };
+const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', qty: 0, maxTickets: 1, fijos: [], file: null, ih: '', link: null, ts: '', doc: 'DNI' };
 const app = $('#app');
 
 function cabecera(c) {
@@ -495,18 +506,20 @@ function portadaHTML(c, total, libres, cierreVenta) {
     <div class="vivo" id="vivo" hidden></div>
   </div></div>`;
 }
+const ACTIVIDAD_RECIENTE_MS = 30 * 6e4;
 async function cargarActividad() {
   let lista;
-  try { lista = (await api(`/api/r/${encodeURIComponent(S.r)}/part`)).list.filter(p => p.e !== 'X').sort((a, b) => b.t - a.t); } catch (e) { return; }
-  const caja = $('#vivo'); if (!caja || !lista.length) return;
-  const hace = t => { const m = Math.max(1, Math.round((Date.now() - t) / 6e4)); return m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} d`; };
+  try { lista = (await api(`/api/r/${encodeURIComponent(S.r)}/part`)).list; } catch (e) { return; }
+  const caja = $('#vivo'); if (!caja) return;
+  const recientes = lista.filter(p => p.e !== 'X' && Date.now() - p.t < ACTIVIDAD_RECIENTE_MS).sort((a, b) => b.t - a.t).slice(0, 8);
+  if (!recientes.length && !participantesVisibles()) return;
+  const hace = t => { const m = Math.max(1, Math.round((Date.now() - t) / 6e4)); return `hace ${m} min`; };
   const linea = p => { const k = splitN(p.nums).length; return `<b>${esc(p.n)}</b> se unió ${hace(p.t)} con ${k} ticket${k === 1 ? '' : 's'}`; };
-  const recientes = lista.slice(0, 8);
-  let i = 0;
+  const total = participantesVisibles() ? `${S.participantes} personas participan` : 'En vivo';
   caja.hidden = false;
-  const total = participantesVisibles() ? `<span class="vivo-total">${S.participantes} personas participan</span>` : '<span class="vivo-total">En vivo</span>';
-  caja.innerHTML = `<span class="vivo-punto"></span>${total}<span class="vivo-linea" id="vivoLinea">${linea(recientes[0])}</span>`;
+  caja.innerHTML = `<span class="vivo-punto"></span><span class="vivo-total">${total}</span>${recientes.length ? `<span class="vivo-linea" id="vivoLinea">${linea(recientes[0])}</span>` : ''}`;
   if (recientes.length < 2) return;
+  let i = 0;
   const rotar = setInterval(() => {
     const el = $('#vivoLinea'); if (!el) return clearInterval(rotar);
     i = (i + 1) % recientes.length; el.classList.remove('entra'); void el.offsetWidth; el.innerHTML = linea(recientes[i]); el.classList.add('entra');
@@ -555,19 +568,38 @@ function numerosDelLink(nums) {
   return String(nums).split(/[,\s]+/).filter(Boolean).map(x => +x - baseOf(S.cfg)).filter(i => i >= 0 && i < S.board.length && S.board[i] === '0');
 }
 
-/* ───── Paso 2: datos ───── */
+/* ───── Paso 2: datos (DNI con nombre automático, o carnet de extranjería a mano) ───── */
+const DOCUMENTOS = {
+  DNI: { placeholder: 'DNI', maxlength: 8, inputmode: 'numeric', valido: v => /^\d{8}$/.test(v), error: 'Escribe tu DNI de 8 dígitos' },
+  CE: { placeholder: 'N° de carnet de extranjería', maxlength: 12, inputmode: 'text', valido: v => /^[A-Z0-9]{9,12}$/.test(v), error: 'Escribe tu carnet de extranjería (9 a 12 caracteres)' },
+};
+const valorDocumento = () => S.doc === 'CE' ? $('#fDni').value.replace(/[^a-z0-9]/gi, '').toUpperCase() : $('#fDni').value.replace(/\D/g, '');
 function pasoDatosHTML(c) {
   return `<section class="paso" id="pDat" hidden>
     <div class="paso-cab"><span class="paso-n">2</span><div><h2>Tus datos</h2><p class="mu sm">${c.pedirDni ? 'Escribe tu DNI y tu nombre sale solo.' : 'Para avisarte si ganas.'}</p></div></div>
-    <label class="fld"><input class="in" id="fDni" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="🪪 DNI${c.pedirDni ? ' *' : ' (opcional)'}"></label>
+    <div class="doc">
+      <input class="in" id="fDni" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="🪪 DNI${c.pedirDni ? ' *' : ' (opcional)'}">
+      <div class="doc-tipo"><button data-doc="DNI" class="on">DNI</button><button data-doc="CE">Carnet ext.</button></div>
+    </div>
     <div class="dni-msg" id="dniMsg"></div>
     <label class="fld"><input class="in" id="fNom" autocomplete="name" maxlength="60" placeholder="Nombre completo *"></label>
     <label class="fld"><div class="pre"><b>+51</b><input class="in" id="fCel" inputmode="numeric" autocomplete="tel-national" maxlength="11" placeholder="Número WhatsApp *"></div></label>
   </section>`;
 }
+function cambiarDocumento(tipo, { conservarValor } = {}) {
+  const d = DOCUMENTOS[tipo] || DOCUMENTOS.DNI, inp = $('#fDni');
+  S.doc = tipo in DOCUMENTOS ? tipo : 'DNI';
+  $$('[data-doc]').forEach(b => b.classList.toggle('on', b.dataset.doc === S.doc));
+  inp.placeholder = `🪪 ${d.placeholder}${S.cfg.pedirDni ? ' *' : ' (opcional)'}`;
+  inp.maxLength = d.maxlength; inp.inputMode = d.inputmode;
+  if (!conservarValor) { inp.value = ''; dniSoltar(); DNI.persona = null; DNI.ult = ''; }
+  $('#dniMsg').innerHTML = S.doc === 'CE' ? '<div class="dni-nada">Escribe tus datos tal como figuran en tu carnet.</div>' : '';
+  if (!conservarValor) { guardarBorrador(); actualizarFlujo(); inp.focus(); }
+}
 function datosValidos() {
-  const dni = $('#fDni').value.replace(/\D/g, ''), nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9);
-  if ((S.cfg.pedirDni || dni) && !/^\d{8}$/.test(dni)) return { campo: $('#fDni'), msg: 'Escribe tu DNI de 8 dígitos' };
+  const doc = valorDocumento(), nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9);
+  const tipo = DOCUMENTOS[S.doc];
+  if ((S.cfg.pedirDni || doc) && !tipo.valido(doc)) return { campo: $('#fDni'), msg: tipo.error };
   if (nom.length < 3 || !nom.includes(' ')) return { campo: $('#fNom'), msg: 'Escribe tu nombre y apellido' };
   if (!/^9\d{8}$/.test(cel)) return { campo: $('#fCel'), msg: 'Tu WhatsApp: 9 dígitos, empieza con 9' };
   return null;
@@ -599,34 +631,47 @@ function actualizarFlujo(opciones = {}) {
   }
   actBar();
 }
+function pagoPendiente() {
+  const c = S.cfg;
+  if (c.modo === 'pago') {
+    if (!S.file && !$('#despues')?.checked) return { campo: $('#drop'), msg: c.compObl ? 'Sube la captura de tu pago' : 'Sube la captura de tu pago o marca "Pagaré después"' };
+    if (S.file && c.opObl !== false && !($('#fOp')?.value || '').trim()) return { campo: $('#fOp'), msg: 'Escribe el N° de operación' };
+  }
+  if (c.tsKey && !S.ts) return { campo: $('#tsBox'), msg: 'Completa la verificación antispam' };
+  return null;
+}
+function loQueFalta() {
+  if (!S.qty) return { campo: $('#pCant'), msg: 'Elige cuántos tickets quieres 🎟️' };
+  return datosValidos() || pagoPendiente();
+}
 function actBar() {
-  const c = S.cfg, n = S.qty, listo = n && !datosValidos();
+  const c = S.cfg, n = S.qty, listo = n && !loQueFalta();
   $('#sbN').textContent = n ? `${n} ticket${n === 1 ? '' : 's'}` : 'Elige tus tickets';
   $('#sbT').textContent = n ? (c.modo === 'pago' ? fmtS(precioTotal(c, n)) : 'Gratis') : '';
-  $('#sbGo').textContent = !n ? 'Elegir' : !listo ? 'Continuar' : '🎲 Revelar mis números';
+  $('#sbGo').textContent = !n ? 'Elegir' : listo ? '🎲 Revelar mis números' : 'Continuar';
   $('#sbGo').classList.toggle('ok', !!listo);
   $$('.tot').forEach(e => e.textContent = fmtS(precioTotal(c, n)));
 }
 function accionPrincipal() {
-  if (!S.qty) { $('#pCant').scrollIntoView({ behavior: 'smooth', block: 'start' }); return toast('Elige cuántos tickets quieres 🎟️'); }
-  const falta = datosValidos();
-  if (falta) return marcarErr(falta.campo, falta.msg);
-  enviar();
+  const falta = loQueFalta();
+  if (!falta) return enviar();
+  if (falta.campo?.id === 'pCant' || falta.campo?.id === 'tsBox') { falta.campo.scrollIntoView({ behavior: 'smooth', block: 'center' }); return toast(falta.msg); }
+  marcarErr(falta.campo, falta.msg);
 }
 
 /* ───── Borrador: si sale y vuelve, todo sigue ahí ───── */
 const claveBorrador = () => 'borrador_' + S.r;
 function guardarBorrador() {
   if (!$('#fDni')) return;
-  lsSet(claveBorrador(), { q: S.qty, d: $('#fDni').value, n: $('#fNom').readOnly ? '' : $('#fNom').value, c: $('#fCel').value, t: Date.now() });
+  lsSet(claveBorrador(), { q: S.qty, doc: S.doc, d: $('#fDni').value, n: $('#fNom').readOnly ? '' : $('#fNom').value, c: $('#fCel').value, t: Date.now() });
 }
 function restaurarBorrador() {
   const b = lsGet(claveBorrador(), null), yo = lsGet('yo', null);
-  const datos = b && Date.now() - b.t < 3 * 864e5 ? b : yo ? { d: yo.d, n: yo.n, c: yo.c } : null;
+  const datos = b && Date.now() - b.t < 3 * 864e5 ? b : yo ? { doc: yo.doc, d: yo.d, n: yo.n, c: yo.c } : null;
   if (S.link) { $('#fNom').value = S.link.nombre || ''; $('#fCel').value = S.link.cel || ''; toast('✨ Link personalizado: tus datos ya están cargados'); }
-  else if (datos) { $('#fDni').value = datos.d || ''; $('#fNom').value = datos.n || ''; $('#fCel').value = datos.c || ''; }
+  else if (datos) { cambiarDocumento(datos.doc || 'DNI', { conservarValor: true }); $('#fDni').value = datos.d || ''; $('#fNom').value = datos.n || ''; $('#fCel').value = datos.c || ''; }
   if (b?.q && !S.fijos.length) elegirCantidad(b.q, { sinScroll: true });
-  const dni = $('#fDni').value.replace(/\D/g, ''); if (dni.length === 8) dniBuscar(dni, true);
+  if (S.doc === 'DNI' && valorDocumento().length === 8) dniBuscar(valorDocumento(), true);
 }
 
 /* ───── El momento: revelar los números como una tragamonedas ───── */
@@ -635,18 +680,18 @@ function animarRevelado(numeros) {
   const capa = document.createElement('div'); capa.className = 'revela';
   capa.innerHTML = `<div class="rv-caja"><p class="rv-t" id="rvT">Sorteando tus números…</p>
     <div class="rv-nums">${visibles.map(() => `<div class="rv-num">${'<span>0</span>'.repeat(ancho)}</div>`).join('')}</div>
-    ${extra > 0 ? `<p class="mu sm">+ ${extra} número${extra === 1 ? '' : 's'} más en tu ticket</p>` : ''}
-    <button class="btn-main" id="rvOk" hidden>Ver mi ticket ➜</button></div>`;
+    ${extra > 0 ? `<p class="mu sm">+ ${extra} número${extra === 1 ? '' : 's'} más en tu ticket</p>` : ''}</div>`;
   document.body.appendChild(capa);
   const sinMovimiento = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cajas = $$('.rv-num', capa);
   return new Promise(listo => {
     const terminar = () => {
       $('#rvT', capa).textContent = numeros.length === 1 ? '¡Este es tu número!' : '¡Estos son tus números!';
-      capa.classList.add('fin'); confeti(capa); $('#rvOk', capa).hidden = false;
-      const cerrar = () => { capa.remove(); listo(); };
-      $('#rvOk', capa).onclick = cerrar;
-      setTimeout(() => capa.isConnected && $('#rvOk', capa).focus(), 100);
+      capa.classList.add('fin'); confeti(capa);
+      let cerrado = false;
+      const cerrar = () => { if (cerrado) return; cerrado = true; capa.classList.add('sale'); setTimeout(() => { capa.remove(); listo(); }, 350); };
+      capa.onclick = cerrar;
+      setTimeout(cerrar, 2800);
     };
     if (sinMovimiento) { cajas.forEach((caja, i) => { caja.innerHTML = [...fmtN(c, visibles[i])].map(d => `<span>${d}</span>`).join(''); caja.classList.add('ok'); }); return terminar(); }
     const giro = setInterval(() => $$('.rv-num:not(.ok) span', capa).forEach(d => { d.textContent = Math.floor(Math.random() * 10); }), 55);
@@ -673,6 +718,7 @@ function confeti(capa) {
 const DNI = { ult: '', persona: null, aceptado: false };
 async function dniBuscar(v, silencioso) {
   const box = $('#dniMsg'), inp = $('#fDni');
+  if (S.doc !== 'DNI') return;
   if (v.length !== 8) { if (DNI.aceptado) dniSoltar(); box.innerHTML = ''; DNI.ult = ''; return; }
   if (v === DNI.ult) return; DNI.ult = v; DNI.persona = null;
   inp.classList.add('dni-escanea'); box.innerHTML = '<span class="dni-buscando">🪪 Buscando en RENIEC<span class="dni-puntos"></span></span>';
@@ -682,9 +728,7 @@ async function dniBuscar(v, silencioso) {
   inp.classList.remove('dni-escanea');
   if (j.ok && j.persona) {
     DNI.persona = j.persona;
-    const nom = $('#fNom').value.trim().toUpperCase();
-    if (silencioso && nom && nom === j.persona.completo) return dniAceptar(true);
-    box.innerHTML = `<div class="dni-sug"><div class="dni-sug-t">¿Eres tú?</div><div class="dni-sug-n">${esc(j.persona.completo)}</div><button class="dni-sug-si" id="dniSi">✅ Sí, soy yo</button><button class="dni-link" id="dniNo">No, corregir el DNI</button></div>`;
+    dniAceptar(silencioso);
   } else if (j.motivo === 'NO_EXISTE') box.innerHTML = '<div class="dni-nada">No encontramos ese DNI. Revisa los números o escribe tu nombre abajo.</div>';
   else box.innerHTML = silencioso ? '' : '<div class="dni-nada">Escribe tu nombre completo abajo.</div>';
 }
@@ -693,8 +737,8 @@ function dniAceptar(silencioso) {
   DNI.aceptado = true;
   const n = $('#fNom'); n.value = DNI.persona.completo; n.readOnly = true;
   $('#dniMsg').innerHTML = '<div class="dni-ok">✅ Nombre verificado con RENIEC<button class="dni-link" id="dniNo">No soy yo</button></div>';
-  actualizarFlujo();
-  if (!silencioso) { heavy('Identidad verificada ✅. Si ganas, el premio solo se le entrega a esta persona.'); $('#fCel').focus(); }
+  guardarBorrador(); actualizarFlujo();
+  if (!silencioso) { heavy('Identidad verificada ✅. Si ganas, el premio solo se le entrega a esta persona.'); if (!$('#fCel').value) $('#fCel').focus(); }
 }
 function dniSoltar() { DNI.aceptado = false; const n = $('#fNom'); if (n.readOnly) { n.readOnly = false; n.value = ''; } }
 function dniCorregir() { dniSoltar(); DNI.persona = null; DNI.ult = ''; $('#fDni').value = ''; $('#dniMsg').innerHTML = ''; actualizarFlujo(); $('#fDni').focus(); }
@@ -887,50 +931,84 @@ function pagoHTML(c, monto) {
     ${c.bancos ? `<pre class="bank">🏦 ${esc(c.bancos)}</pre>` : ''}
     ${c.instr ? `<p class="sm" style="margin-top:10px;white-space:pre-line">ℹ️ ${esc(c.instr)}</p>` : ''}`;
 }
+const pegarDisponible = () => !!navigator.clipboard?.read;
 function subidaHTML(c, permiteDespues) {
-  return `<div class="drop" id="drop"><b>📸</b><strong>Sube la captura de tu pago</strong><span class="xs mu">Se comprime automáticamente</span><input type="file" accept="image/*" id="fFile"></div>
-    <div class="prev" id="prev" hidden><img id="prevImg" alt=""><div class="sm"><b class="c-ok">✔ Comprobante listo</b><br><button class="btn sm" id="quitar" style="margin-top:6px">Cambiar foto</button></div></div>
+  return `<div class="drop" id="drop">
+      <b>📸</b><strong>Sube la captura de tu pago</strong>
+      <div class="subir">
+        ${isMobile ? `<label class="btn sm">📷 Cámara<input type="file" accept="image/*" capture="environment" id="fCam" hidden></label>` : ''}
+        <label class="btn sm">🖼️ ${isMobile ? 'Galería' : 'Elegir archivo'}<input type="file" accept="image/*" id="fFile" hidden></label>
+        ${pegarDisponible() ? '<button class="btn sm" id="pegar" type="button">📋 Pegar</button>' : ''}
+      </div>
+      ${isMobile ? '' : '<span class="xs mu">o arrástrala aquí, o pégala con Ctrl + V</span>'}
+    </div>
+    <div class="prev" id="prev" hidden><button class="prev-ver" id="verComprobante" type="button" aria-label="Ver comprobante"><img id="prevImg" alt=""><span>🔍</span></button><div class="sm"><b class="c-ok">✔ Comprobante listo</b><br><span class="xs mu">Toca la imagen para verla grande</span><br><button class="btn sm" id="quitar" style="margin-top:6px">Cambiar foto</button></div></div>
     ${c.opObl !== false ? `<div id="opBox" hidden style="margin-top:12px"><label class="fld"><span>N° de operación *</span><input class="in" id="fOp" inputmode="numeric" maxlength="30" placeholder="Aparece en tu comprobante"></label></div>` : ''}
     ${permiteDespues ? `<label class="sw"><input type="checkbox" id="despues"><span>Pagaré después <span class="mu">(reservo mis números por ${c.reservaMin || 30} min)</span></span></label>` : ''}
     <div class="warnbox">⚠️ Verificamos cada pago directamente en nuestra cuenta antes de confirmar. Los comprobantes editados se anulan.</div>`;
 }
 function bindSubida() {
-  const f = $('#fFile'); if (!f) return;
-  f.onchange = async () => {
-    const file = f.files[0]; if (!file) return;
-    if (!file.type.startsWith('image/')) return toast('Sube una imagen (foto o captura)', 'bad');
-    $('#drop').classList.add('has'); $('#drop strong').textContent = 'Procesando…';
-    try {
-      const [blob, ih] = await Promise.all([comprimir(file), file.arrayBuffer().then(b => sha(b))]);
-      if (blob.size > 1.45e6) throw new Error('La imagen es muy pesada, intenta con una captura');
-      S.file = blob; S.ih = ih;
-      $('#prevImg').src = URL.createObjectURL(blob); $('#prev').hidden = false; $('#drop').hidden = true;
-      if ($('#opBox')) { $('#opBox').hidden = false; setTimeout(() => $('#fOp').focus(), 250); }
-      if ($('#despues')) $('#despues').checked = false;
-    } catch (e) { toast(e.message, 'bad'); $('#drop').classList.remove('has'); }
-    $('#drop strong').textContent = 'Sube la captura de tu pago';
-  };
+  const zona = $('#drop'); if (!zona) return;
+  ['#fFile', '#fCam'].forEach(id => { const inp = $(id); if (inp) inp.onchange = () => { procesarComprobante(inp.files[0]); inp.value = ''; }; });
+  zona.onclick = e => { if (!e.target.closest('label, button')) $('#fFile').click(); };
+  zona.ondragover = e => { e.preventDefault(); zona.classList.add('encima'); };
+  zona.ondragleave = () => zona.classList.remove('encima');
+  zona.ondrop = e => { e.preventDefault(); zona.classList.remove('encima'); procesarComprobante([...e.dataTransfer.files].find(f => f.type.startsWith('image/'))); };
+}
+async function pegarComprobante() {
+  try {
+    for (const item of await navigator.clipboard.read()) {
+      const tipo = item.types.find(t => t.startsWith('image/'));
+      if (tipo) return procesarComprobante(new File([await item.getType(tipo)], 'captura', { type: tipo }));
+    }
+    toast('No hay ninguna imagen copiada', 'bad');
+  } catch (e) { toast('Tu navegador no dejó pegar. Usa Galería o Ctrl + V', 'bad'); }
+}
+async function procesarComprobante(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return toast('Sube una imagen (foto o captura)', 'bad');
+  const zona = $('#drop'), titulo = $('#drop strong');
+  zona.classList.add('has'); titulo.textContent = 'Procesando…';
+  try {
+    const [blob, ih] = await Promise.all([comprimir(file), file.arrayBuffer().then(b => sha(b))]);
+    if (blob.size > 1.45e6) throw new Error('La imagen es muy pesada, intenta con una captura');
+    S.file = blob; S.ih = ih;
+    $('#prevImg').src = URL.createObjectURL(blob); $('#prev').hidden = false; zona.hidden = true;
+    if ($('#opBox')) { $('#opBox').hidden = false; setTimeout(() => $('#fOp').focus(), 250); }
+    if ($('#despues')) $('#despues').checked = false;
+  } catch (e) { toast(e.message, 'bad'); zona.classList.remove('has'); }
+  titulo.textContent = 'Sube la captura de tu pago';
+  if ($('#sbar') && !$('#sbar').hidden) actBar();
+}
+function quitarComprobante() {
+  S.file = null; $('#prev').hidden = true; $('#drop').hidden = false; $('#drop').classList.remove('has');
+  if ($('#opBox')) $('#opBox').hidden = true;
+  if (!$('#sbar').hidden) actBar();
+}
+function verComprobante() {
+  const conOp = !!$('#fOp');
+  const m = modal(`<h2>🧾 Tu comprobante</h2><img src="${$('#prevImg').src}" class="comp-grande" alt="Comprobante">
+    ${conOp ? `<label class="fld" style="margin-top:12px"><span>N° de operación *</span><input class="in" id="fOpGrande" inputmode="numeric" maxlength="30" placeholder="Cópialo de la imagen" value="${esc($('#fOp').value)}"></label>` : ''}
+    <button class="btn-main" data-x>Listo</button>`);
+  const grande = $('#fOpGrande', m);
+  if (grande) { grande.oninput = () => { $('#fOp').value = grande.value; if (!$('#sbar').hidden) actBar(); }; setTimeout(() => grande.focus(), 250); }
 }
 function cargarTurnstile(key) {
-  window.tsReady = () => { try { turnstile.render('#tsBox', { sitekey: key, theme: 'dark', callback: t => S.ts = t, 'expired-callback': () => S.ts = '' }); } catch (e) {} };
+  const alCambiar = token => { S.ts = token; if ($('#sbar') && !$('#sbar').hidden) actBar(); };
+  window.tsReady = () => { try { turnstile.render('#tsBox', { sitekey: key, theme: 'dark', callback: alCambiar, 'expired-callback': () => alCambiar('') }); } catch (e) {} };
   const s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=tsReady&render=explicit'; s.async = true; document.head.appendChild(s);
 }
 function marcarErr(el, msg) { el.classList.remove('err'); void el.offsetWidth; el.classList.add('err'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => el.focus({ preventScroll: true }), 350); toast(msg, 'bad'); }
 
 async function enviar() {
-  const c = S.cfg, falta = datosValidos();
-  if (!S.qty) return accionPrincipal();
-  if (falta) return marcarErr(falta.campo, falta.msg);
+  const c = S.cfg, falta = loQueFalta();
+  if (falta) return accionPrincipal();
   const despues = $('#despues')?.checked, op = c.modo === 'pago' ? ($('#fOp')?.value || '').replace(/\s/g, '') : '';
-  if (c.modo === 'pago') {
-    if (!S.file && !despues) return marcarErr($('#drop'), c.compObl ? 'Sube la captura de tu pago' : 'Sube la captura de tu pago o marca "Pagaré después"');
-    if (S.file && c.opObl !== false && !op) return marcarErr($('#fOp'), 'Escribe el N° de operación');
-  }
-  if (c.tsKey && !S.ts) { $('#tsBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); return toast('Completa la verificación antispam', 'bad'); }
-  const nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9), dni = $('#fDni').value.replace(/\D/g, '');
+  const nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9), dni = valorDocumento();
 
   const fd = new FormData();
-  fd.append('nombre', nom); fd.append('cel', cel); fd.append('dni', dni); fd.append('acepto', '1');
+  fd.append('nombre', nom); fd.append('cel', cel); fd.append('dni', dni); fd.append('tipoDoc', S.doc); fd.append('acepto', '1');
+  fd.append('cantidad', String(S.fijos.length || S.qty)); fd.append('total', String(precioTotal(c, S.fijos.length || S.qty)));
   if (S.fijos.length) fd.append('nums', S.fijos.join(',')); else fd.append('azar', String(S.qty));
   if (op) fd.append('op', op);
   if (S.file && !despues) { fd.append('img', S.file, 'comprobante.' + (S.file.type === 'image/webp' ? 'webp' : 'jpg')); fd.append('ih', S.ih); }
@@ -940,7 +1018,7 @@ async function enviar() {
   const b = $('#sbGo'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Registrando…';
   try {
     const j = await api(`/api/r/${encodeURIComponent(S.r)}/entrar`, { body: fd });
-    lsSet('yo', { n: j.nombre || nom, c: cel, d: dni });
+    lsSet('yo', { n: j.nombre || nom, c: cel, d: dni, doc: S.doc });
     try { localStorage.removeItem('sxf_' + claveBorrador()); } catch (e) {}
     guardarBoleto(S.r, j.tok);
     history.replaceState(null, '', `?t=${j.tok}`);
@@ -987,6 +1065,10 @@ async function vBoleto(tok, nuevo) {
   let h = cabecera(c) + `
   ${nuevo ? `<div class="banner card" style="background:linear-gradient(135deg,#22c55e26,#4f8ef71a);border-color:#22c55e77">🎉 ¡Ya estás participando!<br><span class="sm mu" style="font-weight:500">Guarda tu ticket: es tu comprobante para el sorteo.</span></div>` : ''}
   ${gane.length ? gane.map(g => `<div class="win">${g.k < R.g ? `🏆 ¡GANASTE EL ${g.k + 1}° PREMIO!<b>${fmtN(c, g.n)}</b>${esc((c.premios || [])[g.k] || '')}` : `🎗️ Quedaste como suplente ${g.k - R.g + 1}<b>${fmtN(c, g.n)}</b>`}</div>`).join('') : ''}
+  <div class="acts">
+    <a class="btn wa full" id="bWa" href="${c.wa ? waURL(c.wa, waN) : '#'}" target="_blank">💬 Enviar ${nuevo ? 'mi registro' : ''} por WhatsApp</a>
+    <div class="row"><button class="btn sp" id="bDesc">💾 Guardar ticket</button><button class="btn sp" data-c="${esc(linkBoleto(tok))}">🔗 Copiar link</button></div>
+  </div>
   ${ticketsHTML(c, p, nums)}
   <div class="card tk-det">
       <div class="tk-row" style="border-top:0"><span class="mu">Estado</span><span class="pill ${e.p}">${e.i} ${vencido ? 'Reserva vencida' : e.t}</span></div>
@@ -998,11 +1080,7 @@ async function vBoleto(tok, nuevo) {
       ${p.est === 'R' && p.vence ? `<div class="tk-row"><span class="c-warn">⏳ Reserva vence en</span><b class="c-warn" id="rv" data-mode="mini"></b></div>` : ''}
       <div class="tk-row"><span class="mu">Código</span><b>${esc(String(p.id || '').toUpperCase())}</b></div>
   </div>
-  <p class="sm" style="text-align:center;margin:0 6px">${expl}</p>
-  <div class="acts">
-    <a class="btn wa full" id="bWa" href="${c.wa ? waURL(c.wa, waN) : '#'}" target="_blank">💬 Enviar ${nuevo ? 'mi registro' : ''} por WhatsApp</a>
-    <div class="row"><button class="btn sp" id="bDesc">💾 Guardar boleto</button><button class="btn sp" data-c="${esc(linkBoleto(tok))}">🔗 Copiar link</button></div>
-  </div>`;
+  <p class="sm" style="text-align:center;margin:0 6px 12px">${expl}</p>`;
   h += envioHTML(c, p);
   if (puedePagar) h += `<div class="card" id="secPay"><h2>💳 Paga y sube tu comprobante</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 Enviar comprobante</button></div>`;
   const acciones = [
@@ -1184,6 +1262,7 @@ document.addEventListener('click', e => {
   // El globo de Heavy se cierra con cualquier toque fuera de él: nunca tapa un botón
   if ($('#hvB') && !t.closest('#hv')) $('#hvB').hidden = true;
   const pack = t.closest('[data-qty]'); if (pack) return elegirCantidad(+pack.dataset.qty);
+  const doc = t.closest('[data-doc]'); if (doc) return cambiarDocumento(doc.dataset.doc);
   const pfb = t.closest('[data-pf]'); if (pfb) { pf = pfb.dataset.pf; $$('[data-pf]').forEach(b => b.classList.toggle('on', b === pfb)); return renderPList(); }
   const cp = t.closest('[data-c]'); if (cp) return copiar(cp.dataset.c);
   if (t.closest('#verBases')) { e.preventDefault(); return modal(`<h2 class="syne" style="margin-bottom:10px">📜 Bases del sorteo</h2><pre>${esc(S.cfg.bases || 'El organizador aún no publicó las bases. Puedes consultarlas por WhatsApp.')}</pre>`); }
@@ -1195,7 +1274,6 @@ document.addEventListener('click', e => {
   if (t.id === 'qrImg') return modal(`<img src="${t.src}" style="width:100%;border-radius:14px;background:#fff;padding:10px"><a class="btn full" style="margin-top:10px" href="${t.src}" download="qr-pago">💾 Descargar QR</a>`);
   switch (t.closest('button')?.id) {
     case 'sbGo': return accionPrincipal();
-    case 'dniSi': return dniAceptar();
     case 'dniNo': return dniCorregir();
     case 'agUbic': return agUbicar();
     case 'agCambiar': return agCambiar();
@@ -1204,17 +1282,26 @@ document.addEventListener('click', e => {
     case 'envDespues': $('#envPick').hidden = true; $('#envDespues').hidden = true; toast('Puedes elegirlo después desde el link de tu boleto'); return envSeguir();
     case 'qm': return elegirCantidad(Math.max(1, S.qty - 1));
     case 'qp': if (S.qty >= S.maxTickets) return toast(`Máximo ${S.maxTickets} tickets por registro`); return elegirCantidad(S.qty + 1);
-    case 'quitar': S.file = null; $('#prev').hidden = true; $('#drop').hidden = false; $('#drop').classList.remove('has'); $('#fFile').value = ''; if ($('#opBox')) $('#opBox').hidden = true; return;
+    case 'quitar': return quitarComprobante();
+    case 'pegar': return pegarComprobante();
+    case 'verComprobante': return verComprobante();
     case 'bVer': return verificar();
   }
 });
+document.addEventListener('paste', e => {
+  const zona = $('#drop'); if (!zona || zona.hidden || !zona.offsetParent) return;
+  const imagen = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith('image/'));
+  if (imagen) { e.preventDefault(); procesarComprobante(imagen); }
+});
 document.addEventListener('change', e => {
   if (e.target.id === 'despues' && e.target.checked && S.file) { toast('Se enviará sin comprobante (reserva)'); }
+  if (e.target.id === 'despues' && !$('#sbar').hidden) actBar();
 });
 let aT; document.addEventListener('input', e => {
   const id = e.target.id;
   if (id === 'fCel') e.target.value = e.target.value.replace(/[^\d ]/g, '');
-  if (id === 'fDni') { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8); dniBuscar(e.target.value); }
+  if (id === 'fDni') { e.target.value = valorDocumento(); dniBuscar(e.target.value); }
+  if (id === 'fOp' && !$('#sbar').hidden) actBar();
   if (id === 'fDni' || id === 'fNom' || id === 'fCel') { guardarBorrador(); actualizarFlujo(); }
   if (id === 'agBusca') { clearTimeout(aT); aT = setTimeout(() => agBuscar(e.target.value), 200); }
 });

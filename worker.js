@@ -348,13 +348,15 @@ async function entrar(req, env, id) {
   const g = k => String(fd.get(k) || '').trim();
   let nombre = g('nombre').replace(/\s+/g, ' ').slice(0, 60);
   const cel = g('cel').replace(/\D/g, '').slice(-9);
-  const dni = g('dni').replace(/\D/g, '').slice(0, 12);
+  const carnetExtranjeria = g('tipoDoc') === 'CE';
+  const dni = carnetExtranjeria ? 'CE ' + g('dni').replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 12) : g('dni').replace(/\D/g, '').slice(0, 12);
   const agencia = limpiarAgencia(g('agencia'));
   const op = g('op').replace(/\s/g, '').slice(0, 30);
   const ih = g('ih').replace(/[^a-f0-9]/gi, '').slice(0, 64);
   const code = g('link').slice(0, 20);
   const azar = Math.max(0, Math.min(500, parseInt(g('azar'), 10) || 0));
   const pedidos = [...new Set(splitNums(g('nums')))];
+  const cantidadVista = parseInt(g('cantidad'), 10), totalVisto = parseFloat(g('total'));
 
   if (nombre.length < 3) err('Escribe tu nombre completo');
   if (!/^9\d{8}$/.test(cel)) err('Celular inválido: 9 dígitos y empieza con 9');
@@ -367,12 +369,15 @@ async function entrar(req, env, id) {
   let r = await loadRifa(env, id);
   const c = r.cfg;
   checkAbierta(c);
-  if (c.pedirDni && !/^\d{8}$/.test(dni)) err('Escribe tu DNI (8 dígitos)');
+  if (c.pedirDni && !(carnetExtranjeria ? /^CE [A-Z0-9]{9,12}$/.test(dni) : /^\d{8}$/.test(dni))) err(carnetExtranjeria ? 'Escribe tu carnet de extranjería (9 a 12 caracteres)' : 'Escribe tu DNI (8 dígitos)');
   // Si el DNI ya se consultó en RENIEC, se usa el nombre oficial (el navegador no decide de quién es un DNI)
   const ofi = /^\d{8}$/.test(dni) ? await dniCache(env, dni) : null;
   if (ofi) nombre = ofi.completo.slice(0, 60);
   const want = azar || pedidos.length;
   if (!want) err('Elige al menos un número');
+  // Lo que el cliente vio en pantalla debe coincidir con lo que se registra: nadie paga por más tickets de los que recibe
+  if (Number.isFinite(cantidadVista) && cantidadVista !== want) err('La cantidad de tickets cambió. Revisa tu pedido e intenta de nuevo.', 409);
+  if (c.modo === 'pago' && Number.isFinite(totalVisto) && Math.abs(totalVisto - precioTotal(c, want)) > 0.009) err('El total cambió. Revisa tu pedido e intenta de nuevo.', 409);
   if (c.maxSel && want > c.maxSel) err(`Máximo ${c.maxSel} números por registro`);
 
   if (iph) {

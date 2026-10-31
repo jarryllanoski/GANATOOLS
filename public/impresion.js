@@ -75,7 +75,11 @@ const Impresion = (() => {
     );
   }
 
-  const lineaContacto = (b) => [b.dni && `DNI ${b.dni}`, b.celular && `Cel ${b.celular}`].filter(Boolean).join(' · ');
+  const esCarnetExtranjeria = (dni) => String(dni).startsWith('CE ');
+  const tipoDocumento = (dni) => (esCarnetExtranjeria(dni) ? 'Carnet ext.' : 'DNI');
+  const numeroDocumento = (dni) => (esCarnetExtranjeria(dni) ? String(dni).slice(3) : String(dni));
+  const documento = (dni) => `${tipoDocumento(dni)} ${numeroDocumento(dni)}`;
+  const lineaContacto = (b) => [b.dni && documento(b.dni), b.celular && `Cel ${b.celular}`].filter(Boolean).join(' · ');
   const posicion = (b) => (b.totalDelParticipante > 1 ? `Número ${b.posicion} de ${b.totalDelParticipante}` : 'Número único');
   const imagenQr = (src, clase) => (src ? `<img class="${clase}" src="${src}" alt="">` : '');
 
@@ -115,7 +119,7 @@ const Impresion = (() => {
         <p class="rollo-posicion">${posicion(b)}</p>
         <dl class="rollo-datos">
           <dt>Participante</dt><dd>${escaparHtml(b.nombre)}</dd>
-          ${b.dni ? `<dt>DNI</dt><dd>${escaparHtml(b.dni)}</dd>` : ''}
+          ${b.dni ? `<dt>${tipoDocumento(b.dni)}</dt><dd>${escaparHtml(numeroDocumento(b.dni))}</dd>` : ''}
           ${b.celular ? `<dt>Celular</dt><dd>${escaparHtml(b.celular)}</dd>` : ''}
           ${sorteo.fecha ? `<dt>Sorteo</dt><dd>${formatearFecha(sorteo.fecha)}</dd>` : ''}
         </dl>
@@ -142,7 +146,7 @@ const Impresion = (() => {
         <p class="mini-titulo">${escaparHtml(sorteo.titulo)}</p>
         <p class="mini-numero">${escaparHtml(b.numero)}</p>
         <p class="mini-nombre">${escaparHtml(b.nombre)}</p>
-        <p class="mini-pie">${b.dni ? `DNI ${escaparHtml(b.dni)} · ` : ''}${escaparHtml(b.codigo)}</p>
+        <p class="mini-pie">${b.dni ? `${escaparHtml(documento(b.dni))} · ` : ''}${escaparHtml(b.codigo)}</p>
       </article>`,
   };
 
