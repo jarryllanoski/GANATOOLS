@@ -43,10 +43,11 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
 - La pantalla avisa cuántos intentos quedan. Un acierto reinicia el contador.
 - Si te bloqueas tú: espera 15 minutos, o entra desde otra red (por ejemplo, datos móviles en vez de WiFi).
 
-## Antispam (opcional)
-Cloudflare → **Turnstile** → *Add widget* con el dominio `sorteos.jarryllanoski.workers.dev`:
-- *Site key* → en el panel: Config → Sistema → Turnstile Site Key.
-- *Secret key* → `npx wrangler secret put TURNSTILE_SECRET`.
+## Antispam (Cloudflare Turnstile)
+Protege **todos los sorteos** a la vez. Se activa solo cuando el Worker tiene las dos claves:
+- `TURNSTILE_SITEKEY` (pública) → en `wrangler.toml`.
+- `TURNSTILE_SECRET` (secreta) → `npx wrangler secret put TURNSTILE_SECRET`.
+El widget se crea en Cloudflare → **Turnstile** → *Add widget*, dominio `sorteos.jarryllanoski.workers.dev`, modo *Managed*.
 
 ## Links que genera el sistema
 | Para qué | Link |

@@ -1316,7 +1316,7 @@ function renderConfig() {
 
   <div class="sec-hdr pur">⚙️ Configuración avanzada</div>
   <div class="card"><h3>🛡️ Sistema</h3>
-    ${F('tsKey', 'Turnstile Site Key (antispam, opcional)', 'placeholder="0x4AAAA…"')}
+    <p class="hint" style="margin:0 0 10px">🛡️ Antispam (Cloudflare Turnstile): se configura una sola vez en el Worker y protege todos los sorteos.</p>
     <label class="fld"><span>URL de formulario.html</span><input id="sysForm" placeholder="${esc(new URL('formulario.html', location.href).href)}"></label>
     <p class="hint">🔐 Compromiso de semilla: <span style="word-break:break-all">${esc(cfg().seedHash || '')}</span></p>
     <div style="display:grid;gap:8px;margin-top:12px"><button class="btn bad full" id="cfgDel">🗑️ Eliminar este sorteo</button></div>

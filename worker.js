@@ -7,7 +7,8 @@
    Variables (Worker → Settings → Variables and Secrets):
      ADMIN_PIN        → PIN del panel   (obligatorio, tipo Secret)
      ALLOWED_ORIGIN   → ej: https://sorteos.tuusuario.workers.dev (opcional, por defecto *)
-     TURNSTILE_SECRET → clave secreta de Turnstile        (opcional, antispam)
+     TURNSTILE_SITEKEY → clave pública de Turnstile (wrangler.toml)  ┐ antispam: se activa
+     TURNSTILE_SECRET  → clave secreta (Secret)                      ┘ solo si están las dos
    Las tablas se crean solas en la primera petición.
    ========================================================================== */
 
@@ -189,13 +190,18 @@ async function auth(req, env) {
   err(`PIN incorrecto. Te queda${q === 1 ? '' : 'n'} ${q} intento${q === 1 ? '' : 's'}.`, 401);
 }
 
+// Antispam: activo para todos los sorteos cuando el Worker tiene las dos claves
+const tsActivo = env => !!(env.TURNSTILE_SECRET && env.TURNSTILE_SITEKEY);
 async function turnstile(env, token, ip) {
-  if (!env.TURNSTILE_SECRET) return;
+  if (!tsActivo(env)) return;
   if (!token) err('Completa la verificación antispam');
   const fd = new FormData();
   fd.append('secret', env.TURNSTILE_SECRET); fd.append('response', token); if (ip) fd.append('remoteip', ip);
-  const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: fd });
-  const j = await r.json().catch(() => ({}));
+  let j = {};
+  try {
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: fd });
+    j = await r.json();
+  } catch (e) { err('No se pudo comprobar el antispam. Intenta de nuevo en unos segundos.', 503); }
   if (!j.success) err('La verificación antispam falló, recarga la página');
 }
 
@@ -293,7 +299,7 @@ async function pubRifa(env, id) {
   let d = memGet('r:' + id);
   if (!d) {
     const r = await loadRifa(env, id);
-    d = { id, cfg: r.cfg, board: r.board, t: now() };
+    d = { id, cfg: { ...r.cfg, tsKey: tsActivo(env) ? env.TURNSTILE_SITEKEY : '' }, board: r.board, t: now() };
     memSet('r:' + id, d, CFG.CACHE_MS);
   }
   return J({ ok: true, ...d }, 200, { 'cache-control': 'public, max-age=8' });
