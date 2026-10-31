@@ -21,3 +21,7 @@ bucket_name = "sorteos-img"
 [assets]
 directory = "public"
 not_found_handling = "none"
+
+# Una vez al día (3:17 a.m. hora Perú) se vacía lo que lleva más de 30 días en la papelera. Gratis.
+[triggers]
+crons = ["17 8 * * *"]

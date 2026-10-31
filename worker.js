@@ -18,6 +18,7 @@ const CFG = {
   MAX_IMG: 1.5e6,    // peso máx. de comprobante (bytes)
   MAX_NUM: 10000,    // números máximos por sorteo
   RETRIES: 4,        // reintentos ante escrituras simultáneas
+  PAPELERA_DIAS: 30, // días en la papelera antes de borrarse para siempre
 };
 
 /* ---------------- Esquema ---------------- */
@@ -34,11 +35,17 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS links (code TEXT PRIMARY KEY, rifa TEXT, data TEXT, usado INTEGER DEFAULT 0, creado INTEGER)`,
   `CREATE TABLE IF NOT EXISTS imgs (k TEXT PRIMARY KEY, mime TEXT, b64 TEXT)`,
 ];
+// Columnas agregadas después (papelera): bor = fecha en que entró a la papelera,
+// prev = estado que tenía antes (para recuperarlo igual).
+const MIGRAR = ['ALTER TABLE part ADD COLUMN bor INTEGER', 'ALTER TABLE part ADD COLUMN prev TEXT'];
 let SCHEMA_OK = false;
 async function ensureSchema(env) {
   if (SCHEMA_OK) return;
   if (!env.DB) err('Falta el binding D1 llamado "DB" en el Worker', 500);
   await env.DB.batch(SCHEMA.map(s => env.DB.prepare(s)));
+  for (const q of MIGRAR) {
+    try { await env.DB.prepare(q).run(); } catch (e) { if (!/duplicate column/i.test(e.message)) throw e; }
+  }
   SCHEMA_OK = true;
 }
 
@@ -67,6 +74,10 @@ export default {
     const h = new Headers(res.headers);
     for (const [k, v] of Object.entries(cors(origin))) h.set(k, v);
     return new Response(res.body, { status: res.status, headers: h });
+  },
+  // Tarea diaria (cron en wrangler.toml): vacía lo que lleva más de 30 días en la papelera
+  async scheduled(evt, env, ctx) {
+    ctx.waitUntil(ensureSchema(env).then(() => limpiarPapelera(env)));
   },
 };
 
@@ -220,7 +231,7 @@ async function expire(env, r) {
   const cfg = { ...r.cfg, _nx: mn && mn.m ? mn.m : 0 };
   const board = b.join('');
   const res = await env.DB.batch([
-    env.DB.prepare("UPDATE part SET est='X', nota='vencido' WHERE rifa=? AND est='R' AND vence<=? AND (SELECT ver FROM rifas WHERE id=?)=?").bind(r.id, t, r.id, r.ver),
+    env.DB.prepare("UPDATE part SET est='X', nota='vencido', bor=?, prev='R' WHERE rifa=? AND est='R' AND vence<=? AND (SELECT ver FROM rifas WHERE id=?)=?").bind(t, r.id, t, r.id, r.ver),
     env.DB.prepare('UPDATE rifas SET board=?, cfg=?, ver=ver+1 WHERE id=? AND ver=?').bind(board, JSON.stringify(cfg), r.id, r.ver),
   ]);
   if (!res[1].meta.changes) return loadRifa(env, r.id, true);
@@ -395,7 +406,7 @@ async function pagoTardio(req, env, tok) {
     }
     idx.forEach(j => { b[j] = '2'; });
     r.board = b.join('');
-    const pre = [env.DB.prepare(`UPDATE part SET est='V', op=?, img=?, ih=?, vence=0, nota=NULL WHERE id=? AND ${VER_OK}`).bind(op || null, key, ih || null, p.id, r.id, r.ver)];
+    const pre = [env.DB.prepare(`UPDATE part SET est='V', op=?, img=?, ih=?, vence=0, nota=NULL, bor=NULL, prev=NULL WHERE id=? AND ${VER_OK}`).bind(op || null, key, ih || null, p.id, r.id, r.ver)];
     if (await commit(env, r, pre, 1)) return J({ ok: true, est: 'V' });
     r = await loadRifa(env, p0.rifa);
   }
@@ -513,8 +524,22 @@ async function delRifa(env, id) {
 
 async function adminDetalle(env, id) {
   const r = await loadRifa(env, id);
-  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
+  await limpiarPapelera(env, id);
+  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
   return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, board: r.board, act: r.act }, parts: results });
+}
+
+// Papelera = registros anulados (est 'X'). Se pueden recuperar; a los 30 días
+// se borran para siempre junto con sus comprobantes. Sin `id` limpia todos los sorteos.
+async function limpiarPapelera(env, id) {
+  const t = now(), lim = t - CFG.PAPELERA_DIAS * 864e5;
+  const w = id ? 'rifa=? AND ' : '', b = id ? [id] : [];
+  const { results } = await env.DB.prepare(`SELECT id,rifa FROM part WHERE ${w}est='X' AND bor<?`).bind(...b, lim).all();
+  const q = [env.DB.prepare(`UPDATE part SET bor=? WHERE ${w}est='X' AND bor IS NULL`).bind(t, ...b)];
+  if (results.length) q.push(env.DB.prepare(`DELETE FROM part WHERE ${w}est='X' AND bor<?`).bind(...b, lim));
+  await env.DB.batch(q);
+  for (const p of results) { await delImgs(env, `c/${p.rifa}/${p.id}.`); await delImgs(env, `c/${p.rifa}/${p.id}-`); }
+  return results.length;
 }
 
 async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
@@ -542,6 +567,7 @@ async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
     if (!p) err('Participante no encontrado', 404);
     if (p.est === est) return J({ ok: true, est });
     const r = await loadRifa(env, p.rifa);
+    if (est === 'X' && p.est === 'P' && r.cfg.resultado) err('Ya participó del sorteo: no se puede mandar a la papelera');
     const idx = splitNums(p.nums);
     const b = r.board.split('');
     if (p.est === 'X') {
@@ -551,7 +577,8 @@ async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
     idx.forEach(j => { b[j] = ch; });
     r.board = b.join('');
     const nn = est === 'X' ? (acc === 'rechazar' ? 'rechazado' : 'liberado') : (p.nota === 'vencido' || p.nota === 'rechazado' || p.nota === 'liberado' ? null : p.nota);
-    const pre = [env.DB.prepare(`UPDATE part SET est=?, nota=?, vence=0 WHERE id=? AND ${VER_OK}`).bind(est, nn, pid, r.id, r.ver)];
+    const bor = est === 'X' ? now() : null, prev = est === 'X' ? p.est : null;
+    const pre = [env.DB.prepare(`UPDATE part SET est=?, nota=?, vence=0, bor=?, prev=? WHERE id=? AND ${VER_OK}`).bind(est, nn, bor, prev, pid, r.id, r.ver)];
     if (await commit(env, r, pre)) return J({ ok: true, est });
   }
   err('Intenta de nuevo', 503);

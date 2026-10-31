@@ -31,6 +31,13 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
 - Secreto `ADMIN_PIN` → PIN del panel. Para cambiarlo: `npx wrangler secret put ADMIN_PIN`.
 - `ALLOWED_ORIGIN` → la dirección del Worker (en `wrangler.toml`).
 
+## Estados y papelera
+- 🆕 **NUEVO** → registro por revisar.
+- ✅ **CONFIRMADO** → pago verificado. Cuando haces el sorteo 🎲, pasan solos a 🏁 **CULMINADO** (ya participaron).
+- 🗑️ **Papelera** (botón al lado del dado) → toca 🗑️ **dos veces** en una tarjeta para mandarla ahí. Sus números quedan libres.
+  Se puede **recuperar** con ♻️. No hay botón de vaciar: cada día, lo que lleva **30 días** se borra solo y para siempre (con su comprobante).
+  Las reservas vencidas también van a la papelera.
+
 ## Antispam (opcional)
 Cloudflare → **Turnstile** → *Add widget* con el dominio `sorteos.jarryllanoski.workers.dev`:
 - *Site key* → en el panel: Config → Sistema → Turnstile Site Key.

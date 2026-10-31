@@ -215,6 +215,11 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
 .st-N{background:rgba(247,129,102,.12);border-color:rgba(247,129,102,.4);color:var(--bad)}
 .st-C{background:rgba(46,160,67,.12);border-color:rgba(46,160,67,.4);color:var(--ok)}
 .st-X{background:rgba(139,148,158,.1);border-color:rgba(139,148,158,.35);color:var(--mu)}
+.st-F{background:rgba(163,113,247,.12);border-color:rgba(163,113,247,.4);color:var(--pur)}
+.btn-del.arm{background:var(--bad);color:#fff;font-size:12px;font-weight:800}
+.ibtn{position:relative}.ibtn .bdg{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--bad);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center}
+.trow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.trow>div{flex:1;min-width:0}
+.trow .trec{flex:none;width:auto;margin:0;padding:8px 12px;white-space:nowrap}
 .btn-edit,.btn-del{width:34px;height:34px;border-radius:7px;font-size:15px;display:flex;align-items:center;justify-content:center;flex:none}
 .btn-edit{border:1px solid var(--line);background:var(--bg2);color:var(--mu)}
 .btn-del{background:rgba(247,129,102,.12);border:1px solid rgba(247,129,102,.3);color:var(--bad)}
@@ -335,6 +340,7 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
         <button class="ibtn" id="bVista" title="Grilla / lista">▦</button>
         <button class="ibtn" id="bRes" title="Resultado">🏆</button>
         <button class="ibtn gold" id="bSort" title="Sortear">🎲</button>
+        <button class="ibtn" id="bTrash" title="Papelera">🗑️</button>
       </div>
     </div>
     <div id="lista"></div>
@@ -380,13 +386,18 @@ const fmtN = (c, i) => String(i + baseOf(c)).padStart(digs(c), '0');
 const splitN = s => String(s || '').split(',').filter(x => x !== '').map(Number);
 const fecha = t => t ? new Date(t).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
 const fechaL = t => t ? new Date(t).toLocaleString('es-PE', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
-const EST = { R: { t: 'Reservado', p: 'p-warn', i: '⏳' }, V: { t: 'En revisión', p: 'p-ac', i: '🔎' }, P: { t: 'Pagado', p: 'p-ok', i: '✅' }, X: { t: 'Anulado', p: 'p-bad', i: '✖️' } };
+const EST = { R: { t: 'Reservado', p: 'p-warn', i: '⏳' }, V: { t: 'En revisión', p: 'p-ac', i: '🔎' }, P: { t: 'Pagado', p: 'p-ok', i: '✅' }, X: { t: 'En papelera', p: 'p-bad', i: '🗑️' } };
 const ESTR = { activa: ['🟢 Activa', 'p-ok'], pausada: ['⏸️ Pausada', 'p-warn'], cerrada: ['🔒 Cerrada', 'p-bad'], sorteada: ['🏆 Sorteada', 'p-pur'] };
-// En el panel solo hay 3 estados (como Total-Tools); R y V del servidor se muestran como NUEVO
-const GRP = { N: { t: 'NUEVO', i: '🆕', bar: 'var(--bad)' }, C: { t: 'CONFIRMADO', i: '✅', bar: 'var(--ok)' }, X: { t: 'ANULADO', i: '🚫', bar: 'var(--mu)' } };
-const GORD = ['N', 'C', 'X'], FILT = ['todos', ...GORD];
-const ACC = { N: 'revision', C: 'aprobar', X: 'liberar' };
-const grp = p => p.est === 'P' ? 'C' : p.est === 'X' ? 'X' : 'N';
+// Estados del panel: R y V del servidor se muestran como NUEVO. Cuando el sorteo ya se
+// realizó, los confirmados pasan solos a CULMINADO (ya participaron). Los anulados (X)
+// no salen en la lista: están en la papelera 🗑️.
+const GRP = { N: { t: 'NUEVO', i: '🆕', bar: 'var(--bad)' }, C: { t: 'CONFIRMADO', i: '✅', bar: 'var(--ok)' }, F: { t: 'CULMINADO', i: '🏁', bar: 'var(--pur)' }, X: { t: 'PAPELERA', i: '🗑️', bar: 'var(--mu)' } };
+// Antes del sorteo: NUEVO / CONFIRMADO. Después: NUEVO / CULMINADO.
+const gord = () => culminada() ? ['N', 'F'] : ['N', 'C'], filt = () => ['todos', ...gord()];
+const ACC = { N: 'revision', C: 'aprobar', F: 'aprobar', X: 'liberar' };
+const PAPELERA_DIAS = 30;
+const culminada = () => !!(cfg().resultado || cfg().estado === 'sorteada');
+const grp = p => p.est === 'X' ? 'X' : p.est === 'P' ? (culminada() ? 'F' : 'C') : 'N';
 const ADV0 = { desde: '', hasta: '', comp: 'any', origen: 'any', min: '', max: '', cant: '', imp: 'any', orden: 'nuevo' };
 const impresos = new Set(lsGet('impresos', []));
 const marcarImpresos = l => { l.forEach(p => impresos.add(p.id)); lsSet('impresos', [...impresos].slice(-3000)); };
@@ -605,7 +616,7 @@ function stats() {
 }
 function renderStats() {
   const s = stats(), c = cfg(), ps = S.d.parts;
-  const conf = ps.filter(p => grp(p) === 'C'), nue = ps.filter(p => grp(p) === 'N');
+  const conf = ps.filter(p => p.est === 'P'), nue = ps.filter(p => grp(p) === 'N');
   $('#stats').innerHTML = `
     <div class="stat"><b class="c-ok">${s.total}</b><span>🎟️ Total números</span></div>
     <div class="stat"><b class="c-bad">${nue.length}</b><span>🆕 Nuevos</span></div>
@@ -621,11 +632,13 @@ function renderStats() {
    que cambian la etiqueta activa, igual que floatpanel.js de Total-Tools */
 function renderChips() {
   const ps = S.d.parts, n = g => ps.filter(p => grp(p) === g).length;
+  if (!filt().includes(S.filtro)) S.filtro = 'todos';
   $('#chipTodos').className = 'chip' + (S.filtro === 'todos' ? ' on' : '');
-  $('#chips').innerHTML = GORD.map(g => `<button class="chip ${S.filtro === g ? 'on' : ''}" data-f="${g}">${GRP[g].i} ${GRP[g].t} (${n(g)})</button>`).join('');
-  const i = FILT.indexOf(S.filtro);
+  const nX = n('X'); $('#bTrash').innerHTML = '🗑️' + (nX ? `<span class="bdg">${nX}</span>` : '');
+  $('#chips').innerHTML = gord().map(g => `<button class="chip ${S.filtro === g ? 'on' : ''}" data-f="${g}">${GRP[g].i} ${GRP[g].t} (${n(g)})</button>`).join('');
+  const i = filt().indexOf(S.filtro);
   $('#chL').style.display = i > 0 ? 'flex' : 'none';
-  $('#chR').style.display = i < FILT.length - 1 ? 'flex' : 'none';
+  $('#chR').style.display = i < filt().length - 1 ? 'flex' : 'none';
   verActivo();
 }
 function verActivo() {
@@ -635,12 +648,12 @@ function verActivo() {
   if (d) car.scrollBy({ left: d, behavior: 'smooth' });
 }
 function setFiltro(f) { if (S.filtro === f) return; S.filtro = f; if (S.vista === 'grilla') S.vista = 'lista'; renderChips(); renderLista(); }
-function navFiltro(d) { const i = FILT.indexOf(S.filtro) + d; if (i >= 0 && i < FILT.length) setFiltro(FILT[i]); }
+function navFiltro(d) { const i = filt().indexOf(S.filtro) + d; if (i >= 0 && i < filt().length) setFiltro(filt()[i]); }
 function todasEtiquetas() {
   const ps = S.d.parts, c = cfg();
   const m = modal(`<h2>🏷️ Todas las etiquetas</h2><div class="sopts">
     <button class="sopt" style="background:rgba(56,139,253,.1);border-color:rgba(56,139,253,.4);color:var(--ac)" data-go="todos">📋 TODOS<span class="xs" style="opacity:.6">${ps.length}</span></button>
-    ${GORD.map(g => { const l = ps.filter(p => grp(p) === g); return `<button class="sopt st-${g}" data-go="${g}">${GRP[g].i} ${GRP[g].t}${c.modo === 'pago' ? `<span class="sopt-m">${fmtS(l.reduce((a, p) => a + (+p.monto || 0), 0))}</span>` : ''}<span class="xs" style="opacity:.6">${l.length}</span></button>`; }).join('')}
+    ${gord().map(g => { const l = ps.filter(p => grp(p) === g); return `<button class="sopt st-${g}" data-go="${g}">${GRP[g].i} ${GRP[g].t}${c.modo === 'pago' ? `<span class="sopt-m">${fmtS(l.reduce((a, p) => a + (+p.monto || 0), 0))}</span>` : ''}<span class="xs" style="opacity:.6">${l.length}</span></button>`; }).join('')}
   </div>`);
   m.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; m.close(); setFiltro(b.dataset.go); });
 }
@@ -649,10 +662,11 @@ function todasEtiquetas() {
    LISTA DE PARTICIPANTES
    ===================================================================== */
 function filtrados() {
+  if (!filt().includes(S.filtro)) S.filtro = 'todos';
   const c = cfg(), q = S.q.trim().toLowerCase(), A = S.adv;
   const d0 = A.desde ? new Date(A.desde + 'T00:00').getTime() : 0, d1 = A.hasta ? new Date(A.hasta + 'T23:59:59').getTime() : 0;
   const l = S.d.parts.filter(p => {
-    if (S.filtro !== 'todos' && grp(p) !== S.filtro) return false;
+    if (grp(p) === 'X' || (S.filtro !== 'todos' && grp(p) !== S.filtro)) return false;
     if ((d0 && p.creado < d0) || (d1 && p.creado > d1)) return false;
     if ((A.comp === 'si' && !p.img) || (A.comp === 'no' && p.img)) return false;
     const lk = !!p.nota?.startsWith('link:');
@@ -673,8 +687,8 @@ function renderLista() {
   renderSelBar();
   if (S.vista === 'grilla') return renderGrilla();
   const ps = filtrados(), c = cfg();
-  if (!ps.length) { $('#lista').innerHTML = `<div class="empty"><b>📭</b>${S.d.parts.length ? 'Nada con ese filtro' : 'Aún no hay participantes.<br>Comparte el link desde la pestaña 🔗 Compartir.'}</div>`; return; }
-  $('#lista').innerHTML = GORD.map(g => [g, ps.filter(p => grp(p) === g)]).filter(([, l]) => l.length).map(([g, l]) => `
+  if (!ps.length) { $('#lista').innerHTML = `<div class="empty"><b>📭</b>${S.d.parts.length ? (S.d.parts.some(p => grp(p) !== 'X') ? 'Nada con ese filtro' : 'No hay participantes activos.<br>Los borrados están en la papelera 🗑️.') : 'Aún no hay participantes.<br>Comparte el link desde la pestaña 🔗 Compartir.'}</div>`; return; }
+  $('#lista').innerHTML = gord().map(g => [g, ps.filter(p => grp(p) === g)]).filter(([, l]) => l.length).map(([g, l]) => `
     <div class="cgroup">
       <div class="cgroup-hdr"><div class="cgroup-bar" style="background:${GRP[g].bar}"></div><span>${GRP[g].i}</span><div class="cgroup-name">${GRP[g].t}</div><div class="cgroup-sp"></div><button class="cgroup-btn" data-gp="${g}" title="Imprimir seleccionados de ${GRP[g].t}">🖨️</button><div class="cgroup-sp"></div><button class="cgroup-btn" data-sc="-1" title="Tarjeta anterior">▲</button><button class="cgroup-btn" data-sc="1" title="Tarjeta siguiente">▼</button><div class="cgroup-cnt">${l.length}</div></div>
       ${l.map(p => cardHTML(p, c)).join('')}
@@ -697,7 +711,7 @@ function cardHTML(p, c) {
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
     ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
-    <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="Anular" ${g === 'X' ? 'disabled' : ''}>🗑️</button></div>
+    <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="${g === 'F' ? 'Ya participó del sorteo' : 'Mandar a la papelera (toca 2 veces)'}" ${g === 'F' ? 'disabled' : ''}>🗑️</button></div>
   </div>`;
 }
 // ▲▼: una tarjeta a la vez, alineada bajo los encabezados fijos (scrollCard de Total-Tools)
@@ -734,7 +748,16 @@ async function accion(pid, acc) {
   if (acc === 'print') return imprimirTickets([p]);
   if (acc === 'estado') return hojaEstado([p]);
   if (acc === 'editar') return editarPart(p);
-  if (acc === 'anular') { if (confirm(`¿Anular el registro de ${p.nombre}? Sus números quedarán libres.`)) cambiarEstado([p], 'X'); return; }
+  if (acc === 'anular') {
+    // Doble toque: el 1er toque arma el botón, el 2º (antes de 3 s) lo manda a la papelera
+    const b = $(`.pc[data-pid="${pid}"] .btn-del`);
+    if (b?.dataset.arm) return cambiarEstado([p], 'X');
+    if (!b) return;
+    b.dataset.arm = '1'; b.classList.add('arm'); b.textContent = '¿?';
+    toast('Toca 🗑️ otra vez para mandarlo a la papelera');
+    setTimeout(() => { if (b.isConnected) { delete b.dataset.arm; b.classList.remove('arm'); b.textContent = '🗑️'; } }, 3000);
+    return;
+  }
   if (acc === 'sel') {
     const on = !S.sel.has(pid); on ? S.sel.add(pid) : S.sel.delete(pid);
     const ck = $(`.pc[data-pid="${pid}"] .chk`); ck.classList.toggle('on', on); ck.textContent = on ? '✓' : '';
@@ -743,11 +766,13 @@ async function accion(pid, acc) {
 }
 // Cambia el estado de uno o varios (selección) usando las acciones del Worker
 async function cambiarEstado(list, g) {
-  const todo = list.filter(p => grp(p) !== g);
-  if (!todo.length) return toast(`Ya está en ${GRP[g].t}`);
+  const fijos = g === 'X' ? list.filter(p => grp(p) === 'F') : [];
+  const todo = list.filter(p => grp(p) !== g && !fijos.includes(p));
+  if (fijos.length) toast(`🏁 ${fijos.length > 1 ? fijos.length + ' ya participaron' : 'Ya participó'} del sorteo: no va a la papelera`);
+  if (!todo.length) return fijos.length ? null : toast(`Ya está en ${GRP[g].t}`);
   let ok = 0; const fallos = [];
   for (const p of todo) { try { await API.accion(p.id, ACC[g]); ok++; S.sel.delete(p.id); } catch (e) { fallos.push(`${p.nombre.split(' ')[0]}: ${e.message}`); } }
-  if (ok) toast(`${GRP[g].i} ${ok > 1 ? ok + ' registros' : 'Registro'} → ${GRP[g].t}`, 'ok');
+  if (ok) toast(g === 'X' ? `🗑️ ${ok > 1 ? ok + ' registros enviados' : 'Enviado'} a la papelera · se puede recuperar ${PAPELERA_DIAS} días` : `${GRP[g].i} ${ok > 1 ? ok + ' registros' : 'Registro'} → ${GRP[g].t}`, 'ok');
   if (fallos.length) setTimeout(() => toast(fallos[0], 'bad'), ok ? 1600 : 0);
   await cargarDetalle();
   if (g === 'C' && ok === 1 && todo.length === 1) {
@@ -757,19 +782,46 @@ async function cambiarEstado(list, g) {
     $('#mTk', m).onclick = () => { imprimirTickets([np]); m.close(); };
   }
 }
-// Hoja de estados (STATUS SHEET de Total-Tools): NUEVO / CONFIRMADO / ANULADO
+// Hoja de estados (STATUS SHEET de Total-Tools): NUEVO / CONFIRMADO (o CULMINADO) / PAPELERA
 function hojaEstado(list) {
   const uno = list.length === 1 ? list[0] : null, act = uno ? grp(uno) : '';
+  const OPC = ['N', culminada() ? 'F' : 'C', 'X'];
   const m = modal(`<h2>🔄 ${uno ? 'Cambiar estado' : `Estado de ${list.length} seleccionados`}</h2>
     <p class="mu sm" style="margin-bottom:14px">${uno ? esc(uno.nombre) : 'Se aplica a todos los seleccionados'}</p>
-    <div class="sopts">${GORD.map(g => `<button class="sopt st-${g}" data-st="${g}"><span>${GRP[g].i} ${GRP[g].t}</span>${g === act ? '<span>✓</span>' : ''}</button>`).join('')}</div>
-    <p class="xs mu" style="margin-top:12px;line-height:1.6">🆕 Nuevo: registro por revisar · ✅ Confirmado: pago verificado, entra al sorteo · 🚫 Anulado: sus números quedan libres</p>`);
+    <div class="sopts">${OPC.map(g => `<button class="sopt st-${g}" data-st="${g}"><span>${GRP[g].i} ${GRP[g].t}</span>${g === act ? '<span>✓</span>' : ''}</button>`).join('')}</div>
+    <p class="xs mu" style="margin-top:12px;line-height:1.6">🆕 Nuevo: registro por revisar · ${culminada() ? '🏁 Culminado: ya participó del sorteo' : '✅ Confirmado: pago verificado, entra al sorteo'} · 🗑️ Papelera: sus números quedan libres; se puede recuperar durante ${PAPELERA_DIAS} días</p>`);
   m.addEventListener('click', e => {
     const b = e.target.closest('[data-st]'); if (!b) return;
     const g = b.dataset.st; m.close();
     if (g === act) return;
-    if (g === 'X' && !confirm(uno ? `¿Anular el registro de ${uno.nombre}? Sus números quedarán libres.` : `¿Anular ${list.length} registros? Sus números quedarán libres.`)) return;
+    if (g === 'X' && !confirm(uno ? `¿Mandar a ${uno.nombre} a la papelera? Sus números quedarán libres.` : `¿Mandar ${list.length} registros a la papelera? Sus números quedarán libres.`)) return;
     cambiarEstado(list, g);
+  });
+}
+// Papelera: solo se puede recuperar (no hay botón de vaciar). El Worker borra para
+// siempre lo que lleva más de PAPELERA_DIAS días.
+function abrirPapelera() {
+  const c = cfg(), DIA = 864e5;
+  const l = S.d.parts.filter(p => p.est === 'X').sort((a, b) => (b.bor || 0) - (a.bor || 0));
+  const motivo = p => p.nota === 'vencido' ? '⏳ Reserva vencida' : p.nota === 'rechazado' ? '❌ Rechazado' : '🗑️ Borrado';
+  const quedan = p => Math.max(0, Math.ceil(((p.bor || Date.now()) + PAPELERA_DIAS * DIA - Date.now()) / DIA));
+  const m = modal(`<h2>🗑️ Papelera</h2>
+    <p class="mu sm" style="margin-bottom:6px">Puedes recuperar cualquier registro. Lo que pasa ${PAPELERA_DIAS} días aquí se borra solo y para siempre.</p>
+    ${l.length ? l.map(p => `<div class="trow"><div><b>${esc(p.nombre)}</b>
+      <div class="xs mu">📞 ${esc(p.cel)}${c.modo === 'pago' ? ' · 💰 ' + fmtS(p.monto) : ''} · 🎟️ ${splitN(p.nums).map(i => fmtN(c, i)).join(', ')}</div>
+      <div class="xs mu">${motivo(p)} ${p.bor ? fecha(p.bor) : ''} · <b class="c-warn">se borra en ${quedan(p)} día${quedan(p) === 1 ? '' : 's'}</b></div></div>
+      <button class="btn-sec trec" data-rec="${p.id}">♻️ Recuperar</button></div>`).join('')
+    : '<div class="empty"><b>🗑️</b>La papelera está vacía</div>'}`);
+  m.addEventListener('click', async e => {
+    const b = e.target.closest('[data-rec]'); if (!b) return;
+    const p = l.find(x => x.id === b.dataset.rec); b.disabled = true;
+    try {
+      // Vuelve como estaba: confirmado si estaba pagado; si no, como nuevo (en revisión)
+      await API.accion(p.id, p.prev === 'P' ? 'aprobar' : 'revision');
+      toast(`♻️ ${p.nombre.split(' ')[0]} recuperado → ${p.prev === 'P' ? GRP[culminada() ? 'F' : 'C'].t : 'NUEVO'}`, 'ok');
+      b.closest('.trow').remove();
+      await cargarDetalle();
+    } catch (er) { toast(er.message, 'bad'); b.disabled = false; }
   });
 }
 // Hoja de edición (como "Editar envío" de Total-Tools)
@@ -778,7 +830,7 @@ function editarPart(p) {
   const m = modal(`<h2>✏️ Editar participante</h2>
     <div class="grid2"><label class="fld"><span>Nombre *</span><input id="eN" maxlength="60" value="${esc(p.nombre)}"></label><label class="fld"><span>Celular *</span><input id="eC" inputmode="numeric" maxlength="9" value="${esc(p.cel)}"></label></div>
     <div class="grid2"><label class="fld"><span>DNI</span><input id="eD" inputmode="numeric" maxlength="12" value="${esc(p.dni || '')}"></label><label class="fld"><span>N° operación</span><input id="eO" maxlength="30" value="${esc(p.op || '')}"></label></div>
-    <div class="fld"><span>Números</span><div class="nums" style="margin:0">${splitN(p.nums).map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div><p class="hint">Para cambiar números, anula este registro y envíale un link personalizado.</p></div>
+    <div class="fld"><span>Números</span><div class="nums" style="margin:0">${splitN(p.nums).map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div><p class="hint">Para cambiar números, manda este registro a la papelera 🗑️ y envíale un link personalizado.</p></div>
     <label class="fld"><span>Nota interna</span><textarea id="eT" rows="2" placeholder="Solo la ves tú">${esc(lk ? '' : p.nota || '')}</textarea></label>
     <button class="btn-pri" id="eG">💾 Guardar cambios</button><button class="btn-sec" data-x>Cancelar</button>`);
   $('#eG', m).onclick = async () => {
@@ -914,7 +966,7 @@ body{--paper:#e9eef0;font-family:'DM Sans',Arial,sans-serif;background:var(--pap
 .hd{display:flex;align-items:center;justify-content:space-between;gap:3mm}
 .brand{background:#e30613;padding:1.2mm 4mm;transform:skewX(-14deg);font:italic 800 13pt 'Syne',sans-serif;letter-spacing:.5px;box-shadow:0 0 0 .6mm #fff;white-space:nowrap}
 .st{font:800 7.5pt 'DM Sans',sans-serif;padding:1mm 3mm;border-radius:10mm;border:.35mm solid #fff;letter-spacing:1px;white-space:nowrap}
-.st-C{background:#fff;color:#0b7a80}.st-N{background:rgba(255,255,255,.15)}.st-X{background:#e30613}
+.st-C,.st-F{background:#fff;color:#0b7a80}.st-N{background:rgba(255,255,255,.15)}.st-X{background:#e30613}
 .tit{font:800 14pt 'Syne',sans-serif;margin-top:3mm;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .who{font:700 11pt 'DM Sans',sans-serif;text-transform:uppercase;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cel{font-size:8.5pt;opacity:.85}
@@ -1099,7 +1151,7 @@ function verResultado() {
 function renderCompartir() {
   if (!S.d) return;
   const c = cfg(), L = linkSorteo(S.rid), P = linkPart(S.rid), ps = S.d.parts;
-  const nC = ps.filter(p => grp(p) === 'C').length, nP = ps.filter(p => grp(p) !== 'X' && !impresos.has(p.id)).length;
+  const nC = ps.filter(p => p.est === 'P').length, nP = ps.filter(p => grp(p) !== 'X' && !impresos.has(p.id)).length;
   $('#t-compartir').innerHTML = `
     <div class="hero"><b>🔑</b><h2>Links para clientes</h2><p>Comparte el sorteo o genera un link único por cliente.<br>El link personalizado se bloquea tras un uso.</p></div>
 
@@ -1387,7 +1439,7 @@ document.addEventListener('click', async e => {
     case 'sbPr': return imprimirSel();
     case 'sbSt': return hojaEstado(selList());
     case 'sbX': S.sel.clear(); return renderLista();
-    case 'cTkC': return imprimirTickets(S.d.parts.filter(p => grp(p) === 'C'));
+    case 'cTkC': return imprimirTickets(S.d.parts.filter(p => p.est === 'P'));
     case 'cTkP': return imprimirTickets(S.d.parts.filter(p => grp(p) !== 'X' && !impresos.has(p.id)));
     case 'lkAy': return modal(`<h2>📖 Link personalizado</h2><p class="mu" style="line-height:1.6">Crea un link para <b>un cliente específico</b>. Al abrirlo, su nombre, celular y números ya vienen llenos.<br><br>🔒 Se puede usar <b>una sola vez</b>: después de registrarse, el link queda bloqueado.<br><br>💡 Útil para clientes que te piden números por WhatsApp o por llamada.</p>`);
     case 'cfgAy': return modal(`<h2>📖 Configuración</h2><p class="mu" style="line-height:1.6"><b>📋 Formulario del cliente</b>: lo que ve el cliente al participar (premios, números, fechas, pagos y contacto).<br><br><b>⚙️ Configuración avanzada</b>: antispam, dirección del formulario y eliminar el sorteo.<br><br>Toca <b>💾 Guardar</b> para aplicar los cambios.</p>`);
@@ -1395,6 +1447,7 @@ document.addEventListener('click', async e => {
     case 'bVista': S.vista = S.vista === 'lista' ? 'grilla' : 'lista'; return renderLista();
     case 'bCsv': return exportarCSV();
     case 'bSort': return abrirSorteo();
+    case 'bTrash': return abrirPapelera();
     case 'bRes': return verResultado();
     case 'cWa': return abrir(waURL('', msgDifusion(cfg(), stats())));
     case 'cWaP': return abrir(waURL('', `👥 Mira la lista de participantes y el talonario de *${cfg().titulo}*:\n${linkPart(S.rid)}`));
