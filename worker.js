@@ -87,6 +87,7 @@ async function route(req, env) {
   if (seg[0] === 'pub' && m === 'GET') return getImg(env, seg.slice(1).join('/'), true);
   if (seg[0] !== 'api') err('No encontrado', 404);
   const [, a, b, c] = seg;
+  if (!a) return J({ ok: true, app: 'sorteos', v: 1 });
   if (a === 'admin') { auth(req, env); return admin(req, env, seg.slice(2)); }
   if (a === 'r' && b && !c && m === 'GET') return pubRifa(env, b);
   if (a === 'r' && b && c === 'part' && m === 'GET') return pubPart(env, b);

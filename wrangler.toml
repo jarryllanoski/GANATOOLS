@@ -15,3 +15,13 @@ database_id = "8a34493d-6223-4393-b2f6-861d09b801dd"
 # [[r2_buckets]]
 # binding = "IMG"
 # bucket_name = "sorteos-img"
+
+# Sirve index.html (panel) y formulario.html desde el mismo Worker (gratis).
+# Las rutas /api/* y /pub/* siguen yendo al código de worker.js.
+# Antes de cada deploy se copian solo las 2 páginas a public/ (carpeta temporal).
+[build]
+command = "rm -rf public && mkdir public && cp index.html formulario.html public/"
+
+[assets]
+directory = "public"
+not_found_handling = "none"
