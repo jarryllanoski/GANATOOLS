@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="impresion.js" defer></script>
 <style>
 /* Paleta y medidas de Total-Tools (panel.css) */
 :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--card:#1c2333;--card2:#1c2333;--line:#30363d;--tx:#e6edf3;--mu:#8b949e;--ac:#388bfd;--ac2:#1a5fbf;--ok:#2ea043;--wa:#2ea043;--warn:#d29922;--bad:#f78166;--org:#db6d28;--pur:#a371f7;--r:11px}
@@ -226,6 +227,7 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
 .btn-del[disabled]{opacity:.35;pointer-events:none}
 .sopts{display:flex;flex-direction:column;gap:9px;width:100%}
 .sopt{padding:14px 16px;border-radius:11px;border:1.5px solid;font-size:14px;font-weight:700;text-align:left;width:100%;display:flex;justify-content:space-between;align-items:center;position:relative}
+.sopt[data-formato]{border-color:var(--line);background:var(--bg2);color:var(--tx);font-weight:500}.sopt[data-formato].on{border-color:var(--ac);background:#388bfd1a}
 .sopt-m{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#f59e0b}
 /* píldoras con flechas (floatpanel.js de Total-Tools) */
 .chiprow{display:flex;align-items:center;gap:7px;margin-top:8px}
@@ -950,78 +952,50 @@ function irAlRegistro(id) {
   }, 120);
 }
 
-// Ticket estilo boleto de cine con los colores de TOTAL (turquesa, rojo y blanco)
-const TK_CSS = `@page{size:A4;margin:10mm}
-*{box-sizing:border-box;margin:0;padding:0}
-body{--paper:#e9eef0;font-family:'DM Sans',Arial,sans-serif;background:var(--paper);padding:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.bar{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:14px;font:600 13px 'DM Sans',sans-serif;color:#08646a}
-.bar button{background:#e30613;color:#fff;border:0;border-radius:8px;padding:10px 18px;font:700 14px 'DM Sans',sans-serif;cursor:pointer}
-.wrap{overflow-x:auto}
-@media print{body{--paper:#fff;background:#fff;padding:0}.bar{display:none}}
-.tk{display:flex;width:186mm;height:62mm;margin:0 auto 5mm;border-radius:4mm;overflow:hidden;background:linear-gradient(115deg,#075b61 0%,#0b858b 55%,#14aaae 100%);color:#fff;position:relative;break-inside:avoid;page-break-inside:avoid}
-.ser{width:14mm;background:#05484d;display:flex;align-items:center;justify-content:center;flex:none}
-.ser span{writing-mode:vertical-rl;transform:rotate(180deg);font:800 10.5pt 'Syne',sans-serif;letter-spacing:1.5px;white-space:nowrap}
-.main{flex:1;padding:4.5mm 5mm 4mm;display:flex;flex-direction:column;min-width:0}
-.hd{display:flex;align-items:center;justify-content:space-between;gap:3mm}
-.brand{background:#e30613;padding:1.2mm 4mm;transform:skewX(-14deg);font:italic 800 13pt 'Syne',sans-serif;letter-spacing:.5px;box-shadow:0 0 0 .6mm #fff;white-space:nowrap}
-.st{font:800 7.5pt 'DM Sans',sans-serif;padding:1mm 3mm;border-radius:10mm;border:.35mm solid #fff;letter-spacing:1px;white-space:nowrap}
-.st-C,.st-F{background:#fff;color:#0b7a80}.st-N{background:rgba(255,255,255,.15)}.st-X{background:#e30613}
-.tit{font:800 14pt 'Syne',sans-serif;margin-top:3mm;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.who{font:700 11pt 'DM Sans',sans-serif;text-transform:uppercase;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cel{font-size:8.5pt;opacity:.85}
-.nums{display:flex;flex-wrap:wrap;gap:1.5mm;margin-top:2.5mm;max-height:15mm;overflow:hidden}
-.nums b{background:#fff;color:#075b61;font:800 12.5pt 'Syne',sans-serif;padding:.5mm 2.6mm;border-radius:1.6mm}
-.ft{margin-top:auto;display:flex;flex-wrap:wrap;gap:1mm 4mm;font-size:7.5pt;opacity:.92;border-top:.3mm dashed rgba(255,255,255,.55);padding-top:1.5mm}
-.cut{width:0;border-left:.7mm dashed rgba(255,255,255,.95);position:relative;flex:none}
-.cut:before,.cut:after{content:'';position:absolute;left:-3.6mm;width:6.5mm;height:6.5mm;border-radius:50%;background:var(--paper)}
-.cut:before{top:-3.3mm}.cut:after{bottom:-3.3mm}
-.stub{width:46mm;flex:none;background:repeating-linear-gradient(-50deg,#e30613 0 5mm,#c3040f 5mm 10mm);display:flex;align-items:center;gap:2mm;padding:3mm 3mm 3mm 2.5mm}
-.stub-ser{writing-mode:vertical-rl;font:800 17pt 'Syne',sans-serif;letter-spacing:1px;white-space:nowrap;max-height:56mm;overflow:hidden}
-.stub-ser.cod{font-size:11pt}
-.stub-in{flex:1;min-width:0;background:#fff;color:#075b61;border-radius:2.5mm;padding:2mm;text-align:center;display:flex;flex-direction:column;align-items:center}
-.stub-in img{width:24mm;height:24mm;display:block}
-.stub-in small{font:800 6.5pt 'DM Sans',sans-serif;letter-spacing:1px;color:#e30613;margin-top:1mm}
-.stub-in b{font:700 8pt 'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}`;
-function qrData(text) {
+function qrComoImagen(texto) {
   if (!window.QRCode) return '';
-  const d = document.createElement('div');
-  new QRCode(d, { text, width: 180, height: 180, colorDark: '#062e33', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-  const cv = $('canvas', d); return cv ? cv.toDataURL('image/png') : ($('img', d)?.src || '');
+  const contenedor = document.createElement('div');
+  new QRCode(contenedor, { text: texto, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  const lienzo = $('canvas', contenedor);
+  return lienzo ? lienzo.toDataURL('image/png') : $('img', contenedor)?.src || '';
 }
-// Abre la ventana en el mismo toque (si no, el celular bloquea la ventana emergente)
-function imprimirTickets(list) {
-  if (!list.length) return;
-  let w = window.open('', '_blank');
-  if (!w) { // ventana bloqueada: se imprime desde un marco oculto
-    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
-    document.body.appendChild(fr); w = fr.contentWindow; setTimeout(() => fr.remove(), 120000);
-  }
-  const c = cfg(), neg = (c.negocio || CONFIG.NEGOCIO || 'TOTAL TOOLS').toUpperCase();
-  const f = t => new Date(t).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-  const tks = list.map(p => {
-    const g = grp(p), ns = splitN(p.nums).map(i => fmtN(c, i)), cod = p.id.toUpperCase(), qr = qrData(linkBoleto(p.tok));
-    return `<div class="tk">
-      <div class="ser"><span>N° ${cod}</span></div>
-      <div class="main">
-        <div class="hd"><span class="brand">${esc(neg)}</span><span class="st st-${g}">${GRP[g].t}</span></div>
-        <div class="tit">${esc(c.titulo || 'Sorteo')}</div>
-        <div class="who">${esc(p.nombre)}</div>
-        <div class="cel">📞 ${esc(p.cel)}${p.dni ? ' · DNI ' + esc(p.dni) : ''}</div>
-        <div class="nums">${ns.map(n => `<b>${n}</b>`).join('')}</div>
-        <div class="ft"><span>Registro: ${f(p.creado)}</span><span>${c.modo === 'pago' ? fmtS(p.monto) : 'GRATIS'}</span>${c.cierre ? `<span>Sorteo: ${f(c.cierre)}</span>` : ''}</div>
-      </div>
-      <div class="cut"></div>
-      <div class="stub"><div class="stub-ser${ns.length === 1 ? '' : ' cod'}">${ns.length === 1 ? ns[0] : cod}</div>
-        <div class="stub-in">${qr ? `<img src="${qr}" alt="QR">` : ''}<small>TALÓN · ${ns.length} N°</small><b>${esc(p.nombre.split(' ')[0])}</b></div></div>
-    </div>`;
-  }).join('');
-  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tickets · ${esc(c.titulo || 'Sorteo')}</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet"><style>${TK_CSS}</style></head>
-    <body><div class="bar"><button onclick="print()">🖨️ Imprimir</button><span>${list.length} ticket${list.length > 1 ? 's' : ''}</span></div><div class="wrap">${tks}</div>
-    <script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { setTimeout(function () { print(); }, 350); });<\/script></body></html>`);
-  w.document.close();
-  marcarImpresos(list);
-  renderLista(); renderBell();
+function datosParaImprimir(participantes) {
+  const c = cfg();
+  return {
+    sorteo: {
+      titulo: c.titulo || 'Sorteo',
+      negocio: (c.negocio || CONFIG.NEGOCIO || '').toUpperCase(),
+      fecha: c.cierre || 0,
+      precio: c.modo === 'pago' ? `${fmtS(c.precio)} por número` : 'Participación gratuita',
+    },
+    participantes: participantes.map(p => ({
+      nombre: p.nombre,
+      dni: p.dni || '',
+      celular: p.cel || '',
+      codigo: p.id.toUpperCase(),
+      registrado: p.creado,
+      enlace: linkBoleto(p.tok),
+      numeros: splitN(p.nums).map(i => fmtN(c, i)),
+    })),
+  };
+}
+function imprimirTickets(participantes) {
+  if (!participantes.length) return;
+  if (typeof Impresion === 'undefined') return toast('No se pudo cargar el módulo de impresión. Recarga la página.', 'bad');
+  const ultimo = lsGet('formatoImpresion', 'a4');
+  const tickets = participantes.reduce((total, p) => total + splitN(p.nums).length, 0);
+  const m = modal(`<h2>Imprimir ${tickets} ticket${tickets === 1 ? '' : 's'}</h2>
+    <p class="mu sm" style="margin-bottom:12px">Un ticket por cada número, con los datos de su dueño.</p>
+    <div class="sopts">${Impresion.FORMATOS.map(f => `<button class="sopt${f.id === ultimo ? ' on' : ''}" data-formato="${f.id}"><span><b>${esc(f.nombre)}</b><br><small class="mu">${esc(f.detalle)}</small></span>${f.id === ultimo ? '<span>✓</span>' : ''}</button>`).join('')}</div>`);
+  m.addEventListener('click', e => {
+    const opcion = e.target.closest('[data-formato]'); if (!opcion) return;
+    const formatoId = opcion.dataset.formato;
+    lsSet('formatoImpresion', formatoId);
+    Impresion.imprimir({ formatoId, ...datosParaImprimir(participantes), generarQr: qrComoImagen });
+    m.close();
+    marcarImpresos(participantes);
+    renderLista(); renderBell();
+  });
 }
 function msgCliente(p, c) {
   const nums = splitN(p.nums).map(i => fmtN(c, i)).join(', '), nom = p.nombre.split(' ')[0];

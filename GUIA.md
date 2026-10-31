@@ -63,6 +63,22 @@ Otras agencias (ciudad) y Retiro en tienda. Puede elegirlo después desde el lin
 - `public/data/agencias-shalom.json` (562 sedes) y `public/data/agencias-olva.json` (430 sedes), copiadas de Total-Tools.
   Para actualizarlas, reemplaza esos archivos.
 
+## Impresión de tickets
+Se imprime **un ticket por cada número**, con los datos de su dueño ("Número 2 de 5").
+Al tocar imprimir, el panel pregunta el formato (y recuerda el último):
+
+| Formato | Papel | Uso |
+|---|---|---|
+| A4 a color | 210 × 297 mm, 5 tickets con talón por hoja | Impresora normal |
+| Ticketera 80 mm | 80 × 100 mm por ticket, blanco y negro | Ticketera térmica |
+| Ticketera 58 mm | 58 × 90 mm por ticket, blanco y negro | Ticketera térmica pequeña |
+| Sticker 100 × 50 mm | Una etiqueta por ticket | Impresora de etiquetas |
+| Sticker 50 × 30 mm | Una etiqueta por ticket, sin QR | Impresora de etiquetas |
+
+En la ventana de impresión elige el **mismo tamaño de papel**, **márgenes: ninguno** y **escala: 100 %**.
+Cada ticket es una página, así la ticketera corta entre ticket y ticket.
+El código está en `public/impresion.js`: para agregar un tamaño, se añade una entrada en `FORMATOS`.
+
 ## Seguridad del PIN
 - Si alguien pone el PIN mal **5 veces seguidas**, ese celular o red queda **bloqueado 15 minutos** (aunque después ponga el correcto).
 - La pantalla avisa cuántos intentos quedan. Un acierto reinicia el contador.
