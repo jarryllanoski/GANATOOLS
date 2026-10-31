@@ -39,11 +39,17 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
   Se puede **recuperar** con ♻️. No hay botón de vaciar: cada día, lo que lleva **30 días** se borra solo y para siempre (con su comprobante).
   Las reservas vencidas también van a la papelera.
 
-## Formulario por pasos (diseño de Total-Tools)
-1. **Números** → 2. **Tus datos** (DNI → nombre automático) → 3. **Pago** (el N° de operación aparece recién al subir la captura; aquí acepta las bases) → **Participar**.
-- La **foto del premio** sale grande arriba: súbela en el panel → Config → *Foto del premio*.
-- Arriba se ve un **boleto vivo** que se llena mientras el cliente escribe.
-- **Heavy** (el guía) da consejos en cada paso; se cierra con cualquier toque.
+## Formulario de una sola página (diseño de Total-Tools)
+Todo en una página que se va abriendo sola, sin botones de "siguiente":
+1. **¿Cuántos tickets quieres?** Paquetes (1, las promociones, 3, 5, 10) con el ahorro y "Mejor precio"; también otra cantidad.
+2. **Tus datos** aparece al elegir: DNI → nombre automático, WhatsApp.
+3. **Paga y asegura tus tickets** aparece al completar los datos: Yape/Plin, captura (el N° de operación aparece al subirla).
+4. **🎲 Revelar mis números**: los números se sortean al azar en el servidor y se revelan con una animación de tragamonedas.
+
+- Arriba: foto del premio, cuenta regresiva, tickets que quedan y **personas que ya participan** (datos reales, nombres ocultos).
+- La barra de abajo siempre muestra cuántos tickets lleva, el total y el siguiente paso.
+- Si el cliente sale y vuelve, sus datos y la cantidad siguen ahí (se guardan en su celular 3 días).
+- El ticket del cliente tiene el mismo diseño del ticket impreso (talón TOTAL), uno por número, y "Guardar ticket" descarga esa imagen.
 
 ### Envío del premio (después de registrarse, opcional)
 En su boleto el cliente ve **"📦 ¿Cómo te enviamos el premio si ganas?"** con los couriers de Total-Tools:

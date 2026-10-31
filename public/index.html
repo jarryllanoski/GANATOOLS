@@ -1264,7 +1264,7 @@ function renderConfig() {
     <div class="grid2">${F('cantidad', 'Cantidad', 'min="1" max="10000" inputmode="numeric" data-t="num"', 'number')}
     <div class="fld"><span>Empieza en</span><div class="seg" data-k="base" data-t="segn"><button data-v="0">0</button><button data-v="1">1</button></div></div></div>
     <div class="grid2">${F('maxSel', 'Máx. por registro', 'min="1" max="500" inputmode="numeric" data-t="num"', 'number')}${F('maxPer', 'Máx. por persona (0 = sin límite)', 'min="0" inputmode="numeric" data-t="num"', 'number')}</div>
-    ${SW('elegir', '👆 El cliente elige sus números', 'Si lo apagas, se asignan al azar')}
+    <p class="hint" style="margin:6px 0 10px">🎲 El cliente elige cuántos tickets quiere y sus números se sortean al azar al final.</p>
     ${SW('aprobar', '✋ Aprobar manualmente (sorteo gratis)', 'Cada registro gratis queda en revisión')}
   </div>
 

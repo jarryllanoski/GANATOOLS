@@ -108,17 +108,7 @@ pre.bank{white-space:pre-wrap;font:inherit;font-size:13px;padding:11px;border-ra
 .sbar b{font-family:'Syne',sans-serif;font-size:16px;display:block;line-height:1.15}
 .sbar .btn{flex:none;padding:12px 18px;font-size:14px;border-radius:10px}
 /* boleto */
-.ticket{border-radius:14px;overflow:hidden;background:var(--bg3);border:1px solid var(--line);margin:0 0 12px}
-.tk-h{padding:16px;background:linear-gradient(135deg,var(--ac),#1a5fbf);color:#fff}
-.tk-h small{display:block;font-weight:700;opacity:.85;letter-spacing:1px;font-size:10px}
-.tk-h b{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;line-height:1.2;display:block;margin-top:2px}
-.tk-b{padding:16px}
-.tk-name{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;text-transform:uppercase}
-.tk-nums{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
-.tk-nums span{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;padding:5px 14px;border-radius:10px;background:var(--bg2);border:2px solid var(--ac);color:#fff}
-.tk-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px dashed var(--line);font-size:13px}
-.tk-perf{height:22px;position:relative;background:radial-gradient(circle at 0 50%,var(--bg) 11px,transparent 12px),radial-gradient(circle at 100% 50%,var(--bg) 11px,transparent 12px);border-top:2px dashed var(--line);margin:0}
-.tk-f{padding:10px 16px 14px;text-align:center;font-size:12px;color:var(--mu)}
+.tk-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line);font-size:13px}
 .win{padding:14px;border-radius:11px;background:#2ea0431a;border:1px solid #2ea04366;text-align:center;font-weight:700;font-size:15px;color:var(--ok)}
 .win b{font-family:'Syne',sans-serif;font-size:22px;display:block;color:var(--tx)}
 .acts{display:grid;gap:9px;margin:12px 0}
@@ -164,39 +154,8 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .hero-foto img{display:block;width:100%;max-height:360px;object-fit:cover}
 .hero-foto .tag{position:absolute;left:12px;top:12px;padding:5px 11px;border-radius:20px;background:rgba(8,8,16,.78);backdrop-filter:blur(4px);font-weight:800;font-size:12px;letter-spacing:.5px}
 .hero-foto .zoom{position:absolute;right:10px;bottom:10px;padding:4px 9px;border-radius:8px;background:rgba(8,8,16,.7);font-size:11px;color:#fff}
-.wz-prog{margin:18px 0 14px}
-.wz-paso{font-size:12px;font-weight:800;letter-spacing:1.4px;color:var(--mu);margin-bottom:8px}
-.wz-bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
-.wz-bar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#06b6d4,var(--ac));transition:width .35s ease}
-.wstep{display:none;animation:slideIn .25s ease}
-.wstep.active{display:block}.wstep.back{animation:slideBack .25s ease}
-@keyframes slideIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
-@keyframes slideBack{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
-.step-ttl{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--mu);text-transform:uppercase;margin:0 0 4px}
-.step-sub{font-size:13px;color:var(--mu);margin:0 0 14px}
-.wz-res{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:12px;background:#4f8ef714;border:1px solid #4f8ef755;font-weight:700;margin-top:12px}
-.wz-res b{font-size:18px;color:var(--ac)}
-.wz-nav{display:flex;gap:10px;margin-top:16px}
-.btn-main{flex:1;width:100%;background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;padding:16px;transition:opacity .15s,transform .1s}
-.btn-main:active{transform:scale(.98)}.btn-main:disabled{opacity:.55}
-.btn-sec{flex:none;background:var(--bg3);color:var(--tx);border:1.5px solid var(--line2);border-radius:14px;font-size:15px;padding:14px 18px}
 .pie{border-top:1px solid var(--line);margin-top:22px;padding-top:16px;text-align:center;font-size:12px;color:var(--mu);line-height:1.9}
 .pie a{color:#22d3ee;text-decoration:none;font-weight:700}
-/* boleto vivo (como la etiqueta de Total-Tools) */
-.lbl{background:#fff;color:#111;border-radius:12px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
-.lbl small{display:block;font-size:9.5px;font-weight:800;letter-spacing:1.6px;color:#555}
-.lbl-h{display:flex;gap:10px;align-items:flex-start;padding-bottom:10px;border-bottom:1.5px dashed #bbb}
-.lbl-h b{font-size:14px;font-weight:800;line-height:1.2;display:block}
-.lbl-h .sp{flex:1}.lbl-q{font-size:30px;line-height:1}
-.lbl-r{padding:9px 0;border-bottom:1.5px solid #222}
-.lbl-r>b{display:block;font-size:17px;font-weight:900;text-transform:uppercase;line-height:1.2}
-.lbl-r>b.vacio{color:#aaa}
-.lbl-r>span{display:block;font-size:12.5px;font-weight:700;margin-top:2px}
-.lbl-r>span.vacio{color:#999;font-weight:500}
-.lbl-nums{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-.lbl-nums i{font-style:normal;font-weight:900;font-size:14px;padding:2px 8px;border-radius:6px;background:#111;color:#fff}
-.lbl-f{display:flex;justify-content:space-between;padding-top:8px;font-size:12px;font-weight:800}
-.lbl-cap{text-align:center;font-size:9.5px;font-weight:700;letter-spacing:1.6px;color:var(--mu);margin:8px 0 4px}
 /* DNI y RENIEC (copiado de Total-Tools) */
 #fDni.dni-escanea{background-image:linear-gradient(90deg,transparent,rgba(79,142,247,.28),transparent);background-size:40% 100%;background-repeat:no-repeat;animation:dniEscanea 1s linear infinite}
 @keyframes dniEscanea{from{background-position:-60% 0}to{background-position:160% 0}}
@@ -242,6 +201,72 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .ag-sel .ag-item-ic{color:var(--ok)}
 .ag-cambiar{display:block;width:100%;background:none;border:none;border-top:1px solid var(--line);color:var(--ac);font-weight:800;font-size:13px;padding:11px 0 2px;margin-top:10px}
 .ag-vacio{padding:16px;text-align:center;color:var(--mu);font-size:13px}
+/* ───── Botones principales ───── */
+.btn-main{width:100%;background:linear-gradient(135deg,var(--ac2),var(--ac));color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;padding:16px;transition:opacity .15s,transform .1s}
+.btn-main:active{transform:scale(.98)}.btn-main:disabled{opacity:.55}
+.btn-sec{background:var(--bg3);color:var(--tx);border:1.5px solid var(--line2);border-radius:14px;font-size:15px;padding:14px 18px}
+/* ───── Flujo de una sola página ───── */
+.paso{background:var(--bg3);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px;scroll-margin-top:12px}
+.paso.entra{animation:subir .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes subir{from{opacity:0;transform:translateY(26px) scale(.98)}to{opacity:1;transform:none}}
+.paso-cab{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.paso-cab h2{font-size:18px;font-weight:800;line-height:1.2}
+.paso-n{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:16px;color:#fff;background:linear-gradient(135deg,var(--ac2),var(--ac));box-shadow:0 0 0 4px #4f8ef726}
+.packs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.pack{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:16px 8px 12px;border-radius:14px;background:var(--bg2);border:2px solid var(--line2);color:var(--tx);transition:transform .12s,border-color .15s,background .15s}
+.pack:active{transform:scale(.96)}
+.pack b{font-size:38px;font-weight:900;line-height:1}
+.pack span{font-size:12px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.pack strong{font-size:17px;margin-top:6px}
+.pack em{font-style:normal;font-size:11.5px;font-weight:800;color:var(--ok);min-height:15px}
+.pack.on{border-color:var(--ac);background:linear-gradient(160deg,#4f8ef726,#4f8ef70a);box-shadow:0 0 0 4px #4f8ef726;animation:latido .35s ease}
+@keyframes latido{50%{transform:scale(1.05)}}
+.pack-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);padding:3px 9px;border-radius:20px;background:linear-gradient(135deg,#f97316,#eab308);color:#1a1000;font-style:normal;font-size:9.5px;font-weight:900;letter-spacing:.8px;white-space:nowrap}
+.otra{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:6px 6px 6px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.otra .step{margin:0;gap:12px}.otra .step button{width:40px;height:40px;font-size:20px}.otra .step b{font-size:24px;min-width:40px}
+.azar{margin-top:12px;font-size:13px;color:var(--mu);text-align:center}
+.legal{margin-top:12px;font-size:11.5px;color:var(--mu);text-align:center;line-height:1.5}
+.vivo{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:12px;padding:9px 12px;border-radius:12px;background:#22c55e10;border:1px solid #22c55e40;font-size:12.5px}
+.vivo-punto{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 #22c55e99;animation:pulso 1.6s infinite}
+@keyframes pulso{70%{box-shadow:0 0 0 8px #22c55e00}100%{box-shadow:0 0 0 0 #22c55e00}}
+.vivo-total{font-weight:800;color:var(--ok)}
+.vivo-linea{width:100%;color:var(--mu)}.vivo-linea b{color:var(--tx)}
+.vivo-linea.entra{animation:subir .4s ease}
+.sbar-t{display:block;font-size:13px;font-weight:800;color:var(--ok)}
+.sbar #sbGo{min-width:150px}
+.sbar #sbGo.ok{background:linear-gradient(135deg,#16a34a,var(--ok));animation:llama 1.6s ease-in-out infinite}
+@keyframes llama{50%{box-shadow:0 0 0 6px #22c55e33}}
+/* ───── Revelado de números (tragamonedas) ───── */
+.revela{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 50% 40%,#16204a,#05050c 70%);overflow:hidden;animation:subir .3s ease}
+.rv-caja{width:100%;max-width:420px;text-align:center}
+.rv-t{font-size:22px;font-weight:900;margin-bottom:22px}
+.revela.fin .rv-t{color:var(--ok);animation:latido .5s ease}
+.rv-nums{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:22px}
+.rv-num{display:flex;gap:3px;padding:8px 10px;border-radius:14px;background:#0b1020;border:2px solid #2b4c86;box-shadow:inset 0 0 18px #000}
+.rv-num span{display:inline-block;width:30px;padding:6px 0;border-radius:7px;background:linear-gradient(#fff,#d6dbe6);color:#0b1020;font-size:30px;font-weight:900;font-variant-numeric:tabular-nums}
+.rv-num.ok{border-color:var(--ok);box-shadow:0 0 22px #22c55e66;animation:latido .3s ease}
+.rv-num.ok span{background:linear-gradient(#eaffef,#b9f5cb)}
+.cf{position:absolute;top:-12px;width:9px;height:14px;border-radius:2px;animation:caer linear forwards;pointer-events:none}
+@keyframes caer{to{top:105%;transform:translateX(40px) rotate(720deg)}}
+/* ───── Ticket del cliente: diseño del ticket impreso (talón TOTAL) ───── */
+.tks{display:grid;gap:10px;margin:0 0 12px}
+.tkc{position:relative;display:flex;min-height:118px;border-radius:14px;overflow:hidden;color:#fff;background:linear-gradient(115deg,#075b61,#0b858b 55%,#14aaae);box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.tkc-serie{flex:none;width:26px;display:flex;align-items:center;justify-content:center;background:#05484d}
+.tkc-serie span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;font-weight:800;letter-spacing:1px;white-space:nowrap}
+.tkc-cuerpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding:11px 12px}
+.tkc-cab{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.tkc-marca{padding:2px 9px;background:#e30613;transform:skewX(-14deg);box-shadow:0 0 0 2px #fff;font-style:italic;font-weight:900;font-size:12px;white-space:nowrap}
+.tkc-pos{padding:1px 8px;border:1.5px solid #fff;border-radius:20px;font-size:10px;font-weight:800;white-space:nowrap}
+.tkc-titulo{font-size:14.5px;line-height:1.2;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tkc-nombre{font-size:12.5px;font-weight:800;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tkc-fecha{font-size:10.5px;opacity:.9;margin-top:auto}
+.tkc-corte{position:relative;flex:none;width:0;border-left:2.5px dashed #fff}
+.tkc-corte::before,.tkc-corte::after{content:'';position:absolute;left:-10px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
+.tkc-corte::before{top:-9px}.tkc-corte::after{bottom:-9px}
+.tkc-talon{flex:none;width:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:repeating-linear-gradient(-50deg,#e30613 0 14px,#c3040f 14px 28px)}
+.tkc-talon small{font-size:11px;font-weight:800;letter-spacing:1px}
+.tkc-talon b{font-size:32px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.tk-det{padding:4px 16px}
 /* Tarjetas de courier (#courierCards de Total-Tools): 3 por fila */
 .cour-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:4px 0 12px}
 .cour-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;background:var(--bg3);border:2px solid #4a4a5e;border-radius:14px;padding:14px 6px;min-height:96px;color:var(--tx);transition:border-color .15s,background .15s}
@@ -254,7 +279,7 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .env-res .ic{font-size:22px}.env-res b{display:block;font-size:14px}.env-res span{font-size:12px;color:var(--mu)}
 #secEnv textarea.in{resize:vertical;line-height:1.4}
 /* Heavy, el guía (clon del narrador de Total-Tools) */
-.hv{position:fixed;left:10px;bottom:12px;z-index:60;display:flex;align-items:flex-end;gap:8px;max-width:440px;pointer-events:none}
+.hv{position:fixed;left:10px;bottom:calc(12px + var(--alto-barra, 0px));z-index:60;display:flex;align-items:flex-end;gap:8px;max-width:440px;pointer-events:none}
 .hv-av{position:relative;width:62px;height:62px;flex:none;pointer-events:auto;animation:hvIn .4s ease}
 .hv-av img{width:62px;height:62px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
 .hv-av span{position:absolute;left:-2px;bottom:-4px;background:var(--ac);color:#fff;font-size:8.5px;font-weight:900;letter-spacing:.6px;padding:1px 5px;border-radius:5px}
@@ -271,7 +296,7 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 </head>
 <body>
 <div class="wrap" id="app"><div class="center"><span class="spin big"></span></div></div>
-<div class="sbar" id="sbar" hidden><div class="in2"><div class="sp"><b id="sbN">0 números</b><span class="mu sm" id="sbT"></span></div><button class="btn ac" id="sbGo">Participar ➜</button></div></div>
+<div class="sbar" id="sbar" hidden><div class="in2"><div class="sp"><b id="sbN">Elige tus tickets</b><span class="sbar-t" id="sbT"></span></div><button class="btn ac" id="sbGo">Elegir</button></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -311,6 +336,10 @@ const linkBoleto = tok => `${here()}?t=${tok}`;
 const linkPart = r => `${here()}?r=${r}&v=p`;
 const linkForm = r => `${here()}?r=${r}`;
 
+function mostrarBarra(visible) {
+  $('#sbar').hidden = !visible;
+  document.documentElement.style.setProperty('--alto-barra', visible ? $('#sbar').offsetHeight + 'px' : '0px');
+}
 function toast(msg, tipo = '') { const t = $('#toast'); t.textContent = msg; t.className = 'toast on ' + tipo; clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 3200); }
 function modal(html) {
   const m = document.createElement('div'); m.className = 'mod';
@@ -378,7 +407,7 @@ async function drawPicks(seed, snap, beacon, k) {
    ESTADO + ARRANQUE
    ===================================================================== */
 const P = new URLSearchParams(location.search);
-const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', sel: new Set(), page: 0, soloLib: false, qty: 1, file: null, ih: '', link: null, ts: '', pasos: [], paso: 0 };
+const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', qty: 0, maxTickets: 1, fijos: [], file: null, ih: '', link: null, ts: '' };
 const app = $('#app');
 
 function cabecera(c) {
@@ -390,7 +419,7 @@ function pie(c) {
   return `<div class="pie">🔐 Sorteo verificable · <a href="${linkPart(S.r)}">ver participantes</a><br>${esc(c?.negocio || CONFIG.NEGOCIO)}${c?.wa ? ` · <a href="${waURL(c.wa, 'Hola')}" target="_blank">WhatsApp</a>` : ''}</div>`;
 }
 function vError(tit, txt, extra = '') {
-  $('#sbar').hidden = true;
+  mostrarBarra(false);
   app.innerHTML = `${cabecera(S.cfg)}<div class="center"><div><b class="e">😕</b><h2 class="syne">${esc(tit)}</h2><p class="mu" style="margin:8px 0 18px">${esc(txt)}</p>${extra}</div></div>`;
 }
 async function boot() {
@@ -415,146 +444,225 @@ async function boot() {
 async function vForm() {
   const j = await api('/api/r/' + encodeURIComponent(S.r));
   S.cfg = j.cfg; S.board = j.board;
-  const c = S.cfg, tot = S.board.length, libres = (S.board.match(/0/g) || []).length, ocup = tot - libres;
+  const c = S.cfg, total = S.board.length, libres = (S.board.match(/0/g) || []).length;
   const cierreVenta = c.cierre ? c.cierre - (c.bloqueoH || 0) * 3600e3 : 0;
   const abierta = c.estado === 'activa' && (!cierreVenta || Date.now() < cierreVenta) && libres > 0;
   const mios = misBoletos(S.r);
-  const prem = (c.premios || []).map((p, i) => `<div><span style="font-size:22px">${['🥇', '🥈', '🥉'][i] || '🎁'}</span>${esc(p)}</div>`).join('');
-  // Portada: la foto de lo que se sortea, grande y arriba
-  let h = cabecera(c) + `
-  ${c.foto ? `<div class="hero-foto" id="heroFoto"><img src="${pubImg(c.foto)}" alt="Premio del sorteo"><span class="tag">🎁 SE SORTEA</span><span class="zoom">🔍 Toca para ver</span></div>` : ''}
-  <div class="card hero"><div class="b">
-      <div class="row wrapf">${c.modo === 'gratis' ? '<span class="pill p-pur">🎁 Participa gratis</span>' : `<span class="pill p-ok">🎟️ ${fmtS(c.precio)} por número</span>`}${(c.promos || []).map(p => `<span class="pill p-warn">🔥 ${p.n} x ${fmtS(p.p)}</span>`).join('')}</div>
-      <h1>${esc(c.titulo)}</h1>
-      ${c.desc ? `<p class="mu" style="white-space:pre-line">${esc(c.desc)}</p>` : ''}
-      ${prem ? `<div class="prem">${prem}</div>` : ''}
-      ${c.cierre && c.estado !== 'sorteada' ? `<p class="sm mu" style="margin-top:8px">📅 Sorteo: <b style="color:var(--tx)">${fechaL(c.cierre)}</b></p><div class="count" id="cd"></div>` : ''}
-      <div class="row sm"><span class="sp">🎟️ ${ocup} de ${tot} tomados</span><b class="c-ac">${Math.round(ocup / tot * 100)}%</b></div>
-      <div class="bar"><i style="width:${Math.max(2, ocup / tot * 100)}%"></i></div>
-  </div></div>
-  ${mios.length ? `<a class="mine" href="${linkBoleto(mios[0])}">🎟️ <span class="sp">Ya tienes ${mios.length} registro(s) en este sorteo</span><b>Ver ➜</b></a>` : ''}`;
+  let h = cabecera(c) + portadaHTML(c, total, libres, cierreVenta)
+    + (mios.length ? `<a class="mine" href="${linkBoleto(mios[0])}">🎟️ <span class="sp">Ya tienes ${mios.length} registro${mios.length === 1 ? '' : 's'} en este sorteo</span><b>Ver ➜</b></a>` : '');
 
   if (c.resultado) {
-    h += resultadoHTML(c) + `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes y verificación</a>` + pie(c);
-    app.innerHTML = h; $('#sbar').hidden = true; return;
+    app.innerHTML = h + resultadoHTML(c) + `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes y verificación</a>` + pie(c);
+    mostrarBarra(false); return;
   }
   if (!abierta) {
-    const why = libres === 0 ? '🎉 ¡Se vendieron todos los números!' : c.estado === 'pausada' ? '⏸️ El sorteo está pausado por el momento' : '🔒 La inscripción ya cerró';
-    h += `<div class="banner card">${why}</div><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>` + pie(c);
-    app.innerHTML = h; $('#sbar').hidden = true;
-    if ($('#cd')) cuenta($('#cd'), c.cierre);
+    const motivo = libres === 0 ? '🎉 ¡Se vendieron todos los tickets!' : c.estado === 'pausada' ? '⏸️ El sorteo está pausado por el momento' : '🔒 La inscripción ya cerró';
+    app.innerHTML = h + `<div class="banner card">${motivo}</div><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>` + pie(c);
+    mostrarBarra(false);
+    if ($('#cd')) cuenta($('#cd'), cierreVenta || c.cierre);
     return;
   }
 
-  // Pasos: números → datos → pago. Cómo recibir el premio se pregunta DESPUÉS, en el boleto:
-  // así nadie abandona con el pago hecho y sin registro.
-  S.pasos = ['num', 'dat', ...(c.modo === 'pago' ? ['pay'] : [])];
-  const PASO = {
-    num: c.elegir !== false
-      ? `<div class="step-ttl">🎟️ Elige tus números *</div><p class="step-sub">Toca los que quieras. Los oscuros ya están tomados.</p>
-        <div class="card" id="secNum">
-          <div class="tools"><input class="in" id="busca" inputmode="numeric" placeholder="Buscar número…"><button class="btn sm" id="azar">🎲 Al azar</button></div>
-          <label class="sw" style="margin-top:4px"><input type="checkbox" id="soloLib"> Mostrar solo disponibles</label>
-          <div class="legend"><span><i></i>Libre</span><span><i style="background:#4f8ef7"></i>Tuyo</span><span><i style="background:#2a2410"></i>Reservado</span><span><i style="background:#080810"></i>Tomado</span></div>
-          <div class="chips" id="pages"></div><div class="ngrid" id="grid"></div><div class="selbox" id="selbox"></div>
-        </div>`
-      : `<div class="step-ttl">🎟️ ¿Cuántos números quieres? *</div><p class="step-sub">Se asignan al azar entre los disponibles.</p>
-        <div class="card" id="secNum"><div class="step"><button id="qm">−</button><b id="qn">1</b><button id="qp">+</button></div></div>`,
-    dat: `<div class="step-ttl">👤 Tus datos</div><p class="step-sub">${c.pedirDni ? 'Escribe tu <b>DNI</b>: tu nombre sale solo, tal cual está en tu documento.' : 'Para avisarte si ganas.'}</p>
-      <label class="fld"><input class="in" id="fDni" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="🪪 DNI${c.pedirDni ? ' *' : ' (opcional)'}"></label>
-      <div class="dni-msg" id="dniMsg"></div>
-      <label class="fld"><input class="in" id="fNom" autocomplete="name" maxlength="60" placeholder="Nombre completo *"></label>
-      <label class="fld"><div class="pre"><b>+51</b><input class="in" id="fCel" inputmode="numeric" autocomplete="tel-national" maxlength="11" placeholder="Número WhatsApp *"></div></label>`,
-    age: `<div class="step-ttl">🏢 ¿Dónde te enviamos el premio?</div><p class="step-sub">Si ganas, te lo enviamos a esta agencia <b>Shalom</b> y lo recoges con tu DNI.</p>
-      <div class="agc-box"><span class="agc-lbl">Elige tu sede Shalom *</span>
-        <div id="agSel" hidden></div>
-        <div id="agPick">
-          <div class="ag-ubic" id="agUbicBox"><button class="ag-ubic-btn" id="agUbic">📍 Usar mi ubicación</button><div class="ag-ubic-sub" id="agUbicSub">Te mostramos las sedes más cerca de ti. Solo la usamos para ordenarlas; no la guardamos.</div></div>
-          <div id="agLupaHint">🔍 Busca tu provincia o distrito</div>
-          <div class="ag-buscar" id="agBuscar"><span class="ag-lupa">🔍</span><input class="in" id="agBusca" autocomplete="off" placeholder="Busca provincia o distrito"></div>
-          <div class="ag-lista" id="agLista" hidden></div>
-        </div>
-      </div>`,
-    pay: `<div class="step-ttl">💳 Pago</div><p class="step-sub">Paga con Yape o Plin y sube la captura. Revisamos cada pago.</p>
-      <div class="card" id="secPay">${pagoHTML(c)}${subidaHTML(c, !c.compObl)}</div>`,
-  };
-  const fin = `<div class="card" id="secOk"><label class="chk"><input type="checkbox" id="fOk"><span>Acepto las <a href="#" id="verBases">bases del sorteo</a> y autorizo el uso de mis datos solo para este sorteo. En la lista pública mi nombre y celular aparecen ocultos.</span></label><div id="tsBox" style="margin-top:12px"></div></div>`;
-  h += `<div id="wz">
-    <div id="lblWrap" hidden>${boletoVivoHTML(c)}</div>
-    <div class="wz-prog"><div class="wz-paso" id="wzPaso"></div><div class="wz-bar"><i id="wzBar"></i></div></div>
-    ${S.pasos.map((k, i) => `<section class="wstep" data-p="${k}">${PASO[k]}${i === S.pasos.length - 1 ? fin : ''}</section>`).join('')}
-    <div class="wz-res" id="wzRes"><span id="wzResN">0 números</span><b id="wzResT"></b></div>
-    <div class="wz-nav"><button class="btn-sec" id="wzAtras" hidden>← Atrás</button><button class="btn-main" id="wzSig">Continuar →</button></div>
-  </div>` + pie(c);
-
-  app.innerHTML = h;
-  $('#sbar').hidden = true;
-  if ($('#cd')) cuenta($('#cd'), c.cierre, () => location.reload());
-  if (S.link) { $('#fNom').value = S.link.nombre || ''; $('#fCel').value = S.link.cel || ''; preSel(S.link.nums); toast('✨ Link personalizado: tus datos ya están cargados'); }
-  else { const me = lsGet('yo', null); if (me) { $('#fNom').value = me.n || ''; $('#fCel').value = me.c || ''; $('#fDni').value = me.d || ''; } }
-  if (c.elegir !== false) { renderPages(); renderGrid(); renderSel(); }
+  S.fijos = S.link ? numerosDelLink(S.link.nums) : [];
+  S.maxTickets = Math.max(1, Math.min(c.maxSel || 20, c.maxPer || Infinity, libres));
+  app.innerHTML = h + pasoCantidadHTML(c) + pasoDatosHTML(c) + pasoPagoHTML(c) + pie(c);
+  mostrarBarra(true);
+  if ($('#cd')) cuenta($('#cd'), cierreVenta || c.cierre, () => location.reload());
   bindSubida();
   if (c.tsKey) cargarTurnstile(c.tsKey);
-  actBar(); irPaso(0, false, true); boletoVivo();
-  const d0 = $('#fDni').value.replace(/\D/g, ''); if (d0.length === 8) dniBuscar(d0, true);
-  heavy(mios.length ? '¡Te reconozco! 👊 Elige más números de la suerte.' : '¡Hola! 🎟️ Soy Heavy. Elige tus números de la suerte y te acompaño hasta el final.');
+  restaurarBorrador();
+  if (S.fijos.length) elegirCantidad(S.fijos.length, { sinScroll: true });
+  actualizarFlujo();
+  cargarActividad();
+  heavy(mios.length ? '¡Te reconozco! 👊 ¿Más tickets, más oportunidades?' : '¡Hola! 🎟️ Elige cuántos tickets quieres. Tus números salen al azar al final.');
 }
 
-/* ───── Pasos (wizard de Total-Tools) ───── */
-const HEAVY_PASO = {
-  dat: () => S.cfg.pedirDni ? 'Escribe tu DNI y tu nombre sale solo, tal cual tu documento. 🪪' : 'Ahora tus datos, para avisarte si ganas. 📲',
-  pay: () => 'Último paso: paga con Yape o Plin y sube la captura. Revisamos cada pago a mano. 💳',
-};
-function irPaso(i, atras, inicio) {
-  S.paso = i; const id = S.pasos[i], ult = i === S.pasos.length - 1;
-  $$('.wstep').forEach(s => { const on = s.dataset.p === id; s.classList.toggle('active', on); s.classList.toggle('back', on && !!atras); });
-  $('#wzPaso').textContent = `PASO ${i + 1} DE ${S.pasos.length}`;
-  $('#wzBar').style.width = ((i + 1) / S.pasos.length * 100) + '%';
-  $('#wzAtras').hidden = i === 0;
-  $('#wzSig').innerHTML = ult ? '🎟️ Participar' : 'Continuar →';
-  $('#wzRes').hidden = id !== 'num' && id !== 'pay';
-  $('#lblWrap').hidden = id === 'num';
-  if (!inicio) { $('#wz').scrollIntoView({ behavior: 'smooth', block: 'start' }); if (HEAVY_PASO[id]) heavy(HEAVY_PASO[id]()); }
+/* ───── Portada: foto del premio, urgencia y escasez reales ───── */
+function portadaHTML(c, total, libres, cierreVenta) {
+  const tomados = total - libres, pct = Math.round(tomados / total * 100);
+  const premios = (c.premios || []).map((p, i) => `<div><span style="font-size:22px">${['🥇', '🥈', '🥉'][i] || '🎁'}</span>${esc(p)}</div>`).join('');
+  return `
+  ${c.foto ? `<div class="hero-foto" id="heroFoto"><img src="${pubImg(c.foto)}" alt="Premio del sorteo"><span class="tag">🎁 SE SORTEA</span><span class="zoom">🔍 Toca para ver</span></div>` : ''}
+  <div class="card hero"><div class="b">
+    <div class="row wrapf">${c.modo === 'gratis' ? '<span class="pill p-pur">🎁 Participa gratis</span>' : `<span class="pill p-ok">🎟️ ${fmtS(c.precio)} por ticket</span>`}${(c.promos || []).map(p => `<span class="pill p-warn">🔥 ${p.n} x ${fmtS(p.p)}</span>`).join('')}</div>
+    <h1>${esc(c.titulo)}</h1>
+    ${c.desc ? `<p class="mu" style="white-space:pre-line">${esc(c.desc)}</p>` : ''}
+    ${premios ? `<div class="prem">${premios}</div>` : ''}
+    ${cierreVenta || c.cierre ? `<p class="sm mu" style="margin-top:8px">${cierreVenta && cierreVenta !== c.cierre ? '⏰ La venta cierra en' : '📅 Sorteo: <b style="color:var(--tx)">' + fechaL(c.cierre) + '</b> · faltan'}</p><div class="count" id="cd"></div>` : ''}
+    <div class="row sm"><span class="sp">🔥 Quedan <b class="c-warn">${libres}</b> de ${total} tickets</span><b class="c-ac">${pct}% vendido</b></div>
+    <div class="bar"><i style="width:${Math.max(2, pct)}%"></i></div>
+    <div class="vivo" id="vivo" hidden></div>
+  </div></div>`;
 }
-function validarPaso(id) {
-  const c = S.cfg;
-  if (id === 'num') { if (!cantidad()) { toast('Elige al menos un número 🎟️', 'bad'); return false; } return true; }
-  if (id === 'dat') {
-    const dni = $('#fDni').value.replace(/\D/g, ''), nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9);
-    if ((c.pedirDni || dni) && !/^\d{8}$/.test(dni)) { marcarErr($('#fDni'), 'Escribe tu DNI de 8 dígitos'); return false; }
-    if (nom.length < 3 || !nom.includes(' ')) { marcarErr($('#fNom'), 'Escribe tu nombre y apellido'); return false; }
-    if (!/^9\d{8}$/.test(cel)) { marcarErr($('#fCel'), 'Celular inválido: 9 dígitos, empieza con 9'); return false; }
-    return true;
-  }
-  if (id === 'pay') {
-    if (!S.file && !$('#despues')?.checked) { marcarErr($('#drop'), c.compObl ? 'Sube la foto de tu comprobante' : 'Sube tu comprobante o marca "Pagaré después"'); return false; }
-    if (S.file && c.opObl !== false && !($('#fOp')?.value || '').trim()) { marcarErr($('#fOp'), 'Escribe el N° de operación'); return false; }
-    return true;
-  }
-  return true;
-}
-function siguiente() {
-  if (!validarPaso(S.pasos[S.paso])) return;
-  if (S.paso === S.pasos.length - 1) return enviar();
-  irPaso(S.paso + 1);
+async function cargarActividad() {
+  let lista;
+  try { lista = (await api(`/api/r/${encodeURIComponent(S.r)}/part`)).list.filter(p => p.e !== 'X').sort((a, b) => b.t - a.t); } catch (e) { return; }
+  const caja = $('#vivo'); if (!caja || !lista.length) return;
+  const hace = t => { const m = Math.max(1, Math.round((Date.now() - t) / 6e4)); return m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} d`; };
+  const linea = p => { const k = splitN(p.nums).length; return `<b>${esc(p.n)}</b> se unió ${hace(p.t)} con ${k} ticket${k === 1 ? '' : 's'}`; };
+  const recientes = lista.slice(0, 8);
+  let i = 0;
+  caja.hidden = false;
+  caja.innerHTML = `<span class="vivo-punto"></span><span class="vivo-total">${lista.length} ${lista.length === 1 ? 'persona participa' : 'personas participan'}</span><span class="vivo-linea" id="vivoLinea">${linea(recientes[0])}</span>`;
+  if (recientes.length < 2) return;
+  const rotar = setInterval(() => {
+    const el = $('#vivoLinea'); if (!el) return clearInterval(rotar);
+    i = (i + 1) % recientes.length; el.classList.remove('entra'); void el.offsetWidth; el.innerHTML = linea(recientes[i]); el.classList.add('entra');
+  }, 3800);
 }
 
-/* ───── Boleto vivo: se va llenando mientras escribes (como la etiqueta de Total-Tools) ───── */
-function boletoVivoHTML(c) {
-  return `<div class="lbl">
-    <div class="lbl-h"><div class="sp"><small>SORTEO</small><b>${esc(c.titulo)}</b></div><span class="lbl-q">🎟️</span></div>
-    <div class="lbl-r"><small>PARTICIPANTE</small><b id="lN" class="vacio">TU NOMBRE</b><span id="lD"></span></div>
-    <div class="lbl-r"><small>TUS NÚMEROS</small><div class="lbl-nums" id="lNums"></div></div>
-    <div class="lbl-f"><span>${esc((c.negocio || CONFIG.NEGOCIO).toUpperCase())}</span><span>${c.cierre ? '📅 ' + fecha(c.cierre) : ''}</span></div>
-  </div><div class="lbl-cap">ASÍ SE VERÁ TU BOLETO</div>`;
+/* ───── Paso 1: cuántos tickets (los números salen al azar al final) ───── */
+function paquetes(c) {
+  const unitario = +c.precio || 0;
+  const promociones = (c.promos || []).map(p => p.n);
+  const prioridad = [1, ...promociones, 3, 5, 10, S.maxTickets];
+  const cantidades = [...new Set(prioridad)].filter(n => n >= 1 && n <= S.maxTickets).slice(0, 4).sort((a, b) => a - b);
+  const lista = cantidades.map(n => ({ n, total: precioTotal(c, n), ahorro: Math.round((n * unitario - precioTotal(c, n)) * 100) / 100 }));
+  const conAhorro = lista.filter(p => p.ahorro > 0);
+  const mejor = conAhorro.sort((a, b) => a.total / a.n - b.total / b.n)[0];
+  if (mejor) mejor.mejor = true;
+  return lista;
 }
-function boletoVivo() {
-  if (!$('#lN')) return;
-  const c = S.cfg, nom = $('#fNom')?.value.trim(), dni = $('#fDni')?.value.replace(/\D/g, '');
-  $('#lN').textContent = nom || 'TU NOMBRE'; $('#lN').className = nom ? '' : 'vacio';
-  $('#lD').textContent = dni ? 'DNI: ' + dni : '';
-  const ns = c.elegir !== false ? [...S.sel].sort((a, b) => a - b).map(i => fmtN(c, i)) : (S.qty ? [`${S.qty} al azar`] : []);
-  $('#lNums').innerHTML = ns.length ? ns.slice(0, 24).map(n => `<i>${esc(n)}</i>`).join('') + (ns.length > 24 ? `<i>+${ns.length - 24}</i>` : '') : '<span style="color:#999;font-size:12.5px">—</span>';
+function pasoCantidadHTML(c) {
+  const fijos = S.fijos.length;
+  return `<section class="paso" id="pCant">
+    <div class="paso-cab"><span class="paso-n">1</span><div><h2>¿Cuántos tickets quieres?</h2><p class="mu sm">Más tickets, más oportunidades de ganar.</p></div></div>
+    ${fijos ? `<div class="env-res"><span class="ic">🎟️</span><div><b>Tus tickets ya están apartados</b><span>${S.fijos.map(i => fmtN(c, i)).join(', ')}</span></div></div>` : `
+    <div class="packs">${paquetes(c).map(p => `<button class="pack" data-qty="${p.n}">
+      ${p.mejor ? '<i class="pack-badge">MEJOR PRECIO</i>' : ''}
+      <b>${p.n}</b><span>ticket${p.n === 1 ? '' : 's'}</span>
+      <strong>${c.modo === 'pago' ? fmtS(p.total) : 'Gratis'}</strong>
+      ${p.ahorro > 0 ? `<em>Ahorras ${fmtS(p.ahorro)}</em>` : '<em>&nbsp;</em>'}
+    </button>`).join('')}</div>
+    ${S.maxTickets > 1 ? `<div class="otra"><span class="mu sm">Otra cantidad</span><div class="step"><button id="qm" aria-label="Menos">−</button><b id="qn">0</b><button id="qp" aria-label="Más">+</button></div></div>` : ''}`}
+    <p class="azar">🎲 <span id="chance">Tus números se eligen <b>al azar</b> al final, frente a ti.</span></p>
+  </section>`;
+}
+function elegirCantidad(n, { sinScroll } = {}) {
+  const primeraVez = !S.qty;
+  S.qty = Math.max(0, Math.min(S.maxTickets, n));
+  $$('.pack').forEach(b => b.classList.toggle('on', +b.dataset.qty === S.qty));
+  if ($('#qn')) $('#qn').textContent = S.qty;
+  if (S.qty) $('#chance').innerHTML = S.qty === 1 ? 'Tu número se elige <b>al azar</b> al final, frente a ti.' : `<b>${S.qty} oportunidades</b> de ganar. Tus números salen <b>al azar</b> al final.`;
+  guardarBorrador();
+  actualizarFlujo({ sinScroll });
+  if (primeraVez && S.qty && !sinScroll) heavy(S.qty > 1 ? `¡${S.qty} oportunidades! 🔥 Ahora tus datos, rapidito.` : '¡Vamos! 🍀 Ahora tus datos, rapidito.');
+}
+function numerosDelLink(nums) {
+  if (!nums) return [];
+  return String(nums).split(/[,\s]+/).filter(Boolean).map(x => +x - baseOf(S.cfg)).filter(i => i >= 0 && i < S.board.length && S.board[i] === '0');
+}
+
+/* ───── Paso 2: datos ───── */
+function pasoDatosHTML(c) {
+  return `<section class="paso" id="pDat" hidden>
+    <div class="paso-cab"><span class="paso-n">2</span><div><h2>Tus datos</h2><p class="mu sm">${c.pedirDni ? 'Escribe tu DNI y tu nombre sale solo.' : 'Para avisarte si ganas.'}</p></div></div>
+    <label class="fld"><input class="in" id="fDni" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="🪪 DNI${c.pedirDni ? ' *' : ' (opcional)'}"></label>
+    <div class="dni-msg" id="dniMsg"></div>
+    <label class="fld"><input class="in" id="fNom" autocomplete="name" maxlength="60" placeholder="Nombre completo *"></label>
+    <label class="fld"><div class="pre"><b>+51</b><input class="in" id="fCel" inputmode="numeric" autocomplete="tel-national" maxlength="11" placeholder="Número WhatsApp *"></div></label>
+  </section>`;
+}
+function datosValidos() {
+  const dni = $('#fDni').value.replace(/\D/g, ''), nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9);
+  if ((S.cfg.pedirDni || dni) && !/^\d{8}$/.test(dni)) return { campo: $('#fDni'), msg: 'Escribe tu DNI de 8 dígitos' };
+  if (nom.length < 3 || !nom.includes(' ')) return { campo: $('#fNom'), msg: 'Escribe tu nombre y apellido' };
+  if (!/^9\d{8}$/.test(cel)) return { campo: $('#fCel'), msg: 'Tu WhatsApp: 9 dígitos, empieza con 9' };
+  return null;
+}
+
+/* ───── Paso 3: pago (o confirmación si es gratis) ───── */
+function pasoPagoHTML(c) {
+  const pago = c.modo === 'pago';
+  return `<section class="paso" id="pPago" hidden>
+    <div class="paso-cab"><span class="paso-n">3</span><div><h2>${pago ? 'Paga y asegura tus tickets' : 'Confirma tu participación'}</h2><p class="mu sm">${pago ? 'Yapea, sube la captura y revela tus números.' : 'Un toque y revelas tus números.'}</p></div></div>
+    ${pago ? `<div id="secPay">${pagoHTML(c)}${subidaHTML(c, !c.compObl)}</div>` : ''}
+    <div id="tsBox" style="margin-top:12px"></div>
+    <p class="legal">Al participar aceptas las <a href="#" id="verBases">bases del sorteo</a>. Tu nombre y celular aparecen ocultos en la lista pública.</p>
+  </section>`;
+}
+
+/* ───── Flujo: cada sección aparece al completar la anterior ───── */
+function revelarSeccion(id, { sinScroll } = {}) {
+  const el = $('#' + id); if (!el || !el.hidden) return;
+  el.hidden = false; el.classList.add('entra');
+  if (!sinScroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+}
+function actualizarFlujo(opciones = {}) {
+  if (S.qty) revelarSeccion('pDat', opciones);
+  if (S.qty && !datosValidos()) {
+    const primera = $('#pPago').hidden;
+    revelarSeccion('pPago', opciones);
+    if (primera && !opciones.sinScroll) { document.activeElement?.blur(); heavy(S.cfg.modo === 'pago' ? '¡Último paso! 💳 Yapea, sube tu captura y revela tus números. 🎲' : '¡Último paso! Toca revelar y mira tus números. 🎲'); }
+  }
+  actBar();
+}
+function actBar() {
+  const c = S.cfg, n = S.qty, listo = n && !datosValidos();
+  $('#sbN').textContent = n ? `${n} ticket${n === 1 ? '' : 's'}` : 'Elige tus tickets';
+  $('#sbT').textContent = n ? (c.modo === 'pago' ? fmtS(precioTotal(c, n)) : 'Gratis') : '';
+  $('#sbGo').textContent = !n ? 'Elegir' : !listo ? 'Continuar' : '🎲 Revelar mis números';
+  $('#sbGo').classList.toggle('ok', !!listo);
+  $$('.tot').forEach(e => e.textContent = fmtS(precioTotal(c, n)));
+}
+function accionPrincipal() {
+  if (!S.qty) { $('#pCant').scrollIntoView({ behavior: 'smooth', block: 'start' }); return toast('Elige cuántos tickets quieres 🎟️'); }
+  const falta = datosValidos();
+  if (falta) return marcarErr(falta.campo, falta.msg);
+  enviar();
+}
+
+/* ───── Borrador: si sale y vuelve, todo sigue ahí ───── */
+const claveBorrador = () => 'borrador_' + S.r;
+function guardarBorrador() {
+  if (!$('#fDni')) return;
+  lsSet(claveBorrador(), { q: S.qty, d: $('#fDni').value, n: $('#fNom').readOnly ? '' : $('#fNom').value, c: $('#fCel').value, t: Date.now() });
+}
+function restaurarBorrador() {
+  const b = lsGet(claveBorrador(), null), yo = lsGet('yo', null);
+  const datos = b && Date.now() - b.t < 3 * 864e5 ? b : yo ? { d: yo.d, n: yo.n, c: yo.c } : null;
+  if (S.link) { $('#fNom').value = S.link.nombre || ''; $('#fCel').value = S.link.cel || ''; toast('✨ Link personalizado: tus datos ya están cargados'); }
+  else if (datos) { $('#fDni').value = datos.d || ''; $('#fNom').value = datos.n || ''; $('#fCel').value = datos.c || ''; }
+  if (b?.q && !S.fijos.length) elegirCantidad(b.q, { sinScroll: true });
+  const dni = $('#fDni').value.replace(/\D/g, ''); if (dni.length === 8) dniBuscar(dni, true);
+}
+
+/* ───── El momento: revelar los números como una tragamonedas ───── */
+function animarRevelado(numeros) {
+  const c = S.cfg, ancho = digs(c), visibles = numeros.slice(0, 12), extra = numeros.length - visibles.length;
+  const capa = document.createElement('div'); capa.className = 'revela';
+  capa.innerHTML = `<div class="rv-caja"><p class="rv-t" id="rvT">Sorteando tus números…</p>
+    <div class="rv-nums">${visibles.map(() => `<div class="rv-num">${'<span>0</span>'.repeat(ancho)}</div>`).join('')}</div>
+    ${extra > 0 ? `<p class="mu sm">+ ${extra} número${extra === 1 ? '' : 's'} más en tu ticket</p>` : ''}
+    <button class="btn-main" id="rvOk" hidden>Ver mi ticket ➜</button></div>`;
+  document.body.appendChild(capa);
+  const sinMovimiento = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cajas = $$('.rv-num', capa);
+  return new Promise(listo => {
+    const terminar = () => {
+      $('#rvT', capa).textContent = numeros.length === 1 ? '¡Este es tu número!' : '¡Estos son tus números!';
+      capa.classList.add('fin'); confeti(capa); $('#rvOk', capa).hidden = false;
+      const cerrar = () => { capa.remove(); listo(); };
+      $('#rvOk', capa).onclick = cerrar;
+      setTimeout(() => capa.isConnected && $('#rvOk', capa).focus(), 100);
+    };
+    if (sinMovimiento) { cajas.forEach((caja, i) => { caja.innerHTML = [...fmtN(c, visibles[i])].map(d => `<span>${d}</span>`).join(''); caja.classList.add('ok'); }); return terminar(); }
+    const giro = setInterval(() => $$('.rv-num:not(.ok) span', capa).forEach(d => { d.textContent = Math.floor(Math.random() * 10); }), 55);
+    const paso = Math.min(700, 2400 / visibles.length);
+    cajas.forEach((caja, i) => setTimeout(() => {
+      caja.innerHTML = [...fmtN(c, visibles[i])].map(d => `<span>${d}</span>`).join(''); caja.classList.add('ok');
+      try { navigator.vibrate?.(35); } catch (e) {}
+      if (i === cajas.length - 1) { clearInterval(giro); setTimeout(terminar, 350); }
+    }, 900 + i * paso));
+  });
+}
+function confeti(capa) {
+  const colores = ['#22c55e', '#4f8ef7', '#eab308', '#f87171', '#a78bfa', '#ffffff'];
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('i'); p.className = 'cf';
+    p.style.cssText = `left:${Math.random() * 100}%;background:${colores[i % colores.length]};animation-delay:${Math.random() * .4}s;animation-duration:${1.6 + Math.random() * 1.4}s;transform:rotate(${Math.random() * 360}deg)`;
+    capa.appendChild(p);
+  }
 }
 
 /* ───── DNI → nombre oficial (RENIEC, consultado por el Worker con tu clave) ─────
@@ -583,11 +691,11 @@ function dniAceptar(silencioso) {
   DNI.aceptado = true;
   const n = $('#fNom'); n.value = DNI.persona.completo; n.readOnly = true;
   $('#dniMsg').innerHTML = '<div class="dni-ok">✅ Nombre verificado con RENIEC<button class="dni-link" id="dniNo">No soy yo</button></div>';
-  boletoVivo();
+  actualizarFlujo();
   if (!silencioso) { heavy('Identidad verificada ✅. Si ganas, el premio solo se le entrega a esta persona.'); $('#fCel').focus(); }
 }
 function dniSoltar() { DNI.aceptado = false; const n = $('#fNom'); if (n.readOnly) { n.readOnly = false; n.value = ''; } }
-function dniCorregir() { dniSoltar(); DNI.persona = null; DNI.ult = ''; $('#fDni').value = ''; $('#dniMsg').innerHTML = ''; boletoVivo(); $('#fDni').focus(); }
+function dniCorregir() { dniSoltar(); DNI.persona = null; DNI.ult = ''; $('#fDni').value = ''; $('#dniMsg').innerHTML = ''; actualizarFlujo(); $('#fDni').focus(); }
 
 /* ───── Cómo recibir el premio: los couriers del formulario de Total-Tools ─────
    Se pregunta en el boleto, cuando el cliente ya participa. Es opcional y cada
@@ -768,11 +876,6 @@ function heavy(msg, ms = 5000) {
   clearTimeout(HV.h); HV.h = setTimeout(() => { if ($('#hvB')) $('#hvB').hidden = true; }, ms);
 }
 
-function preSel(nums) {
-  if (!nums) return; const c = S.cfg;
-  String(nums).split(/[,\s]+/).filter(Boolean).forEach(x => { const i = +x - baseOf(c); if (i >= 0 && i < S.board.length && S.board[i] === '0') S.sel.add(i); });
-  if (S.sel.size) S.page = Math.floor([...S.sel][0] / CONFIG.PAGE);
-}
 function pagoHTML(c, monto) {
   const rows = [];
   if (c.yape) rows.push(`<div class="payrow"><div class="ic" style="background:#742284">Yape</div><div class="v"><span class="xs mu">Yapea al número</span><b>${esc(c.yape.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3'))}</b>${c.titular ? `<span class="xs mu">${esc(c.titular)}</span>` : ''}</div><button class="btn sm" data-c="${esc(c.yape)}">📋</button></div>`);
@@ -806,65 +909,6 @@ function bindSubida() {
     $('#drop strong').textContent = 'Sube la captura de tu pago';
   };
 }
-function renderPages() {
-  const n = S.board.length, np = Math.ceil(n / CONFIG.PAGE), c = S.cfg;
-  $('#pages').hidden = np < 2;
-  if (np < 2) return;
-  $('#pages').innerHTML = Array.from({ length: np }, (_, p) => {
-    const a = p * CONFIG.PAGE, b = Math.min(n, a + CONFIG.PAGE) - 1, lib = (S.board.slice(a, b + 1).match(/0/g) || []).length;
-    return `<button class="chip ${p === S.page ? 'on' : ''}" data-pg="${p}">${fmtN(c, a)}–${fmtN(c, b)} <span style="opacity:.7">(${lib})</span></button>`;
-  }).join('');
-}
-function renderGrid() {
-  const c = S.cfg, a = S.page * CONFIG.PAGE, b = Math.min(S.board.length, a + CONFIG.PAGE);
-  let h = '';
-  for (let i = a; i < b; i++) {
-    const ch = S.board[i];
-    if (S.soloLib && ch !== '0' && !S.sel.has(i)) continue;
-    h += `<button class="nb ${S.sel.has(i) ? 'sel' : ch === '0' ? '' : ch === '1' ? 't t1' : 't'}" data-n="${i}">${fmtN(c, i)}</button>`;
-  }
-  $('#grid').innerHTML = h || '<p class="mu sm">No hay números disponibles en esta página</p>';
-}
-function renderSel() {
-  const c = S.cfg;
-  $('#selbox').innerHTML = [...S.sel].sort((x, y) => x - y).map(i => `<span class="num">${fmtN(c, i)}<button data-rm="${i}">✕</button></span>`).join('');
-  actBar();
-}
-function cantidad() { return S.cfg.elegir !== false ? S.sel.size : S.qty; }
-function actBar() {
-  const c = S.cfg, n = cantidad(), t = precioTotal(c, n);
-  $('#sbN').textContent = `${n} número${n === 1 ? '' : 's'}`;
-  $('#sbT').textContent = c.modo === 'pago' ? fmtS(t) : '🎁 Gratis';
-  if ($('#wzResN')) { $('#wzResN').textContent = `🎟️ ${n} número${n === 1 ? '' : 's'}`; $('#wzResT').textContent = c.modo === 'pago' ? fmtS(t) : '🎁 Gratis'; }
-  $$('.tot').forEach(e => e.textContent = fmtS(t));
-  boletoVivo();
-}
-function toggleNum(i) {
-  const c = S.cfg;
-  if (S.sel.has(i)) S.sel.delete(i);
-  else {
-    if (S.board[i] !== '0') return toast('Ese número ya fue tomado', 'bad');
-    const max = Math.min(c.maxSel || 500, c.maxPer || 500);
-    if (S.sel.size >= max) return toast(`Puedes elegir máximo ${max} número(s)`, 'bad');
-    S.sel.add(i);
-    if (S.sel.size === 1) heavy('¡Buena elección! 🍀 Cuando termines el registro, ese número será tuyo.');
-  }
-  renderGrid(); renderSel();
-}
-function alAzar() {
-  const libres = []; for (let i = 0; i < S.board.length; i++) if (S.board[i] === '0' && !S.sel.has(i)) libres.push(i);
-  if (!libres.length) return toast('No quedan números libres', 'bad');
-  const i = libres[Math.floor(Math.random() * libres.length)];
-  S.page = Math.floor(i / CONFIG.PAGE); toggleNum(i); renderPages();
-  const b = $(`.nb[data-n="${i}"]`); if (b) { b.classList.add('hl'); b.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-}
-function buscarNum(v) {
-  const c = S.cfg, i = parseInt(v, 10) - baseOf(c);
-  if (!(i >= 0 && i < S.board.length)) return;
-  S.page = Math.floor(i / CONFIG.PAGE); S.soloLib = false; $('#soloLib').checked = false; renderPages(); renderGrid();
-  const b = $(`.nb[data-n="${i}"]`); if (b) { b.classList.add('hl'); b.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
-  if (S.board[i] !== '0') toast(`El ${fmtN(c, i)} ya fue tomado`, 'bad');
-}
 function cargarTurnstile(key) {
   window.tsReady = () => { try { turnstile.render('#tsBox', { sitekey: key, theme: 'dark', callback: t => S.ts = t, 'expired-callback': () => S.ts = '' }); } catch (e) {} };
   const s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=tsReady&render=explicit'; s.async = true; document.head.appendChild(s);
@@ -872,36 +916,43 @@ function cargarTurnstile(key) {
 function marcarErr(el, msg) { el.classList.remove('err'); void el.offsetWidth; el.classList.add('err'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => el.focus({ preventScroll: true }), 350); toast(msg, 'bad'); }
 
 async function enviar() {
-  const c = S.cfg, n = cantidad();
-  for (let i = 0; i < S.pasos.length; i++) if (!validarPaso(S.pasos[i])) { if (i !== S.paso) irPaso(i, true); return; }
-  if (!$('#fOk').checked) return marcarErr($('#secOk'), 'Debes aceptar las bases del sorteo');
-  if (c.tsKey && !S.ts) return toast('Completa la verificación antispam', 'bad');
-  const nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9), dni = $('#fDni').value.replace(/\D/g, '');
+  const c = S.cfg, falta = datosValidos();
+  if (!S.qty) return accionPrincipal();
+  if (falta) return marcarErr(falta.campo, falta.msg);
   const despues = $('#despues')?.checked, op = c.modo === 'pago' ? ($('#fOp')?.value || '').replace(/\s/g, '') : '';
+  if (c.modo === 'pago') {
+    if (!S.file && !despues) return marcarErr($('#drop'), c.compObl ? 'Sube la captura de tu pago' : 'Sube la captura de tu pago o marca "Pagaré después"');
+    if (S.file && c.opObl !== false && !op) return marcarErr($('#fOp'), 'Escribe el N° de operación');
+  }
+  if (c.tsKey && !S.ts) { $('#tsBox').scrollIntoView({ behavior: 'smooth', block: 'center' }); return toast('Completa la verificación antispam', 'bad'); }
+  const nom = $('#fNom').value.trim().replace(/\s+/g, ' '), cel = $('#fCel').value.replace(/\D/g, '').slice(-9), dni = $('#fDni').value.replace(/\D/g, '');
 
   const fd = new FormData();
   fd.append('nombre', nom); fd.append('cel', cel); fd.append('dni', dni); fd.append('acepto', '1');
-  if (c.elegir !== false) fd.append('nums', [...S.sel].join(',')); else fd.append('azar', String(S.qty));
+  if (S.fijos.length) fd.append('nums', S.fijos.join(',')); else fd.append('azar', String(S.qty));
   if (op) fd.append('op', op);
   if (S.file && !despues) { fd.append('img', S.file, 'comprobante.' + (S.file.type === 'image/webp' ? 'webp' : 'jpg')); fd.append('ih', S.ih); }
   if (S.link) fd.append('link', S.l);
   if (S.ts) fd.append('ts', S.ts);
 
-  const b = $('#wzSig'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Registrando…';
+  const b = $('#sbGo'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Registrando…';
   try {
     const j = await api(`/api/r/${encodeURIComponent(S.r)}/entrar`, { body: fd });
     lsSet('yo', { n: j.nombre || nom, c: cel, d: dni });
+    try { localStorage.removeItem('sxf_' + claveBorrador()); } catch (e) {}
     guardarBoleto(S.r, j.tok);
-    const p = { nombre: j.nombre || nom, celFull: cel, nums: j.nums.join(','), monto: j.monto, op, est: j.est, vence: j.vence };
     history.replaceState(null, '', `?t=${j.tok}`);
-    S.t = j.tok; S.sel.clear(); S.file = null;
-    await vBoleto(j.tok, p);
-    heavy(c.pedirAgencia ? '¡Ya participas! 🎉 Último detalle (opcional): dinos cómo enviarte el premio si ganas. 📦' : '¡Listo! 🎉 Ya estás participando. Guarda tu boleto y mucha suerte. 🍀', 9000);
+    S.t = j.tok; S.file = null;
+    mostrarBarra(false);
+    if ($('#hvB')) $('#hvB').hidden = true;
+    await animarRevelado(j.nums);
+    await vBoleto(j.tok, { nombre: j.nombre || nom, celFull: cel, nums: j.nums.join(','), monto: j.monto, op, est: j.est, vence: j.vence });
+    window.scrollTo({ top: 0 });
+    heavy(c.pedirAgencia ? '¡Ya participas! 🎉 Último detalle (opcional): dinos cómo enviarte el premio si ganas. 📦' : '¡Ya participas! 🎉 Guarda tu ticket y mucha suerte. 🍀', 9000);
   } catch (e) {
     toast(e.message, 'bad');
-    if (e.status === 409 && c.elegir !== false) { try { const r = await api('/api/r/' + encodeURIComponent(S.r)); S.board = r.board; [...S.sel].forEach(i => { if (S.board[i] !== '0') S.sel.delete(i); }); renderPages(); renderGrid(); renderSel(); irPaso(0, true); } catch (er) {} }
     try { window.turnstile && turnstile.reset('#tsBox'); S.ts = ''; } catch (er) {}
-    b.disabled = false; b.innerHTML = '🎟️ Participar';
+    b.disabled = false; actBar();
   }
 }
 
@@ -919,7 +970,7 @@ async function vBoleto(tok, nuevo) {
   const j = await api('/api/t/' + encodeURIComponent(tok));
   const c = j.rifa.cfg, p = { ...j.p, ...(nuevo ? { celFull: nuevo.celFull, op: nuevo.op || j.p.op } : {}) };
   if ($('#hvB')) $('#hvB').hidden = true;
-  S.cfg = c; S.r = j.rifa.id; guardarBoleto(S.r, tok); $('#sbar').hidden = true;
+  S.cfg = c; S.r = j.rifa.id; guardarBoleto(S.r, tok); mostrarBarra(false);
   const nums = splitN(p.nums), e = EST[p.est];
   const R = c.resultado, gane = R ? R.picks.map((pk, k) => ({ ...pk, k })).filter(pk => nums.includes(pk.n)) : [];
   const vencido = p.est === 'X' && p.nota === 'vencido';
@@ -932,23 +983,18 @@ async function vBoleto(tok, nuevo) {
     X: vencido ? 'Tu reserva venció. Si tus números siguen libres, puedes subir tu comprobante para recuperarlos.' : 'Este registro fue anulado. Si crees que es un error, escríbenos.',
   }[p.est];
   let h = cabecera(c) + `
-  ${nuevo ? `<div class="banner card" style="background:linear-gradient(135deg,#2ea04326,#388bfd1a);border-color:#2ea04377">🎉 ¡Registro enviado!<br><span class="sm mu" style="font-weight:500">Envía tu registro por WhatsApp para que lo atendamos más rápido 👇</span></div>` : ''}
+  ${nuevo ? `<div class="banner card" style="background:linear-gradient(135deg,#22c55e26,#4f8ef71a);border-color:#22c55e77">🎉 ¡Ya estás participando!<br><span class="sm mu" style="font-weight:500">Guarda tu ticket: es tu comprobante para el sorteo.</span></div>` : ''}
   ${gane.length ? gane.map(g => `<div class="win">${g.k < R.g ? `🏆 ¡GANASTE EL ${g.k + 1}° PREMIO!<b>${fmtN(c, g.n)}</b>${esc((c.premios || [])[g.k] || '')}` : `🎗️ Quedaste como suplente ${g.k - R.g + 1}<b>${fmtN(c, g.n)}</b>`}</div>`).join('') : ''}
-  <div class="ticket">
-    <div class="tk-h"><small>🎟️ ${esc((c.negocio || CONFIG.NEGOCIO).toUpperCase())}</small><b>${esc(c.titulo)}</b></div>
-    <div class="tk-b">
-      <div class="tk-name">${esc(p.nombre)}</div><div class="sm mu">📞 ${esc(p.celFull || p.cel)}</div>
-      <div class="tk-nums">${nums.map(i => `<span>${fmtN(c, i)}</span>`).join('')}</div>
-      <div class="tk-row"><span class="mu">Estado</span><span class="pill ${e.p}">${e.i} ${vencido ? 'Reserva vencida' : e.t}</span></div>
+  ${ticketsHTML(c, p, nums)}
+  <div class="card tk-det">
+      <div class="tk-row" style="border-top:0"><span class="mu">Estado</span><span class="pill ${e.p}">${e.i} ${vencido ? 'Reserva vencida' : e.t}</span></div>
       ${c.modo === 'pago' ? `<div class="tk-row"><span class="mu">Monto</span><b>${fmtS(p.monto)}</b></div>` : ''}
       ${p.op ? `<div class="tk-row"><span class="mu">N° operación</span><b>${esc(p.op)}</b></div>` : ''}
       ${envDe(p) ? `<div class="tk-row" style="align-items:flex-start;gap:12px"><span class="mu" style="flex:none">📦 Premio a</span><span style="text-align:right;font-size:12.5px">${esc(envTexto(envDe(p), c))}</span></div>` : ''}
       <div class="tk-row"><span class="mu">Registrado</span><span>${fecha(p.creado || Date.now())}</span></div>
       ${c.cierre ? `<div class="tk-row"><span class="mu">Sorteo</span><span>${fecha(c.cierre)}</span></div>` : ''}
       ${p.est === 'R' && p.vence ? `<div class="tk-row"><span class="c-warn">⏳ Reserva vence en</span><b class="c-warn" id="rv" data-mode="mini"></b></div>` : ''}
-    </div>
-    <div class="tk-perf"></div>
-    <div class="tk-f">Código <b style="color:var(--tx)">${esc(String(p.id || '').toUpperCase())}</b> · Guarda este link</div>
+      <div class="tk-row"><span class="mu">Código</span><b>${esc(String(p.id || '').toUpperCase())}</b></div>
   </div>
   <p class="sm" style="text-align:center;margin:0 6px">${expl}</p>
   <div class="acts">
@@ -957,13 +1003,13 @@ async function vBoleto(tok, nuevo) {
   </div>`;
   h += envioHTML(c, p);
   if (puedePagar) h += `<div class="card" id="secPay"><h2>${p.est === 'V' ? '🔁 ¿Te equivocaste de captura?' : '💳 Paga y sube tu comprobante'}</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 ${p.est === 'V' ? 'Reemplazar comprobante' : 'Enviar comprobante'}</button></div>`;
-  h += `<div class="acts"><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>${!R && c.estado === 'activa' ? `<a class="btn full" href="${linkForm(S.r)}">➕ Elegir más números</a>` : ''}</div>`;
+  h += `<div class="acts"><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>${!R && c.estado === 'activa' ? `<a class="btn full" href="${linkForm(S.r)}">➕ Comprar más tickets</a>` : ''}</div>`;
   const otros = misBoletos(S.r).filter(t => t !== tok);
   if (otros.length) h += `<div class="card"><h2>🎟️ Mis otros registros</h2>${otros.map((t, i) => `<a class="btn full sm" style="margin-top:6px" href="${linkBoleto(t)}">Registro ${otros.length - i}</a>`).join('')}</div>`;
   app.innerHTML = h;
   if ($('#rv')) cuenta($('#rv'), p.vence, () => setTimeout(() => location.reload(), 1500));
   if (!c.wa) $('#bWa').onclick = ev => { ev.preventDefault(); toast('El organizador no configuró su WhatsApp', 'bad'); };
-  $('#bDesc').onclick = () => boletoPNG(c, p, nums, tok);
+  $('#bDesc').onclick = () => guardarTicketComoImagen(c, p, nums);
   bindSubida();
   if ($('#bPagar')) $('#bPagar').onclick = () => pagoTardio(tok, c, p);
   ENV.boleto = { tok, p, waPend: !!nuevo }; ENV.e = null; ENV.sel = null;
@@ -984,35 +1030,72 @@ async function pagoTardio(tok, c, p) {
     if (c.wa) { if (isMobile) location.href = waURL(c.wa, msg); else window.open(waURL(c.wa, msg), '_blank'); }
   } catch (e) { toast(e.message, 'bad'); b.disabled = false; b.innerHTML = '📤 Enviar comprobante'; }
 }
-function boletoPNG(c, p, nums, tok) {
-  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const x = cv.getContext('2d');
-  const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#0d1117'); g.addColorStop(1, '#0d1117'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-  const hg = x.createLinearGradient(0, 0, W, 0); hg.addColorStop(0, '#388bfd'); hg.addColorStop(1, '#1a5fbf');
-  rr(x, 60, 60, W - 120, H - 120, 40); x.fillStyle = '#1c2333'; x.fill(); x.save(); x.clip(); x.fillStyle = hg; x.fillRect(60, 60, W - 120, 260); x.restore();
-  x.textAlign = 'center'; x.fillStyle = '#ffffffcc'; x.font = '700 34px DM Sans, sans-serif'; x.fillText('🎟️ ' + (c.negocio || CONFIG.NEGOCIO).toUpperCase(), W / 2, 140);
-  x.fillStyle = '#fff'; x.font = '800 58px Syne, sans-serif'; wrap(x, c.titulo, W / 2, 220, W - 200, 64, 2);
-  x.fillStyle = '#e6edf3'; x.font = '800 54px Syne, sans-serif'; x.fillText(String(p.nombre).toUpperCase().slice(0, 28), W / 2, 420);
-  x.fillStyle = '#8b949e'; x.font = '600 32px DM Sans, sans-serif'; x.fillText('Mis números', W / 2, 500);
-  const txt = nums.map(i => fmtN(c, i)), fs = txt.length > 12 ? 52 : txt.length > 6 ? 70 : 100;
-  x.fillStyle = '#fff'; x.font = `800 ${fs}px Syne, sans-serif`;
-  const lines = []; let cur = '';
-  for (const t of txt) { const nx = cur ? cur + '  ' + t : t; if (x.measureText(nx).width > W - 220) { lines.push(cur); cur = t; } else cur = nx; }
-  lines.push(cur); lines.slice(0, 5).forEach((l, i) => x.fillText(l, W / 2, 610 + i * (fs + 18)));
-  const e = EST[p.est] || EST.R, col = { R: '#d29922', V: '#388bfd', P: '#2ea043', X: '#f78166' }[p.est];
-  x.fillStyle = col; x.font = '800 44px DM Sans, sans-serif'; x.fillText(e.i + ' ' + e.t, W / 2, 1010);
-  x.strokeStyle = '#30363d'; x.setLineDash([16, 12]); x.lineWidth = 3; x.beginPath(); x.moveTo(110, 1070); x.lineTo(W - 110, 1070); x.stroke(); x.setLineDash([]);
-  x.fillStyle = '#8b949e'; x.font = '600 30px DM Sans, sans-serif';
-  if (c.cierre) x.fillText('Sorteo: ' + fecha(c.cierre), W / 2, 1130);
-  x.fillText('Código ' + String(p.id || '').toUpperCase(), W / 2, 1180);
-  x.fillStyle = '#388bfd'; x.font = '600 24px DM Sans, sans-serif'; x.fillText(linkBoleto(tok).replace(/^https?:\/\//, '').slice(0, 70), W / 2, 1230);
-  cv.toBlob(b => {
-    const f = new File([b], 'mi-boleto.png', { type: 'image/png' });
-    if (navigator.canShare && navigator.canShare({ files: [f] })) navigator.share({ files: [f], title: c.titulo }).catch(() => dl(b));
-    else dl(b);
-  }, 'image/png');
-  function dl(b) { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'mi-boleto.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('💾 Boleto descargado'); }
+/* ───── Ticket del cliente: el mismo diseño del ticket impreso (talón TOTAL), uno por número ───── */
+function ticketsHTML(c, p, nums) {
+  const negocio = esc((c.negocio || CONFIG.NEGOCIO).toUpperCase()), total = nums.length;
+  return `<div class="tks">${nums.map((n, i) => `<div class="tkc">
+      <div class="tkc-serie"><span>N° ${esc(String(p.id || '').toUpperCase())}</span></div>
+      <div class="tkc-cuerpo">
+        <div class="tkc-cab"><span class="tkc-marca">${negocio}</span><span class="tkc-pos">${total > 1 ? `${i + 1} de ${total}` : 'Único'}</span></div>
+        <b class="tkc-titulo">${esc(c.titulo)}</b>
+        <span class="tkc-nombre">${esc(p.nombre)}</span>
+        ${c.cierre ? `<span class="tkc-fecha">Sorteo ${fecha(c.cierre)}</span>` : ''}
+      </div>
+      <div class="tkc-corte"></div>
+      <div class="tkc-talon"><small>N°</small><b>${fmtN(c, n)}</b></div>
+    </div>`).join('')}</div>`;
 }
-function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+const TICKET_IMAGEN = { ancho: 1080, margen: 60, alto: 230, separacion: 26, cabecera: 300, pie: 170 };
+function guardarTicketComoImagen(c, p, nums) {
+  const T = TICKET_IMAGEN, alto = T.cabecera + nums.length * (T.alto + T.separacion) + T.pie;
+  const lienzo = document.createElement('canvas'); lienzo.width = T.ancho; lienzo.height = alto;
+  const x = lienzo.getContext('2d'), fuente = (peso, px) => `${peso} ${px}px Arial, Helvetica, sans-serif`;
+  x.fillStyle = '#080810'; x.fillRect(0, 0, T.ancho, alto);
+  x.textAlign = 'center'; x.fillStyle = '#ffffff'; x.font = fuente(800, 54); wrap(x, c.titulo, T.ancho / 2, 120, T.ancho - 2 * T.margen, 62, 2);
+  x.fillStyle = '#9ca3af'; x.font = fuente(700, 34); x.fillText(String(p.nombre).toUpperCase().slice(0, 34), T.ancho / 2, 250);
+  nums.forEach((n, i) => dibujarTicket(x, T.margen, T.cabecera + i * (T.alto + T.separacion), T.ancho - 2 * T.margen, T.alto, { c, p, numero: fmtN(c, n), posicion: nums.length > 1 ? `${i + 1} de ${nums.length}` : 'Único', fuente }));
+  const e = EST[p.est] || EST.R;
+  x.textAlign = 'center'; x.fillStyle = { R: '#eab308', V: '#4f8ef7', P: '#22c55e', X: '#f87171' }[p.est] || '#ffffff'; x.font = fuente(800, 36);
+  x.fillText(e.t.toUpperCase(), T.ancho / 2, alto - 100);
+  x.fillStyle = '#6b7280'; x.font = fuente(600, 26); x.fillText(`Código ${String(p.id || '').toUpperCase()}${c.cierre ? ' · Sorteo ' + fecha(c.cierre) : ''}`, T.ancho / 2, alto - 52);
+  lienzo.toBlob(blob => {
+    const archivo = new File([blob], 'mi-ticket.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) navigator.share({ files: [archivo], title: c.titulo }).catch(() => descargar(blob));
+    else descargar(blob);
+  }, 'image/png');
+  function descargar(blob) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mi-ticket.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); toast('💾 Ticket guardado'); }
+}
+function dibujarTicket(x, X, Y, W, H, { c, p, numero, posicion, fuente }) {
+  const talon = 250, serie = 64, corte = X + W - talon;
+  x.save(); trazarRectanguloRedondeado(x, X, Y, W, H, 26); x.clip();
+  const fondo = x.createLinearGradient(X, Y, X + W, Y + H); fondo.addColorStop(0, '#075b61'); fondo.addColorStop(.55, '#0b858b'); fondo.addColorStop(1, '#14aaae');
+  x.fillStyle = fondo; x.fillRect(X, Y, W, H);
+  x.fillStyle = '#05484d'; x.fillRect(X, Y, serie, H);
+  x.fillStyle = '#e30613'; x.fillRect(corte, Y, talon, H);
+  x.save(); x.beginPath(); x.rect(corte, Y, talon, H); x.clip();
+  x.strokeStyle = '#c3040f'; x.lineWidth = 22;
+  for (let k = -H; k < talon + H; k += 52) { x.beginPath(); x.moveTo(corte + k, Y + H); x.lineTo(corte + k + H, Y); x.stroke(); }
+  x.restore();
+  x.restore();
+  x.fillStyle = '#080810'; [Y, Y + H].forEach(cy => { x.beginPath(); x.arc(corte, cy, 17, 0, Math.PI * 2); x.fill(); });
+  x.strokeStyle = '#ffffff'; x.lineWidth = 4; x.setLineDash([12, 10]); x.beginPath(); x.moveTo(corte, Y + 20); x.lineTo(corte, Y + H - 20); x.stroke(); x.setLineDash([]);
+  x.save(); x.translate(X + serie / 2 + 10, Y + H / 2); x.rotate(-Math.PI / 2); x.textAlign = 'center'; x.fillStyle = '#ffffff'; x.font = fuente(800, 24); x.fillText('N° ' + String(p.id || '').toUpperCase(), 0, 0); x.restore();
+  const izq = X + serie + 30;
+  x.textAlign = 'left';
+  x.save(); x.translate(izq, Y + 34); x.transform(1, 0, -0.25, 1, 0, 0); x.fillStyle = '#e30613'; x.fillRect(0, 0, 250, 46); x.strokeStyle = '#ffffff'; x.lineWidth = 4; x.strokeRect(0, 0, 250, 46); x.restore();
+  x.fillStyle = '#ffffff'; x.font = 'italic ' + fuente(800, 28); x.fillText((c.negocio || CONFIG.NEGOCIO).toUpperCase().slice(0, 14), izq + 14, Y + 68);
+  x.font = fuente(800, 22); x.textAlign = 'right'; x.fillText(posicion.toUpperCase(), corte - 30, Y + 66);
+  x.textAlign = 'left'; x.font = fuente(800, 36); x.fillText(String(c.titulo).slice(0, 30), izq, Y + 128);
+  x.font = fuente(700, 30); x.fillText(String(p.nombre).toUpperCase().slice(0, 32), izq, Y + 172);
+  if (c.cierre) { x.font = fuente(600, 22); x.globalAlpha = .9; x.fillText('Sorteo ' + fecha(c.cierre), izq, Y + 207); x.globalAlpha = 1; }
+  x.textAlign = 'center'; x.fillStyle = '#ffffff'; x.font = fuente(800, 26); x.fillText('N°', corte + talon / 2, Y + 70);
+  x.font = fuente(900, numero.length > 4 ? 72 : 92); x.fillText(numero, corte + talon / 2, Y + 160);
+}
+function trazarRectanguloRedondeado(x, X, Y, ancho, alto, radio) {
+  x.beginPath(); x.moveTo(X + radio, Y);
+  x.arcTo(X + ancho, Y, X + ancho, Y + alto, radio); x.arcTo(X + ancho, Y + alto, X, Y + alto, radio);
+  x.arcTo(X, Y + alto, X, Y, radio); x.arcTo(X, Y, X + ancho, Y, radio); x.closePath();
+}
 function wrap(x, t, cx, y, mw, lh, maxL) {
   const w = String(t).split(' '); let l = '', n = 0;
   for (const p of w) { const tt = l ? l + ' ' + p : p; if (x.measureText(tt).width > mw && l) { x.fillText(l, cx, y + n * lh); l = p; if (++n >= maxL - 1) break; } else l = tt; }
@@ -1025,7 +1108,7 @@ function wrap(x, t, cx, y, mw, lh, maxL) {
 let PD = null, pf = 'todos', pq = '';
 async function vPart() {
   PD = await api(`/api/r/${encodeURIComponent(S.r)}/part`);
-  const c = PD.cfg; S.cfg = c; $('#sbar').hidden = true;
+  const c = PD.cfg; S.cfg = c; mostrarBarra(false);
   const b = PD.board, pag = (b.match(/3/g) || []).length, lib = (b.match(/0/g) || []).length;
   let h = cabecera(c) + `
   <div class="card"><h2>👥 Participantes</h2><p class="mu sm" style="margin-top:-6px">${esc(c.titulo)}</p>
@@ -1094,9 +1177,7 @@ document.addEventListener('click', e => {
   const t = e.target;
   // El globo de Heavy se cierra con cualquier toque fuera de él: nunca tapa un botón
   if ($('#hvB') && !t.closest('#hv')) $('#hvB').hidden = true;
-  const nb = t.closest('#grid .nb[data-n]'); if (nb) return toggleNum(+nb.dataset.n);
-  const rm = t.closest('[data-rm]'); if (rm) { S.sel.delete(+rm.dataset.rm); renderGrid(); return renderSel(); }
-  const pg = t.closest('[data-pg]'); if (pg) { S.page = +pg.dataset.pg; renderPages(); return renderGrid(); }
+  const pack = t.closest('[data-qty]'); if (pack) return elegirCantidad(+pack.dataset.qty);
   const pfb = t.closest('[data-pf]'); if (pfb) { pf = pfb.dataset.pf; $$('[data-pf]').forEach(b => b.classList.toggle('on', b === pfb)); return renderPList(); }
   const cp = t.closest('[data-c]'); if (cp) return copiar(cp.dataset.c);
   if (t.closest('#verBases')) { e.preventDefault(); return modal(`<h2 class="syne" style="margin-bottom:10px">📜 Bases del sorteo</h2><pre>${esc(S.cfg.bases || 'El organizador aún no publicó las bases. Puedes consultarlas por WhatsApp.')}</pre>`); }
@@ -1107,9 +1188,7 @@ document.addEventListener('click', e => {
   if (t.closest('#hvX')) { $('#hvB').hidden = true; return; }
   if (t.id === 'qrImg') return modal(`<img src="${t.src}" style="width:100%;border-radius:14px;background:#fff;padding:10px"><a class="btn full" style="margin-top:10px" href="${t.src}" download="qr-pago">💾 Descargar QR</a>`);
   switch (t.closest('button')?.id) {
-    case 'sbGo': return enviar();
-    case 'wzSig': return siguiente();
-    case 'wzAtras': return irPaso(S.paso - 1, true);
+    case 'sbGo': return accionPrincipal();
     case 'dniSi': return dniAceptar();
     case 'dniNo': return dniCorregir();
     case 'agUbic': return agUbicar();
@@ -1117,26 +1196,28 @@ document.addEventListener('click', e => {
     case 'envGo': return envGuardar();
     case 'envCambiar': $('#envPick').hidden = false; $('#envCambiar').hidden = true; return;
     case 'envDespues': $('#envPick').hidden = true; $('#envDespues').hidden = true; toast('Puedes elegirlo después desde el link de tu boleto'); return envSeguir();
-    case 'azar': return alAzar();
-    case 'qm': S.qty = Math.max(1, S.qty - 1); $('#qn').textContent = S.qty; return actBar();
-    case 'qp': S.qty = Math.min(S.cfg.maxSel || 20, S.cfg.maxPer || 500, S.qty + 1); $('#qn').textContent = S.qty; return actBar();
+    case 'qm': return elegirCantidad(Math.max(1, S.qty - 1));
+    case 'qp': if (S.qty >= S.maxTickets) return toast(`Máximo ${S.maxTickets} tickets por registro`); return elegirCantidad(S.qty + 1);
     case 'quitar': S.file = null; $('#prev').hidden = true; $('#drop').hidden = false; $('#drop').classList.remove('has'); $('#fFile').value = ''; if ($('#opBox')) $('#opBox').hidden = true; return;
     case 'bVer': return verificar();
   }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'soloLib') { S.soloLib = e.target.checked; renderGrid(); }
   if (e.target.id === 'despues' && e.target.checked && S.file) { toast('Se enviará sin comprobante (reserva)'); }
 });
-let bT, aT; document.addEventListener('input', e => {
+let aT; document.addEventListener('input', e => {
   const id = e.target.id;
-  if (id === 'busca') { clearTimeout(bT); bT = setTimeout(() => buscarNum(e.target.value), 350); }
   if (id === 'fCel') e.target.value = e.target.value.replace(/[^\d ]/g, '');
-  if (id === 'fDni') { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8); dniBuscar(e.target.value); boletoVivo(); }
-  if (id === 'fNom') boletoVivo();
+  if (id === 'fDni') { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 8); dniBuscar(e.target.value); }
+  if (id === 'fDni' || id === 'fNom' || id === 'fCel') { guardarBorrador(); actualizarFlujo(); }
   if (id === 'agBusca') { clearTimeout(aT); aT = setTimeout(() => agBuscar(e.target.value), 200); }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches?.('#fDni,#fNom,#fCel')) { e.preventDefault(); siguiente(); } });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.matches?.('#fDni,#fNom,#fCel')) return;
+  e.preventDefault();
+  const siguienteCampo = { fDni: '#fNom', fNom: '#fCel' }[e.target.id];
+  if (siguienteCampo && !$(siguienteCampo).readOnly) $(siguienteCampo).focus(); else accionPrincipal();
+});
 
 boot();
 </script>
