@@ -9,6 +9,7 @@
      ALLOWED_ORIGIN   → ej: https://sorteos.tuusuario.workers.dev (opcional, por defecto *)
      TURNSTILE_SITEKEY → clave pública de Turnstile (wrangler.toml)  ┐ antispam: se activa
      TURNSTILE_SECRET  → clave secreta (Secret)                      ┘ solo si están las dos
+     RENIEC_API_KEY    → clave de shalom-api.lat (Secret) para completar el nombre con el DNI (opcional)
    Las tablas se crean solas en la primera petición.
    ========================================================================== */
 
@@ -22,7 +23,12 @@ const CFG = {
   PAPELERA_DIAS: 30, // días en la papelera antes de borrarse para siempre
   PIN_MAX: 5,             // PIN equivocado X veces seguidas...
   PIN_BLOQUEO: 15 * 60e3, // ...bloquea ese dispositivo/red durante 15 minutos
+  DNI_IP_MAX: 12,         // consultas de DNI nuevas por IP...
+  DNI_IP_WIN: 10 * 60e3,  // ...cada 10 minutos
+  DNI_DIA: 150,           // tope de consultas NUEVAS al día (las de la caché no cuentan ni cuestan)
+  DNI_CACHE_DIAS: 365,    // un nombre consultado se reutiliza un año sin volver a pagar
 };
+const RENIEC_URL = 'https://api.shalom-api.lat/account/dni/';
 
 /* ---------------- Esquema ---------------- */
 const SCHEMA = [
@@ -39,12 +45,16 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS imgs (k TEXT PRIMARY KEY, mime TEXT, b64 TEXT)`,
   // Intentos de PIN fallidos por IP (guardada cifrada): n = fallos seguidos, hasta = fin del bloqueo
   `CREATE TABLE IF NOT EXISTS intentos (ip TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, ult INTEGER, hasta INTEGER NOT NULL DEFAULT 0)`,
+  // Caché de RENIEC (nombre oficial por DNI) y contadores de consultas (por IP y por día)
+  `CREATE TABLE IF NOT EXISTS dni (dni TEXT PRIMARY KEY, nombres TEXT, pat TEXT, mat TEXT, t INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS dniq (k TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, t INTEGER)`,
 ];
 // Columnas agregadas después (papelera): bor = fecha en que entró a la papelera,
 // prev = estado que tenía antes (para recuperarlo igual).
 // fin = 1 → CULMINADO (ya participó). Al crear la columna, los pagados de sorteos ya realizados pasan a culminado.
 const MIGRAR = [
   ['ALTER TABLE part ADD COLUMN bor INTEGER'], ['ALTER TABLE part ADD COLUMN prev TEXT'],
+  ['ALTER TABLE part ADD COLUMN agencia TEXT'],  // agencia Shalom elegida (JSON) para enviar el premio
   ['ALTER TABLE part ADD COLUMN fin INTEGER NOT NULL DEFAULT 0', "UPDATE part SET fin=1 WHERE est='P' AND rifa IN (SELECT id FROM rifas WHERE json_extract(cfg,'$.resultado') IS NOT NULL)"],
 ];
 let SCHEMA_OK = false;
@@ -67,6 +77,7 @@ const DEF = {
   cierre: 0, bloqueoH: 0, reservaMin: 30,
   precio: 5, promos: [], yape: '', plin: '', titular: '', qr: '', bancos: '', instr: '',
   compObl: false, opObl: true, wa: '', negocio: '', bases: '', tsKey: '',
+  pedirDni: true, pedirAgencia: true,  // DNI obligatorio (con nombre de RENIEC) y agencia Shalom para el premio
 };
 
 /* ---------------- Entrada ---------------- */
@@ -91,6 +102,7 @@ export default {
       await limpiarPapelera(env);
       // Borra registros de intentos de PIN viejos (más de 1 día sin actividad)
       await env.DB.prepare('DELETE FROM intentos WHERE hasta<? AND ult<?').bind(now(), now() - 864e5).run();
+      await env.DB.prepare('DELETE FROM dniq WHERE t<?').bind(now() - 3 * 864e5).run();
     }));
   },
 };
@@ -117,6 +129,7 @@ async function route(req, env) {
   if (a === 'r' && b && !c && m === 'GET') return pubRifa(env, b);
   if (a === 'r' && b && c === 'part' && m === 'GET') return pubPart(env, b);
   if (a === 'r' && b && c === 'entrar' && m === 'POST') return entrar(req, env, b);
+  if (a === 'dni' && b && !c && m === 'GET') return consultaDni(req, env, b);
   if (a === 't' && b && !c && m === 'GET') return boleto(env, b);
   if (a === 't' && b && c === 'pago' && m === 'POST') return pagoTardio(req, env, b);
   if (a === 'l' && b && m === 'GET') return linkInfo(env, b);
@@ -324,9 +337,10 @@ async function pubPart(env, id) {
 async function entrar(req, env, id) {
   const fd = await req.formData();
   const g = k => String(fd.get(k) || '').trim();
-  const nombre = g('nombre').replace(/\s+/g, ' ').slice(0, 60);
+  let nombre = g('nombre').replace(/\s+/g, ' ').slice(0, 60);
   const cel = g('cel').replace(/\D/g, '').slice(-9);
   const dni = g('dni').replace(/\D/g, '').slice(0, 12);
+  const agencia = limpiarAgencia(g('agencia'));
   const op = g('op').replace(/\s/g, '').slice(0, 30);
   const ih = g('ih').replace(/[^a-f0-9]/gi, '').slice(0, 64);
   const code = g('link').slice(0, 20);
@@ -344,6 +358,11 @@ async function entrar(req, env, id) {
   let r = await loadRifa(env, id);
   const c = r.cfg;
   checkAbierta(c);
+  if (c.pedirDni && !/^\d{8}$/.test(dni)) err('Escribe tu DNI (8 dígitos)');
+  if (c.pedirAgencia && !agencia) err('Elige la agencia Shalom donde recibirías tu premio');
+  // Si el DNI ya se consultó en RENIEC, se usa el nombre oficial (el navegador no decide de quién es un DNI)
+  const ofi = /^\d{8}$/.test(dni) ? await dniCache(env, dni) : null;
+  if (ofi) nombre = ofi.completo.slice(0, 60);
   const want = azar || pedidos.length;
   if (!want) err('Elige al menos un número');
   if (c.maxSel && want > c.maxSel) err(`Máximo ${c.maxSel} números por registro`);
@@ -394,18 +413,75 @@ async function entrar(req, env, id) {
     if (vence) r.cfg = { ...r.cfg, _nx: r.cfg._nx ? Math.min(r.cfg._nx, vence) : vence };
     const monto = c.modo === 'pago' ? precioTotal(c, idx.length) : 0;
     const pre = [
-      env.DB.prepare(`INSERT INTO part (id,rifa,tok,nombre,cel,dni,nums,monto,op,img,ih,est,creado,vence,ip,nota) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE ${VER_OK}`)
-        .bind(pid, id, tok, nombre, cel, dni, idx.join(','), monto, op || null, key, ih || null, est, t, vence, iph, code ? 'link:' + code : null, id, r.ver),
+      env.DB.prepare(`INSERT INTO part (id,rifa,tok,nombre,cel,dni,nums,monto,op,img,ih,est,creado,vence,ip,nota,agencia) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE ${VER_OK}`)
+        .bind(pid, id, tok, nombre, cel, dni, idx.join(','), monto, op || null, key, ih || null, est, t, vence, iph, code ? 'link:' + code : null, agencia, id, r.ver),
     ];
     if (code) pre.push(env.DB.prepare(`UPDATE links SET usado=1 WHERE code=? AND usado=0 AND ${VER_OK}`).bind(code, id, r.ver));
-    if (await commit(env, r, pre, 1)) return J({ ok: true, tok, id: pid, nums: idx, est, vence, monto });
+    if (await commit(env, r, pre, 1)) return J({ ok: true, tok, id: pid, nums: idx, est, vence, monto, nombre });
     r = await loadRifa(env, id);
   }
   err('Mucha gente registrándose a la vez, intenta de nuevo', 503);
 }
 
+/* ---------------- DNI (RENIEC) y agencia Shalom ----------------
+   El formulario pregunta GET /api/dni/12345678 y recibe el nombre oficial para no
+   teclearlo. Cada consulta NUEVA cuesta y devuelve datos de una persona real, así que:
+     · caché: un DNI ya consultado no vuelve a costar (y de ahí sale el nombre que se guarda)
+     · freno por IP y tope diario: pasado el tope, el formulario sigue funcionando y
+       el cliente escribe su nombre a mano. Degrada, no rompe.
+   Las respuestas son siempre 200 con ok:false + motivo, para que el formulario no se trabe. */
+const personaDe = (dni, x) => {
+  const completo = [x.nombres, x.pat, x.mat].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+  return { dni, nombres: x.nombres || '', apePaterno: x.pat || '', apeMaterno: x.mat || '', completo };
+};
+async function dniCache(env, dni) {
+  const x = await env.DB.prepare('SELECT nombres,pat,mat FROM dni WHERE dni=? AND t>?').bind(dni, now() - CFG.DNI_CACHE_DIAS * 864e5).first();
+  return x ? personaDe(dni, x) : null;
+}
+async function consultaDni(req, env, raw) {
+  const dni = String(raw || '').replace(/\D/g, '');
+  if (!/^\d{8}$/.test(dni)) return J({ ok: false, motivo: 'FORMATO' });
+  const hit = await dniCache(env, dni);
+  if (hit) return J({ ok: true, persona: hit });
+  if (!env.RENIEC_API_KEY) return J({ ok: false, motivo: 'APAGADO' });
+  const t = now();
+  const ipk = 'ip:' + (await sha((req.headers.get('cf-connecting-ip') || 'x') + 'dni')).slice(0, 16);
+  const dk = 'dia:' + new Date(t - 5 * 3600e3).toISOString().slice(0, 10);  // día en hora de Perú
+  const [qi, qd] = await Promise.all([ipk, dk].map(k => env.DB.prepare('SELECT n,t FROM dniq WHERE k=?').bind(k).first()));
+  const ventanaOk = qi && t - qi.t < CFG.DNI_IP_WIN;
+  if (ventanaOk && qi.n >= CFG.DNI_IP_MAX) return J({ ok: false, motivo: 'ESPERA' });
+  if (qd && qd.n >= CFG.DNI_DIA) return J({ ok: false, motivo: 'TOPE' });
+  // Se cuenta ANTES de consultar: así un ataque en ráfaga no se cuela entre la consulta y la cuenta
+  await env.DB.batch([
+    env.DB.prepare('INSERT OR REPLACE INTO dniq (k,n,t) VALUES (?,?,?)').bind(ipk, ventanaOk ? qi.n + 1 : 1, ventanaOk ? qi.t : t),
+    env.DB.prepare('INSERT INTO dniq (k,n,t) VALUES (?,1,?) ON CONFLICT(k) DO UPDATE SET n=n+1').bind(dk, t),
+  ]);
+  let j;
+  try {
+    const r = await fetch(RENIEC_URL + dni, { headers: { 'x-api-key': env.RENIEC_API_KEY, accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
+    if (r.status === 404) return J({ ok: false, motivo: 'NO_EXISTE' });
+    if (!r.ok) return J({ ok: false, motivo: 'ERROR', status: r.status });
+    j = await r.json();
+  } catch (e) { return J({ ok: false, motivo: 'ERROR' }); }
+  const d = j && j.success === true && j.data && typeof j.data === 'object' ? j.data : null;
+  const txt = x => (typeof x === 'string' ? x.trim().toUpperCase().slice(0, 60) : '');
+  if (!d || !txt(d.nombres)) return J({ ok: false, motivo: 'NO_EXISTE' });
+  const x = { nombres: txt(d.nombres), pat: txt(d.apellidoPaterno), mat: txt(d.apellidoMaterno) };
+  await env.DB.prepare('INSERT OR REPLACE INTO dni (dni,nombres,pat,mat,t) VALUES (?,?,?,?,?)').bind(dni, x.nombres, x.pat, x.mat, t).run();
+  return J({ ok: true, persona: personaDe(dni, x) });
+}
+// Agencia elegida en el formulario: solo se guardan campos conocidos y cortos
+function limpiarAgencia(s) {
+  if (!s) return null;
+  let a; try { a = JSON.parse(s); } catch { return null; }
+  if (!a || typeof a !== 'object') return null;
+  const t = (k, n) => String(a[k] ?? '').replace(/\s+/g, ' ').trim().slice(0, n);
+  const o = { id: t('id', 12), nombre: t('nombre', 120), dir: t('dir', 200), dep: t('dep', 40), prov: t('prov', 40), dist: t('dist', 40) };
+  return o.id && o.nombre ? JSON.stringify(o) : null;
+}
+
 async function boleto(env, tok) {
-  const p = await env.DB.prepare('SELECT id,rifa,nombre,cel,nums,monto,op,img,est,creado,vence,nota FROM part WHERE tok=?').bind(tok).first();
+  const p = await env.DB.prepare('SELECT id,rifa,nombre,cel,nums,monto,op,img,est,creado,vence,nota,agencia FROM part WHERE tok=?').bind(tok).first();
   if (!p) err('Boleto no encontrado', 404);
   const r = await loadRifa(env, p.rifa);
   if (p.est === 'R' && p.vence && p.vence <= now()) { p.est = 'X'; p.nota = 'vencido'; }
@@ -513,7 +589,7 @@ function sanitize(c) {
   if ('estado' in c) o.estado = ['activa', 'pausada', 'cerrada', 'sorteada'].includes(c.estado) ? c.estado : 'activa';
   num('cantidad', 1, CFG.MAX_NUM); num('base', 0, 1); num('maxPer', 0, CFG.MAX_NUM); num('maxSel', 1, 500);
   num('bloqueoH', 0, 720); num('reservaMin', 5, 10080); num('precio', 0, 1e6, false); num('cierre', 0, 4e12);
-  bool('elegir'); bool('aprobar'); bool('compObl'); bool('opObl');
+  bool('elegir'); bool('aprobar'); bool('compObl'); bool('opObl'); bool('pedirDni'); bool('pedirAgencia');
   if ('promos' in c) o.promos = (Array.isArray(c.promos) ? c.promos : []).map(p => ({ n: Math.round(+p.n || 0), p: Math.max(0, Math.round((+p.p || 0) * 100) / 100) })).filter(p => p.n > 1).slice(0, 10);
   return o;
 }
@@ -559,7 +635,7 @@ async function delRifa(env, id) {
 async function adminDetalle(env, id) {
   const r = await loadRifa(env, id);
   await limpiarPapelera(env, id);
-  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev,fin FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
+  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev,fin,agencia FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
   return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, board: r.board, act: r.act }, parts: results });
 }
 

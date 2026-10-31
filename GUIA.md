@@ -39,6 +39,23 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
   Se puede **recuperar** con ♻️. No hay botón de vaciar: cada día, lo que lleva **30 días** se borra solo y para siempre (con su comprobante).
   Las reservas vencidas también van a la papelera.
 
+## Formulario por pasos (diseño de Total-Tools)
+1. **Números** → 2. **Tus datos** (DNI → nombre automático) → 3. **Agencia Shalom** (para enviar el premio) → 4. **Pago**.
+- La **foto del premio** sale grande arriba: súbela en el panel → Config → *Foto del premio*.
+- Arriba se ve un **boleto vivo** que se llena mientras el cliente escribe.
+- **Heavy** (el guía) da consejos en cada paso; se cierra con cualquier toque.
+- En el panel → Config → *Datos del participante* puedes apagar el DNI o la agencia en cada sorteo.
+
+### DNI con RENIEC (shalom-api.lat)
+- La clave va como secreto del Worker: **`RENIEC_API_KEY`**. Sin la clave, el cliente escribe su nombre a mano.
+- Protecciones: un DNI ya consultado no vuelve a costar (caché de 1 año); máximo 12 consultas nuevas
+  cada 10 minutos por red y **150 consultas nuevas al día**. Pasado el tope, el formulario sigue funcionando.
+- Si el DNI ya se consultó, se guarda el **nombre oficial** (aunque el cliente escriba otro).
+
+### Agencias Shalom
+- Lista en `public/data/agencias-shalom.json` (562 sedes, copiada de Total-Tools). Para actualizarla, reemplaza ese archivo.
+- El cliente puede usar su **ubicación** (solo para ordenar las sedes por cercanía, no se guarda) o **buscar** su provincia o distrito.
+
 ## Seguridad del PIN
 - Si alguien pone el PIN mal **5 veces seguidas**, ese celular o red queda **bloqueado 15 minutos** (aunque después ponga el correcto).
 - La pantalla avisa cuántos intentos quedan. Un acierto reinicia el contador.

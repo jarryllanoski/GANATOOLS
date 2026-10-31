@@ -709,7 +709,7 @@ function cardHTML(p, c) {
     <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
-    ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
+    ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${agDe(p) ? `<div class="card-addr">🏢 ${esc(agDe(p).nombre)} · <span class="mu">${esc(agDe(p).dir)}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</span></div>` : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
     <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="${g === 'F' ? 'Ya participó del sorteo' : 'Mandar a la papelera (toca 2 veces)'}" ${g === 'F' ? 'disabled' : ''}>🗑️</button></div>
   </div>`;
 }
@@ -1049,9 +1049,10 @@ function menuMas(p) {
     m.close();
   });
 }
+function agDe(p) { try { return p.agencia ? JSON.parse(p.agencia) : null; } catch (e) { return null; } }
 function exportarCSV() {
-  const c = cfg(), rows = [['Fecha', 'Nombre', 'Celular', 'DNI', 'Números', 'Monto', 'N° operación', 'Estado', 'Nota', 'Código']];
-  for (const p of S.d.parts) rows.push([new Date(p.creado).toLocaleString('es-PE'), p.nombre, p.cel, p.dni || '', splitN(p.nums).map(i => fmtN(c, i)).join(' '), (+p.monto || 0).toFixed(2), p.op || '', GRP[grp(p)].t, p.nota || '', p.id]);
+  const c = cfg(), rows = [['Fecha', 'Nombre', 'Celular', 'DNI', 'Números', 'Monto', 'N° operación', 'Estado', 'Agencia Shalom', 'Dirección agencia', 'Departamento', 'Nota', 'Código']];
+  for (const p of S.d.parts) { const a = agDe(p) || {}; rows.push([new Date(p.creado).toLocaleString('es-PE'), p.nombre, p.cel, p.dni || '', splitN(p.nums).map(i => fmtN(c, i)).join(' '), (+p.monto || 0).toFixed(2), p.op || '', GRP[grp(p)].t, a.nombre || '', a.dir || '', a.dep || '', p.nota || '', p.id]); }
   const csv = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
   descargar(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `sorteo-${(c.titulo || 'datos').replace(/\W+/g, '-').toLowerCase()}.csv`);
   toast('📊 CSV descargado');
@@ -1270,7 +1271,7 @@ function renderConfig() {
   <div class="card"><h3>🎁 Sorteo</h3>
     ${F('titulo', 'Título', 'maxlength="120" placeholder="Ej: Gran sorteo Taladro TOTAL"')}
     ${TA('desc', 'Descripción', 'Detalles del premio, condiciones…')}
-    ${IMG('foto', 'Foto del premio')}
+    ${IMG('foto', 'Foto del premio (sale grande al inicio del formulario)')}
     ${TA('premios', 'Premios (uno por línea, en orden)', '1° Taladro percutor\n2° Juego de brocas', 'lines')}
     <div class="fld"><span>Tipo</span><div class="seg" data-k="modo" data-t="seg"><button data-v="pago">💰 Rifa pagada</button><button data-v="gratis">🎁 Sorteo gratis</button></div></div>
     <div class="fld"><span>Estado</span><div class="seg" data-k="estado" data-t="seg"><button data-v="activa">🟢 Activa</button><button data-v="pausada">⏸️ Pausada</button><button data-v="cerrada">🔒 Cerrada</button>${cfg().resultado ? '<button data-v="sorteada">🏆 Sorteada</button>' : ''}</div></div>
@@ -1282,6 +1283,11 @@ function renderConfig() {
     <div class="grid2">${F('maxSel', 'Máx. por registro', 'min="1" max="500" inputmode="numeric" data-t="num"', 'number')}${F('maxPer', 'Máx. por persona (0 = sin límite)', 'min="0" inputmode="numeric" data-t="num"', 'number')}</div>
     ${SW('elegir', '👆 El cliente elige sus números', 'Si lo apagas, se asignan al azar')}
     ${SW('aprobar', '✋ Aprobar manualmente (sorteo gratis)', 'Cada registro gratis queda en revisión')}
+  </div>
+
+  <div class="card"><h3>🪪 Datos del participante</h3>
+    ${SW('pedirDni', '🪪 Pedir DNI (nombre automático de RENIEC)', 'El cliente escribe su DNI y su nombre sale solo')}
+    ${SW('pedirAgencia', '🏢 Pedir agencia Shalom', 'Para saber a dónde enviar el premio si gana')}
   </div>
 
   <div class="card"><h3>📅 Fechas y reservas</h3>
