@@ -317,11 +317,16 @@ async function dupPago(env, id, op, ih, except = '') {
 }
 
 /* ---------------- Público ---------------- */
+// Personas distintas con pago subido o confirmado (no cuenta reservas sin pagar)
+async function contarParticipantes(env, id) {
+  const q = await env.DB.prepare("SELECT COUNT(DISTINCT cel) n FROM part WHERE rifa=? AND est IN ('V','P')").bind(id).first();
+  return q?.n || 0;
+}
 async function pubRifa(env, id) {
   let d = memGet('r:' + id);
   if (!d) {
     const r = await loadRifa(env, id);
-    d = { id, cfg: { ...r.cfg, tsKey: tsActivo(env) ? env.TURNSTILE_SITEKEY : '' }, board: r.board, t: now() };
+    d = { id, cfg: { ...r.cfg, tsKey: tsActivo(env) ? env.TURNSTILE_SITEKEY : '' }, board: r.board, participantes: await contarParticipantes(env, id), t: now() };
     memSet('r:' + id, d, CFG.CACHE_MS);
   }
   return J({ ok: true, ...d }, 200, { 'cache-control': 'public, max-age=8' });
@@ -516,7 +521,7 @@ async function boleto(env, tok) {
   if (!p) err('Boleto no encontrado', 404);
   const r = await loadRifa(env, p.rifa);
   if (p.est === 'R' && p.vence && p.vence <= now()) { p.est = 'X'; p.nota = 'vencido'; }
-  return J({ ok: true, rifa: { id: r.id, cfg: r.cfg }, p: { ...p, cel: maskCel(p.cel), img: !!p.img } });
+  return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, participantes: await contarParticipantes(env, r.id) }, p: { ...p, cel: maskCel(p.cel), img: !!p.img } });
 }
 
 async function pagoTardio(req, env, tok) {

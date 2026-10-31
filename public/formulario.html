@@ -306,7 +306,7 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 const CONFIG = {
   API: 'https://sorteos.jarryllanoski.workers.dev', // URL de tu Worker, ej: https://sorteos.tuusuario.workers.dev
   NEGOCIO: 'TOTAL TOOLS',
-  PAGE: 200,            // números por página en la grilla
+  MIN_PARTICIPANTES_VISIBLES: 100,  // la lista de participantes se muestra desde esta cantidad
 };
 
 /* =====================================================================
@@ -415,8 +415,9 @@ function cabecera(c) {
   document.title = c?.titulo ? `${c.titulo} · ${neg}` : neg;
   return `<div class="hdr"><b>🎟️ ${esc(neg.toUpperCase())}</b>${c?.wa ? `<a class="ayuda" href="${waURL(c.wa, 'Hola, tengo una consulta sobre el sorteo ' + (c.titulo || ''))}" target="_blank">💬 Ayuda</a>` : ''}</div>`;
 }
+const participantesVisibles = () => (S.participantes || 0) >= CONFIG.MIN_PARTICIPANTES_VISIBLES;
 function pie(c) {
-  return `<div class="pie">🔐 Sorteo verificable · <a href="${linkPart(S.r)}">ver participantes</a><br>${esc(c?.negocio || CONFIG.NEGOCIO)}${c?.wa ? ` · <a href="${waURL(c.wa, 'Hola')}" target="_blank">WhatsApp</a>` : ''}</div>`;
+  return `<div class="pie">🔐 Sorteo verificable${participantesVisibles() ? ` · <a href="${linkPart(S.r)}">ver participantes</a>` : ''}<br>${esc(c?.negocio || CONFIG.NEGOCIO)}${c?.wa ? ` · <a href="${waURL(c.wa, 'Hola')}" target="_blank">WhatsApp</a>` : ''}</div>`;
 }
 function vError(tit, txt, extra = '') {
   mostrarBarra(false);
@@ -443,7 +444,7 @@ async function boot() {
    ===================================================================== */
 async function vForm() {
   const j = await api('/api/r/' + encodeURIComponent(S.r));
-  S.cfg = j.cfg; S.board = j.board;
+  S.cfg = j.cfg; S.board = j.board; S.participantes = j.participantes || 0;
   const c = S.cfg, total = S.board.length, libres = (S.board.match(/0/g) || []).length;
   const cierreVenta = c.cierre ? c.cierre - (c.bloqueoH || 0) * 3600e3 : 0;
   const abierta = c.estado === 'activa' && (!cierreVenta || Date.now() < cierreVenta) && libres > 0;
@@ -452,12 +453,12 @@ async function vForm() {
     + (mios.length ? `<a class="mine" href="${linkBoleto(mios[0])}">🎟️ <span class="sp">Ya tienes ${mios.length} registro${mios.length === 1 ? '' : 's'} en este sorteo</span><b>Ver ➜</b></a>` : '');
 
   if (c.resultado) {
-    app.innerHTML = h + resultadoHTML(c) + `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes y verificación</a>` + pie(c);
+    app.innerHTML = h + resultadoHTML(c) + (participantesVisibles() ? `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes y verificación</a>` : '') + pie(c);
     mostrarBarra(false); return;
   }
   if (!abierta) {
     const motivo = libres === 0 ? '🎉 ¡Se vendieron todos los tickets!' : c.estado === 'pausada' ? '⏸️ El sorteo está pausado por el momento' : '🔒 La inscripción ya cerró';
-    app.innerHTML = h + `<div class="banner card">${motivo}</div><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>` + pie(c);
+    app.innerHTML = h + `<div class="banner card">${motivo}</div>` + (participantesVisibles() ? `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>` : '') + pie(c);
     mostrarBarra(false);
     if ($('#cd')) cuenta($('#cd'), cierreVenta || c.cierre);
     return;
@@ -503,7 +504,8 @@ async function cargarActividad() {
   const recientes = lista.slice(0, 8);
   let i = 0;
   caja.hidden = false;
-  caja.innerHTML = `<span class="vivo-punto"></span><span class="vivo-total">${lista.length} ${lista.length === 1 ? 'persona participa' : 'personas participan'}</span><span class="vivo-linea" id="vivoLinea">${linea(recientes[0])}</span>`;
+  const total = participantesVisibles() ? `<span class="vivo-total">${S.participantes} personas participan</span>` : '<span class="vivo-total">En vivo</span>';
+  caja.innerHTML = `<span class="vivo-punto"></span>${total}<span class="vivo-linea" id="vivoLinea">${linea(recientes[0])}</span>`;
   if (recientes.length < 2) return;
   const rotar = setInterval(() => {
     const el = $('#vivoLinea'); if (!el) return clearInterval(rotar);
@@ -970,11 +972,11 @@ async function vBoleto(tok, nuevo) {
   const j = await api('/api/t/' + encodeURIComponent(tok));
   const c = j.rifa.cfg, p = { ...j.p, ...(nuevo ? { celFull: nuevo.celFull, op: nuevo.op || j.p.op } : {}) };
   if ($('#hvB')) $('#hvB').hidden = true;
-  S.cfg = c; S.r = j.rifa.id; guardarBoleto(S.r, tok); mostrarBarra(false);
+  S.cfg = c; S.r = j.rifa.id; S.participantes = j.rifa.participantes || 0; guardarBoleto(S.r, tok); mostrarBarra(false);
   const nums = splitN(p.nums), e = EST[p.est];
   const R = c.resultado, gane = R ? R.picks.map((pk, k) => ({ ...pk, k })).filter(pk => nums.includes(pk.n)) : [];
   const vencido = p.est === 'X' && p.nota === 'vencido';
-  const puedePagar = c.modo === 'pago' && !R && (p.est === 'R' || p.est === 'V' || vencido);
+  const puedePagar = c.modo === 'pago' && !R && (p.est === 'R' || vencido);
   const waN = msgNegocio(c, p, tok, nuevo ? 'NUEVO REGISTRO' : 'MI REGISTRO');
   const expl = {
     R: `Tus números están <b>reservados</b>. Sube tu comprobante antes de que venza la reserva o se liberarán.`,
@@ -1002,8 +1004,12 @@ async function vBoleto(tok, nuevo) {
     <div class="row"><button class="btn sp" id="bDesc">💾 Guardar boleto</button><button class="btn sp" data-c="${esc(linkBoleto(tok))}">🔗 Copiar link</button></div>
   </div>`;
   h += envioHTML(c, p);
-  if (puedePagar) h += `<div class="card" id="secPay"><h2>${p.est === 'V' ? '🔁 ¿Te equivocaste de captura?' : '💳 Paga y sube tu comprobante'}</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 ${p.est === 'V' ? 'Reemplazar comprobante' : 'Enviar comprobante'}</button></div>`;
-  h += `<div class="acts"><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>${!R && c.estado === 'activa' ? `<a class="btn full" href="${linkForm(S.r)}">➕ Comprar más tickets</a>` : ''}</div>`;
+  if (puedePagar) h += `<div class="card" id="secPay"><h2>💳 Paga y sube tu comprobante</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 Enviar comprobante</button></div>`;
+  const acciones = [
+    participantesVisibles() && `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>`,
+    !R && c.estado === 'activa' && `<a class="btn full" href="${linkForm(S.r)}">➕ Comprar más tickets</a>`,
+  ].filter(Boolean);
+  if (acciones.length) h += `<div class="acts">${acciones.join('')}</div>`;
   const otros = misBoletos(S.r).filter(t => t !== tok);
   if (otros.length) h += `<div class="card"><h2>🎟️ Mis otros registros</h2>${otros.map((t, i) => `<a class="btn full sm" style="margin-top:6px" href="${linkBoleto(t)}">Registro ${otros.length - i}</a>`).join('')}</div>`;
   app.innerHTML = h;
