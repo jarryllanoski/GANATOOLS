@@ -85,6 +85,13 @@ En la ventana de impresión elige el **mismo tamaño de papel**, **márgenes: ni
 Cada ticket es una página, así la ticketera corta entre ticket y ticket.
 El código está en `public/impresion.js`: para agregar un tamaño, se añade una entrada en `FORMATOS`.
 
+## Eliminar un sorteo (papelera de sorteos)
+- Config → **Eliminar este sorteo** pide tu **PIN** otra vez.
+- El sorteo va a la **papelera de sorteos** con todos sus participantes, números y comprobantes:
+  deja de verse en el panel y su formulario deja de funcionar.
+- En la barra de sorteos aparece **🗑️ Eliminados (n)**: ahí se **recupera** con un toque.
+- A los **30 días** se borra solo y para siempre (tarea diaria de Cloudflare).
+
 ## Seguridad del PIN
 - Si alguien pone el PIN mal **5 veces seguidas**, ese celular o red queda **bloqueado 15 minutos** (aunque después ponga el correcto).
 - La pantalla avisa cuántos intentos quedan. Un acierto reinicia el contador.

@@ -230,8 +230,11 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
 .sopt[data-formato]{border-color:var(--line);background:var(--bg2);color:var(--tx);font-weight:500}.sopt[data-formato].on{border-color:var(--ac);background:#388bfd1a}
 .sopt-m{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#f59e0b}
 /* píldoras con flechas (floatpanel.js de Total-Tools) */
-.chiprow{display:flex;align-items:center;gap:7px;margin-top:8px}
-.chiprow>.chip{flex:none}
+.chiprow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}
+.etiquetas{display:contents}
+.chip.fija{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 2px;border-radius:12px;min-width:0;white-space:nowrap}
+.chip.fija span{font-size:9.5px;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.chip.fija b{font-size:15px;line-height:1.1}
 .chipsnav{position:relative;flex:1;min-width:0;display:flex}
 .chipsnav .chips{flex:1;min-width:0;padding:0}
 .carr{position:absolute;top:0;bottom:0;z-index:2;font-size:22px;font-weight:900;line-height:1;display:none;align-items:center}
@@ -331,8 +334,8 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
       <div class="search"><span>🔍</span><input id="q" placeholder="Buscar nombre, celular, N° op, número…"><button id="qx" class="mu" hidden>✕</button><button class="advb" id="bAdv" title="Búsqueda avanzada">⚙️</button></div>
       <div class="advbar" id="advBar" hidden></div>
       <div class="chiprow">
-        <button class="chip on" id="chipTodos" data-f="todos" title="Doble toque: todas las etiquetas">TODOS</button>
-        <div class="chipsnav"><div class="chips" id="chips"></div><button class="carr l" id="chL" aria-label="Etiqueta anterior">&#8249;</button><button class="carr r" id="chR" aria-label="Etiqueta siguiente">&#8250;</button></div>
+        <button class="chip fija on" id="chipTodos" data-f="todos" title="Doble toque: todas las etiquetas"></button>
+        <div class="etiquetas" id="chips"></div>
       </div>
       <div class="tools">
         <button class="ibtn" id="bSelAll" title="Seleccionar / deseleccionar todo">☑️</button>
@@ -480,7 +483,8 @@ const API = {
   },
   rifas: () => API.req('/api/admin/rifas'),
   guardar: (id, cfg) => API.req('/api/admin/rifas', { body: { id, cfg } }),
-  borrar: id => API.req('/api/admin/rifas/' + id, { method: 'DELETE' }),
+  borrar: (id, pin) => API.req('/api/admin/rifas/' + id, { method: 'DELETE', body: { pin } }),
+  restaurar: id => API.req('/api/admin/rifas/' + id + '/restaurar', { method: 'POST' }),
   detalle: id => API.req('/api/admin/r/' + id + '/part'),
   accion: (pid, acc, extra = {}) => API.req('/api/admin/part/' + pid, { body: { acc, ...extra } }),
   sortear: (id, g, s, force) => API.req('/api/admin/r/' + id + '/sortear', { body: { g, s, force } }),
@@ -552,7 +556,9 @@ async function iniciar(error) {
    DATOS
    ===================================================================== */
 async function cargarRifas() {
-  const j = await API.rifas(); S.rifas = j.rifas;
+  const j = await API.rifas();
+  S.rifas = j.rifas.filter(r => !r.eliminado);
+  S.rifasEliminadas = j.rifas.filter(r => r.eliminado);
   const tot = j.rifas.reduce((a, r) => a + (r.act || 0), 0);
   if (S.act != null && tot > S.act) avisoNuevo(tot - S.act);
   S.act = tot; renderRBar();
@@ -590,7 +596,8 @@ function avisoNuevo(n) {
    ===================================================================== */
 const cfg = () => S.d?.rifa.cfg || {};
 function renderRBar() {
-  $('#rbar').innerHTML = S.rifas.map(r => `<button class="rchip ${r.id === S.rid ? 'on' : ''}" data-rid="${r.id}">${r.estado === 'sorteada' ? '🏆 ' : r.modo === 'gratis' ? '🎁 ' : '🎟️ '}${esc(r.titulo)}</button>`).join('') + `<button class="rchip add" id="bNueva">＋ Nuevo sorteo</button>`;
+  $('#rbar').innerHTML = S.rifas.map(r => `<button class="rchip ${r.id === S.rid ? 'on' : ''}" data-rid="${r.id}">${r.estado === 'sorteada' ? '🏆 ' : r.modo === 'gratis' ? '🎁 ' : '🎟️ '}${esc(r.titulo)}</button>`).join('') + `<button class="rchip add" id="bNueva">＋ Nuevo sorteo</button>`
+    + (S.rifasEliminadas?.length ? `<button class="rchip" id="bRifasEliminadas">🗑️ Eliminados (${S.rifasEliminadas.length})</button>` : '');
 }
 function renderHeader() {
   const c = cfg();
@@ -629,27 +636,16 @@ function renderStats() {
     : `<span>💰 Confirmado <small class="mu">(${conf.length} confirmados · ${nue.length} nuevos)</small></span><b>${fmtS(conf.reduce((a, p) => a + (+p.monto || 0), 0))}</b>`;
 }
 
-/* Píldoras: TODOS aparte (doble toque = todas las etiquetas) y carrusel con flechas
-   que cambian la etiqueta activa, igual que floatpanel.js de Total-Tools */
+// Las cuatro etiquetas (TODOS, NUEVO, CONFIRMADO, CULMINADO) siempre visibles, en todos los sorteos
 function renderChips() {
-  const ps = S.d.parts, n = g => ps.filter(p => grp(p) === g).length;
+  const ps = S.d.parts, n = g => ps.filter(p => grp(p) === g).length, activos = ps.filter(p => grp(p) !== 'X').length;
   if (!filt().includes(S.filtro)) S.filtro = 'todos';
-  $('#chipTodos').className = 'chip' + (S.filtro === 'todos' ? ' on' : '');
+  $('#chipTodos').className = 'chip fija' + (S.filtro === 'todos' ? ' on' : '');
+  $('#chipTodos').innerHTML = `<span>TODOS</span><b>📋 ${activos}</b>`;
   const nX = n('X'); $('#bTrash').innerHTML = '🗑️' + (nX ? `<span class="bdg">${nX}</span>` : '');
-  $('#chips').innerHTML = gord().map(g => `<button class="chip ${S.filtro === g ? 'on' : ''}" data-f="${g}">${GRP[g].i} ${GRP[g].t} (${n(g)})</button>`).join('');
-  const i = filt().indexOf(S.filtro);
-  $('#chL').style.display = i > 0 ? 'flex' : 'none';
-  $('#chR').style.display = i < filt().length - 1 ? 'flex' : 'none';
-  verActivo();
-}
-function verActivo() {
-  const car = $('#chips'), a = $('.chip.on', car); if (!a) return;
-  const r = a.getBoundingClientRect(), c = car.getBoundingClientRect();
-  const d = r.left < c.left ? r.left - c.left - 8 : r.right > c.right ? r.right - c.right + 8 : 0;
-  if (d) car.scrollBy({ left: d, behavior: 'smooth' });
+  $('#chips').innerHTML = gord().map(g => `<button class="chip fija ${S.filtro === g ? 'on' : ''}" data-f="${g}"><span>${GRP[g].t}</span><b>${GRP[g].i} ${n(g)}</b></button>`).join('');
 }
 function setFiltro(f) { if (S.filtro === f) return; S.filtro = f; if (S.vista === 'grilla') S.vista = 'lista'; renderChips(); renderLista(); }
-function navFiltro(d) { const i = filt().indexOf(S.filtro) + d; if (i >= 0 && i < filt().length) setFiltro(filt()[i]); }
 function todasEtiquetas() {
   const ps = S.d.parts, c = cfg();
   const m = modal(`<h2>🏷️ Todas las etiquetas</h2><div class="sopts">
@@ -1368,11 +1364,43 @@ function plantillaBases() {
   const c = leerCfg();
   return `BASES DEL SORTEO "${c.titulo}"\n\n1. ORGANIZADOR: ${c.negocio || CONFIG.NEGOCIO}.\n2. PREMIO(S): ${(c.premios || []).join('; ')}.\n3. PARTICIPACIÓN: ${c.modo === 'gratis' ? 'Gratuita, registrándose en el formulario.' : `Cada número cuesta S/ ${(+c.precio || 0).toFixed(2)}. Solo participan los números con pago verificado.`}\n4. FECHA: El sorteo se realizará el ${c.cierre ? new Date(c.cierre).toLocaleString('es-PE') : '[fecha]'} y se transmitirá en vivo.\n5. MECÁNICA: El ganador se elige con un sistema aleatorio verificable. La semilla se publica comprometida desde el inicio y el resultado puede comprobarse en la página de participantes.\n6. SUPLENTES: Si el ganador no responde en 72 horas, el premio pasa al suplente.\n7. ENTREGA: Coordinada con el ganador presentando su DNI.\n8. DATOS PERSONALES: Los datos se usan solo para este sorteo (Ley 29733). En la lista pública el nombre y el celular aparecen parcialmente ocultos.\n9. Al participar aceptas estas bases.`;
 }
-async function eliminarRifa() {
-  if (!confirm('¿Eliminar este sorteo con TODOS sus participantes y comprobantes? No se puede deshacer.')) return;
-  if (prompt('Escribe ELIMINAR para confirmar') !== 'ELIMINAR') return;
-  try { await API.borrar(S.rid); toast('🗑️ Eliminado'); S.rid = ''; lsSet('rid', ''); await cargarRifas(); S.rid = S.rifas[0]?.id || ''; S.rid ? await cargarDetalle() : renderVacio(); irTab('sorteo'); }
-  catch (e) { toast(e.message, 'bad'); }
+// Eliminar manda el sorteo completo a la papelera de sorteos por PAPELERA_DIAS días; pide el PIN otra vez
+function eliminarRifa() {
+  const c = cfg();
+  const m = modal(`<h2>🗑️ Eliminar sorteo</h2>
+    <p class="mu sm" style="margin-bottom:12px"><b style="color:var(--tx)">${esc(c.titulo)}</b> irá a la papelera de sorteos con todos sus participantes, números y comprobantes. Puedes recuperarlo durante ${PAPELERA_DIAS} días; después se borra para siempre.</p>
+    <label class="fld"><span>Escribe tu PIN para confirmar</span><input id="pinBorrar" type="password" inputmode="numeric" autocomplete="off" maxlength="12"></label>
+    <button class="btn bad full" id="okBorrar">🗑️ Eliminar sorteo</button><button class="btn-sec" data-x>Cancelar</button>`);
+  const pin = $('#pinBorrar', m), boton = $('#okBorrar', m);
+  setTimeout(() => pin.focus(), 200);
+  const confirmar = async () => {
+    if (!pin.value) return pin.focus();
+    boton.disabled = true;
+    try {
+      await API.borrar(S.rid, pin.value);
+      m.close(); toast(`🗑️ Sorteo en la papelera · se puede recuperar ${PAPELERA_DIAS} días`, 'ok');
+      S.rid = ''; lsSet('rid', ''); await cargarRifas(); S.rid = S.rifas[0]?.id || ''; S.rid ? await cargarDetalle() : renderVacio(); irTab('sorteo');
+    } catch (e) { toast(e.message, 'bad'); pin.value = ''; pin.focus(); boton.disabled = false; }
+  };
+  boton.onclick = confirmar;
+  pin.onkeydown = e => { if (e.key === 'Enter') confirmar(); };
+}
+function abrirRifasEliminadas() {
+  const DIA = 864e5, quedan = r => Math.max(0, Math.ceil((r.eliminado + PAPELERA_DIAS * DIA - Date.now()) / DIA));
+  const m = modal(`<h2>🗑️ Sorteos eliminados</h2>
+    <p class="mu sm" style="margin-bottom:6px">Se recuperan con todos sus participantes. Lo que pasa ${PAPELERA_DIAS} días aquí se borra solo y para siempre.</p>
+    ${S.rifasEliminadas.length ? S.rifasEliminadas.map(r => `<div class="trow"><div><b>${esc(r.titulo)}</b>
+      <div class="xs mu">${r.st ? `${r.st.pag + r.st.rev + r.st.reserv} tickets tomados · ` : ''}eliminado ${fecha(r.eliminado)} · <b class="c-warn">se borra en ${quedan(r)} día${quedan(r) === 1 ? '' : 's'}</b></div></div>
+      <button class="btn-sec trec" data-restaurar="${r.id}">♻️ Recuperar</button></div>`).join('') : '<div class="empty"><b>🗑️</b>No hay sorteos eliminados</div>'}`);
+  m.addEventListener('click', async e => {
+    const b = e.target.closest('[data-restaurar]'); if (!b) return;
+    b.disabled = true;
+    try {
+      await API.restaurar(b.dataset.restaurar);
+      toast('♻️ Sorteo recuperado', 'ok'); m.close();
+      S.rid = b.dataset.restaurar; await cargarRifas(); await cargarDetalle(); irTab('sorteo');
+    } catch (er) { toast(er.message, 'bad'); b.disabled = false; }
+  });
 }
 function nuevaRifa() {
   const m = modal(`<h2>＋ Nuevo sorteo</h2>
@@ -1429,8 +1457,6 @@ document.addEventListener('click', async e => {
     case 'hOut': if (!confirm('¿Cerrar sesión en este dispositivo?')) return; lsSet('pin', ''); return location.reload();
     case 'hBell': return S.d && ($('#nPanel') ? cerrarNotis() : abrirNotis());
     case 'nClr': lsSet(ntKey(), { ...lsGet(ntKey(), {}), limpio: Date.now() }); return renderBell();
-    case 'chL': return navFiltro(-1);
-    case 'chR': return navFiltro(1);
     case 'bAdv': return S.d && abrirAvanzada();
     case 'advX': return limpiarAvanzada();
     case 'bSelAll': return S.d && selTodo();
@@ -1458,6 +1484,7 @@ document.addEventListener('click', async e => {
     case 'difW': return abrir(waURL('', $('#dif').value));
     case 'cfgSave': return guardarCfg();
     case 'cfgDel': return eliminarRifa();
+    case 'bRifasEliminadas': return abrirRifasEliminadas();
     case 'basesTpl': { const ta = $('[data-k="bases"]'); if (ta.value && !confirm('¿Reemplazar las bases actuales?')) return; ta.value = plantillaBases(); return; }
     case 'qx': S.q = ''; $('#q').value = ''; $('#qx').hidden = true; return renderLista();
   }
@@ -1465,7 +1492,6 @@ document.addEventListener('click', async e => {
 document.addEventListener('change', e => { const u = e.target.closest('[data-up]'); if (u && u.files[0]) subirImg(u.dataset.up, u.files[0]); });
 let qT;
 // La rueda del ratón desplaza las píldoras sin cambiar el filtro
-$('#chips').addEventListener('wheel', e => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); $('#chips').scrollLeft += e.deltaY; } }, { passive: false });
 $('#q').addEventListener('input', e => { clearTimeout(qT); qT = setTimeout(() => { S.q = e.target.value; $('#qx').hidden = !S.q; if (S.vista === 'grilla') S.vista = 'lista'; renderLista(); }, 180); });
 
 /* ===================================================================== */

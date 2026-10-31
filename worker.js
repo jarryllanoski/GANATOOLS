@@ -101,6 +101,7 @@ export default {
   async scheduled(evt, env, ctx) {
     ctx.waitUntil(ensureSchema(env).then(async () => {
       await limpiarPapelera(env);
+      await vaciarRifasVencidas(env);
       // Borra registros de intentos de PIN viejos (más de 1 día sin actividad)
       await env.DB.prepare('DELETE FROM intentos WHERE hasta<? AND ult<?').bind(now(), now() - 864e5).run();
       await env.DB.prepare('DELETE FROM dniq WHERE t<?').bind(now() - 3 * 864e5).run();
@@ -265,6 +266,7 @@ async function loadRifa(env, id, noExp) {
   const row = await env.DB.prepare('SELECT id,cfg,board,priv,ver,act FROM rifas WHERE id=?').bind(id).first();
   if (!row) err('Sorteo no encontrado', 404);
   const r = { id: row.id, cfg: JSON.parse(row.cfg), board: row.board, priv: JSON.parse(row.priv || '{}'), ver: row.ver, act: row.act };
+  if (r.cfg._eliminado) err('Sorteo no encontrado', 404);
   return noExp ? r : expire(env, r);
 }
 
@@ -591,7 +593,8 @@ async function admin(req, env, s) {
   const body = async () => { try { return await req.json(); } catch { return {}; } };
   if (s[0] === 'rifas' && !s[1] && m === 'GET') return listRifas(env);
   if (s[0] === 'rifas' && !s[1] && m === 'POST') return saveRifa(env, await body());
-  if (s[0] === 'rifas' && s[1] && m === 'DELETE') return delRifa(env, s[1]);
+  if (s[0] === 'rifas' && s[1] && !s[2] && m === 'DELETE') return enviarRifaAPapelera(env, s[1], await body());
+  if (s[0] === 'rifas' && s[1] && s[2] === 'restaurar' && m === 'POST') return restaurarRifa(env, s[1]);
   if (s[0] === 'r' && s[1] && s[2] === 'part' && m === 'GET') return adminDetalle(env, s[1]);
   if (s[0] === 'r' && s[1] && s[2] === 'sortear' && m === 'POST') return sortear(env, s[1], await body());
   if (s[0] === 'part' && s[1] && m === 'POST') return accion(env, s[1], await body());
@@ -603,7 +606,7 @@ async function admin(req, env, s) {
 
 async function listRifas(env) {
   const { results } = await env.DB.prepare('SELECT id,cfg,board,act FROM rifas ORDER BY creado DESC').all();
-  return J({ ok: true, rifas: results.map(x => { const c = JSON.parse(x.cfg); return { id: x.id, titulo: c.titulo, estado: c.estado, modo: c.modo, act: x.act, st: stats(x.board) }; }) });
+  return J({ ok: true, rifas: results.map(x => { const c = JSON.parse(x.cfg); return { id: x.id, titulo: c.titulo, estado: c.estado, modo: c.modo, act: x.act, st: stats(x.board), eliminado: c._eliminado || 0 }; }) });
 }
 
 function sanitize(c) {
@@ -652,7 +655,28 @@ async function saveRifa(env, { id, cfg = {} }) {
   err('Intenta de nuevo', 503);
 }
 
-async function delRifa(env, id) {
+// Eliminar un sorteo lo manda a la papelera de sorteos (con todos sus participantes) por
+// PAPELERA_DIAS días: deja de verse en público y en el panel, y se puede restaurar.
+// Pide el PIN otra vez para que no se elimine por un toque accidental.
+async function enviarRifaAPapelera(env, id, { pin } = {}) {
+  if (await sha(String(pin || '')) !== await sha(String(env.ADMIN_PIN))) err('Clave incorrecta', 403);
+  const r = await env.DB.prepare(`UPDATE rifas SET cfg=json_set(cfg,'$._eliminado',?), ver=ver+1 WHERE id=? AND json_extract(cfg,'$._eliminado') IS NULL`).bind(now(), id).run();
+  if (!r.meta.changes) err('Sorteo no encontrado', 404);
+  memDel(id);
+  return J({ ok: true });
+}
+async function restaurarRifa(env, id) {
+  const r = await env.DB.prepare(`UPDATE rifas SET cfg=json_remove(cfg,'$._eliminado'), ver=ver+1 WHERE id=? AND json_extract(cfg,'$._eliminado') IS NOT NULL`).bind(id).run();
+  if (!r.meta.changes) err('Ese sorteo no está en la papelera', 404);
+  memDel(id);
+  return J({ ok: true });
+}
+async function vaciarRifasVencidas(env) {
+  const limite = now() - CFG.PAPELERA_DIAS * 864e5;
+  const { results } = await env.DB.prepare(`SELECT id FROM rifas WHERE json_extract(cfg,'$._eliminado') < ?`).bind(limite).all();
+  for (const { id } of results) await borrarRifaDefinitivo(env, id);
+}
+async function borrarRifaDefinitivo(env, id) {
   await env.DB.batch([
     env.DB.prepare('DELETE FROM rifas WHERE id=?').bind(id),
     env.DB.prepare('DELETE FROM part WHERE rifa=?').bind(id),
@@ -660,7 +684,6 @@ async function delRifa(env, id) {
   ]);
   await delImgs(env, `c/${id}/`);
   memDel(id);
-  return J({ ok: true });
 }
 
 async function adminDetalle(env, id) {
