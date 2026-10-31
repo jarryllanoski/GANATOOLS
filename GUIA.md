@@ -38,6 +38,11 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
   Se puede **recuperar** con ♻️. No hay botón de vaciar: cada día, lo que lleva **30 días** se borra solo y para siempre (con su comprobante).
   Las reservas vencidas también van a la papelera.
 
+## Seguridad del PIN
+- Si alguien pone el PIN mal **5 veces seguidas**, ese celular o red queda **bloqueado 15 minutos** (aunque después ponga el correcto).
+- La pantalla avisa cuántos intentos quedan. Un acierto reinicia el contador.
+- Si te bloqueas tú: espera 15 minutos, o entra desde otra red (por ejemplo, datos móviles en vez de WiFi).
+
 ## Antispam (opcional)
 Cloudflare → **Turnstile** → *Add widget* con el dominio `sorteos.jarryllanoski.workers.dev`:
 - *Site key* → en el panel: Config → Sistema → Turnstile Site Key.

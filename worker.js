@@ -19,6 +19,8 @@ const CFG = {
   MAX_NUM: 10000,    // números máximos por sorteo
   RETRIES: 4,        // reintentos ante escrituras simultáneas
   PAPELERA_DIAS: 30, // días en la papelera antes de borrarse para siempre
+  PIN_MAX: 5,             // PIN equivocado X veces seguidas...
+  PIN_BLOQUEO: 15 * 60e3, // ...bloquea ese dispositivo/red durante 15 minutos
 };
 
 /* ---------------- Esquema ---------------- */
@@ -34,6 +36,8 @@ const SCHEMA = [
   `CREATE UNIQUE INDEX IF NOT EXISTS ux_part_tok ON part(tok)`,
   `CREATE TABLE IF NOT EXISTS links (code TEXT PRIMARY KEY, rifa TEXT, data TEXT, usado INTEGER DEFAULT 0, creado INTEGER)`,
   `CREATE TABLE IF NOT EXISTS imgs (k TEXT PRIMARY KEY, mime TEXT, b64 TEXT)`,
+  // Intentos de PIN fallidos por IP (guardada cifrada): n = fallos seguidos, hasta = fin del bloqueo
+  `CREATE TABLE IF NOT EXISTS intentos (ip TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, ult INTEGER, hasta INTEGER NOT NULL DEFAULT 0)`,
 ];
 // Columnas agregadas después (papelera): bor = fecha en que entró a la papelera,
 // prev = estado que tenía antes (para recuperarlo igual).
@@ -77,7 +81,11 @@ export default {
   },
   // Tarea diaria (cron en wrangler.toml): vacía lo que lleva más de 30 días en la papelera
   async scheduled(evt, env, ctx) {
-    ctx.waitUntil(ensureSchema(env).then(() => limpiarPapelera(env)));
+    ctx.waitUntil(ensureSchema(env).then(async () => {
+      await limpiarPapelera(env);
+      // Borra registros de intentos de PIN viejos (más de 1 día sin actividad)
+      await env.DB.prepare('DELETE FROM intentos WHERE hasta<? AND ult<?').bind(now(), now() - 864e5).run();
+    }));
   },
 };
 
@@ -99,7 +107,7 @@ async function route(req, env) {
   if (seg[0] !== 'api') err('No encontrado', 404);
   const [, a, b, c] = seg;
   if (!a) return J({ ok: true, app: 'sorteos', v: 1 });
-  if (a === 'admin') { auth(req, env); return admin(req, env, seg.slice(2)); }
+  if (a === 'admin') { await auth(req, env); return admin(req, env, seg.slice(2)); }
   if (a === 'r' && b && !c && m === 'GET') return pubRifa(env, b);
   if (a === 'r' && b && c === 'part' && m === 'GET') return pubPart(env, b);
   if (a === 'r' && b && c === 'entrar' && m === 'POST') return entrar(req, env, b);
@@ -161,9 +169,24 @@ const memGet = k => { const v = MEM.get(k); return v && v.t > now() ? v.d : null
 const memSet = (k, d, ms) => { if (MEM.size > 200) MEM.clear(); MEM.set(k, { d, t: now() + ms }); };
 const memDel = id => { MEM.delete('r:' + id); MEM.delete('p:' + id); };
 
-function auth(req, env) {
+// Bloqueo del PIN: tras PIN_MAX fallos seguidos desde la misma IP, esa IP queda
+// bloqueada PIN_BLOQUEO (aunque luego ponga el PIN correcto). Un acierto reinicia el contador.
+async function auth(req, env) {
   if (!env.ADMIN_PIN) err('Configura la variable ADMIN_PIN en el Worker', 500);
-  if ((req.headers.get('x-pin') || '') !== String(env.ADMIN_PIN)) err('PIN incorrecto', 401);
+  const ip = (await sha((req.headers.get('cf-connecting-ip') || 'x') + 'pin')).slice(0, 16), t = now();
+  const row = await env.DB.prepare('SELECT n,ult,hasta FROM intentos WHERE ip=?').bind(ip).first();
+  const espera = ms => { const m = Math.ceil(ms / 60e3); return `${m} minuto${m === 1 ? '' : 's'}`; };
+  if (row && row.hasta > t) err(`🔒 Demasiados intentos. Espera ${espera(row.hasta - t)} y vuelve a intentar.`, 429);
+  // Comparación por huella: tarda lo mismo acierte o no
+  if (await sha(req.headers.get('x-pin') || '') === await sha(String(env.ADMIN_PIN))) {
+    if (row) await env.DB.prepare('DELETE FROM intentos WHERE ip=?').bind(ip).run();
+    return;
+  }
+  const n = (row && row.hasta === 0 && t - row.ult < 864e5 ? row.n : 0) + 1, bloq = n >= CFG.PIN_MAX;
+  await env.DB.prepare('INSERT OR REPLACE INTO intentos (ip,n,ult,hasta) VALUES (?,?,?,?)').bind(ip, bloq ? 0 : n, t, bloq ? t + CFG.PIN_BLOQUEO : 0).run();
+  if (bloq) err(`🔒 Demasiados intentos. Espera ${espera(CFG.PIN_BLOQUEO)} y vuelve a intentar.`, 429);
+  const q = CFG.PIN_MAX - n;
+  err(`PIN incorrecto. Te queda${q === 1 ? '' : 'n'} ${q} intento${q === 1 ? '' : 's'}.`, 401);
 }
 
 async function turnstile(env, token, ip) {

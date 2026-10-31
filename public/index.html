@@ -512,7 +512,7 @@ function pedirPin(error) {
     const teclas = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="pin-btn" data-pin="${n}">${n}</button>`).join('');
     d.innerHTML = `<div class="pinbox"><div class="logo" style="margin:0 auto 12px">🎟️</div>
       <h2 style="font-size:17px;font-weight:700">🔐 Clave requerida</h2>
-      <p class="mu" style="margin-top:6px">${error ? 'PIN incorrecto, intenta de nuevo' : 'Ingresa tu PIN del panel'}</p>
+      <p class="${error ? 'c-bad' : 'mu'}" style="margin-top:6px">${error ? esc(typeof error === 'string' ? error : 'PIN incorrecto, intenta de nuevo') : 'Ingresa tu PIN del panel'}</p>
       <div class="pin-dots${error ? ' error' : ''}"></div>
       <div class="pin-grid">${teclas}<button class="pin-btn pin-btn-del" data-pin="del">⌫</button><button class="pin-btn" data-pin="0">0</button><button class="pin-btn pin-btn-ok" data-pin="ok">✓</button></div></div>`;
     document.body.appendChild(d);
@@ -541,7 +541,8 @@ async function iniciar(error) {
     if (S.rid) await cargarDetalle(); else renderVacio();
     poll();
   } catch (e) {
-    if (e.status === 401 && !CONFIG.PIN) { lsSet('pin', ''); S.pin = ''; return iniciar(true); }
+    // 401 = PIN incorrecto (dice cuántos intentos quedan) · 429 = bloqueado unos minutos
+    if ((e.status === 401 || e.status === 429) && !CONFIG.PIN) { lsSet('pin', ''); S.pin = ''; return iniciar(e.message); }
     if (e.status === 401) vAviso('PIN incorrecto', 'El PIN de CONFIG en index.html no coincide con ADMIN_PIN del Worker.');
     else vAviso('No se pudo conectar', e.message);
   }
