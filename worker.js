@@ -77,7 +77,8 @@ const DEF = {
   cierre: 0, bloqueoH: 0, reservaMin: 30,
   precio: 5, promos: [], yape: '', plin: '', titular: '', qr: '', bancos: '', instr: '',
   compObl: false, opObl: true, wa: '', negocio: '', bases: '', tsKey: '',
-  pedirDni: true, pedirAgencia: true,  // DNI obligatorio (con nombre de RENIEC) y agencia Shalom para el premio
+  pedirDni: true, pedirAgencia: true,  // DNI obligatorio (con nombre de RENIEC) y preguntar cómo enviar el premio (opcional para el cliente)
+  tiendaDir: '',                       // dirección de la tienda, para "Retiro en tienda"
 };
 
 /* ---------------- Entrada ---------------- */
@@ -132,6 +133,7 @@ async function route(req, env) {
   if (a === 'dni' && b && !c && m === 'GET') return consultaDni(req, env, b);
   if (a === 't' && b && !c && m === 'GET') return boleto(env, b);
   if (a === 't' && b && c === 'pago' && m === 'POST') return pagoTardio(req, env, b);
+  if (a === 't' && b && c === 'envio' && m === 'POST') return guardarEnvio(req, env, b);
   if (a === 'l' && b && m === 'GET') return linkInfo(env, b);
   err('Ruta no encontrada', 404);
 }
@@ -359,7 +361,6 @@ async function entrar(req, env, id) {
   const c = r.cfg;
   checkAbierta(c);
   if (c.pedirDni && !/^\d{8}$/.test(dni)) err('Escribe tu DNI (8 dígitos)');
-  if (c.pedirAgencia && !agencia) err('Elige la agencia Shalom donde recibirías tu premio');
   // Si el DNI ya se consultó en RENIEC, se usa el nombre oficial (el navegador no decide de quién es un DNI)
   const ofi = /^\d{8}$/.test(dni) ? await dniCache(env, dni) : null;
   if (ofi) nombre = ofi.completo.slice(0, 60);
@@ -470,14 +471,42 @@ async function consultaDni(req, env, raw) {
   await env.DB.prepare('INSERT OR REPLACE INTO dni (dni,nombres,pat,mat,t) VALUES (?,?,?,?,?)').bind(dni, x.nombres, x.pat, x.mat, t).run();
   return J({ ok: true, persona: personaDe(dni, x) });
 }
-// Agencia elegida en el formulario: solo se guardan campos conocidos y cortos
+// Cómo recibir el premio (los mismos couriers del formulario de Total-Tools). Cada uno
+// se prende o apaga por sorteo en el panel (cfg[k] === false = apagado).
+const ENVIOS = [
+  { k: 'env_shalom', n: 'SHALOM', t: 'agencia' }, { k: 'env_olva', n: 'OLVA COURIER', t: 'agencia' },
+  { k: 'env_marvisur', n: 'MARVISUR', t: 'agencia' }, { k: 'env_delivery', n: 'DELIVERY', t: 'domicilio' },
+  { k: 'env_otras', n: 'OTRAS AGENCIAS', t: 'encomienda' }, { k: 'env_retiro', n: 'RETIRO EN TIENDA', t: 'retiro' },
+];
+// Solo se guardan campos conocidos y cortos. Los registros viejos (solo Shalom) no traen courier.
 function limpiarAgencia(s) {
   if (!s) return null;
-  let a; try { a = JSON.parse(s); } catch { return null; }
+  let a; try { a = typeof s === 'string' ? JSON.parse(s) : s; } catch { return null; }
   if (!a || typeof a !== 'object') return null;
   const t = (k, n) => String(a[k] ?? '').replace(/\s+/g, ' ').trim().slice(0, n);
-  const o = { id: t('id', 12), nombre: t('nombre', 120), dir: t('dir', 200), dep: t('dep', 40), prov: t('prov', 40), dist: t('dist', 40) };
-  return o.id && o.nombre ? JSON.stringify(o) : null;
+  const e = ENVIOS.find(x => x.n === t('courier', 30)) || ENVIOS[0];
+  const o = { courier: e.n, tipo: e.t, id: t('id', 12), nombre: t('nombre', 120), dir: t('dir', 250), ref: t('ref', 150),
+    ciudad: t('ciudad', 60), dep: t('dep', 40), prov: t('prov', 40), dist: t('dist', 40) };
+  for (const k of Object.keys(o)) if (!o[k]) delete o[k];
+  return o.tipo === 'retiro' || o.nombre || o.dir || o.ciudad ? JSON.stringify(o) : null;
+}
+// El cliente elige (o cambia) cómo recibir el premio desde su boleto, cuando ya participa.
+async function guardarEnvio(req, env, tok) {
+  let b; try { b = await req.json(); } catch { err('Datos inválidos'); }
+  const p = await env.DB.prepare('SELECT id,rifa,est FROM part WHERE tok=?').bind(tok).first();
+  if (!p) err('Boleto no encontrado', 404);
+  if (p.est === 'X') err('Este registro fue anulado');
+  const r = await loadRifa(env, p.rifa, true);
+  if (!r.cfg.pedirAgencia) err('Este sorteo no pide datos de envío');
+  const e = ENVIOS.find(x => x.n === String(b?.courier || ''));
+  if (!e || r.cfg[e.k] === false) err('Elige una de las opciones de envío disponibles');
+  if (e.t === 'agencia' && !String(b.nombre || '').trim()) err('Elige o escribe la agencia');
+  if (e.t === 'domicilio' && (!String(b.dir || '').trim() || !String(b.dist || '').trim())) err('Escribe tu dirección y distrito');
+  if (e.t === 'encomienda' && !String(b.ciudad || '').trim()) err('Escribe la ciudad de destino');
+  const v = limpiarAgencia(b);
+  if (!v) err('Faltan datos del envío');
+  await env.DB.prepare('UPDATE part SET agencia=? WHERE id=?').bind(v, p.id).run();
+  return J({ ok: true, agencia: v });
 }
 
 async function boleto(env, tok) {
@@ -590,6 +619,8 @@ function sanitize(c) {
   num('cantidad', 1, CFG.MAX_NUM); num('base', 0, 1); num('maxPer', 0, CFG.MAX_NUM); num('maxSel', 1, 500);
   num('bloqueoH', 0, 720); num('reservaMin', 5, 10080); num('precio', 0, 1e6, false); num('cierre', 0, 4e12);
   bool('elegir'); bool('aprobar'); bool('compObl'); bool('opObl'); bool('pedirDni'); bool('pedirAgencia');
+  for (const e of ENVIOS) bool(e.k);
+  str('tiendaDir', 200);
   if ('promos' in c) o.promos = (Array.isArray(c.promos) ? c.promos : []).map(p => ({ n: Math.round(+p.n || 0), p: Math.max(0, Math.round((+p.p || 0) * 100) / 100) })).filter(p => p.n > 1).slice(0, 10);
   return o;
 }

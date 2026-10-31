@@ -709,7 +709,7 @@ function cardHTML(p, c) {
     <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
-    ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${agDe(p) ? `<div class="card-addr">🏢 ${esc(agDe(p).nombre)} · <span class="mu">${esc(agDe(p).dir)}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</span></div>` : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
+    ${info}${p.dni ? `<div class="card-addr">🪪 DNI ${esc(p.dni)}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
     <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="${g === 'F' ? 'Ya participó del sorteo' : 'Mandar a la papelera (toca 2 veces)'}" ${g === 'F' ? 'disabled' : ''}>🗑️</button></div>
   </div>`;
 }
@@ -1049,10 +1049,19 @@ function menuMas(p) {
     m.close();
   });
 }
-function agDe(p) { try { return p.agencia ? JSON.parse(p.agencia) : null; } catch (e) { return null; } }
+// Envío del premio que eligió el cliente (los registros viejos solo traen agencia Shalom)
+function agDe(p) { try { const a = p.agencia ? JSON.parse(p.agencia) : null; if (a && !a.courier) { a.courier = 'SHALOM'; a.tipo = 'agencia'; } return a; } catch (e) { return null; } }
+const ENV_IC = { SHALOM: '🚌', 'OLVA COURIER': '📦', MARVISUR: '🚐', DELIVERY: '🛵', 'OTRAS AGENCIAS': '🏢', 'RETIRO EN TIENDA': '🏪' };
+function envTexto(a) {
+  if (!a) return '';
+  if (a.tipo === 'retiro') return 'Retiro en tienda';
+  if (a.tipo === 'domicilio') return [a.dir, a.dist].filter(Boolean).join(', ') + (a.ref ? ' (' + a.ref + ')' : '');
+  if (a.tipo === 'encomienda') return a.ciudad + (a.nombre ? ' · ' + a.nombre : '');
+  return a.nombre + (a.dir ? ' · ' + a.dir : '');
+}
 function exportarCSV() {
-  const c = cfg(), rows = [['Fecha', 'Nombre', 'Celular', 'DNI', 'Números', 'Monto', 'N° operación', 'Estado', 'Agencia Shalom', 'Dirección agencia', 'Departamento', 'Nota', 'Código']];
-  for (const p of S.d.parts) { const a = agDe(p) || {}; rows.push([new Date(p.creado).toLocaleString('es-PE'), p.nombre, p.cel, p.dni || '', splitN(p.nums).map(i => fmtN(c, i)).join(' '), (+p.monto || 0).toFixed(2), p.op || '', GRP[grp(p)].t, a.nombre || '', a.dir || '', a.dep || '', p.nota || '', p.id]); }
+  const c = cfg(), rows = [['Fecha', 'Nombre', 'Celular', 'DNI', 'Números', 'Monto', 'N° operación', 'Estado', 'Envío', 'Destino', 'Departamento', 'Nota', 'Código']];
+  for (const p of S.d.parts) { const a = agDe(p); rows.push([new Date(p.creado).toLocaleString('es-PE'), p.nombre, p.cel, p.dni || '', splitN(p.nums).map(i => fmtN(c, i)).join(' '), (+p.monto || 0).toFixed(2), p.op || '', GRP[grp(p)].t, a ? a.courier : '', envTexto(a), a?.dep || '', p.nota || '', p.id]); }
   const csv = '﻿' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
   descargar(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `sorteo-${(c.titulo || 'datos').replace(/\W+/g, '-').toLowerCase()}.csv`);
   toast('📊 CSV descargado');
@@ -1287,7 +1296,18 @@ function renderConfig() {
 
   <div class="card"><h3>🪪 Datos del participante</h3>
     ${SW('pedirDni', '🪪 Pedir DNI (nombre automático de RENIEC)', 'El cliente escribe su DNI y su nombre sale solo')}
-    ${SW('pedirAgencia', '🏢 Pedir agencia Shalom', 'Para saber a dónde enviar el premio si gana')}
+  </div>
+
+  <div class="card"><h3>📦 Envío del premio</h3>
+    ${SW('pedirAgencia', '📦 Preguntar cómo enviar el premio', 'Aparece en el boleto, después de registrarse. Es opcional para el cliente')}
+    <p class="hint" style="margin:10px 0 4px">Opciones que verá el cliente:</p>
+    ${SW('env_shalom', '🚌 Shalom', 'Lista de sedes con buscador y ubicación')}
+    ${SW('env_olva', '📦 Olva Courier', 'Lista de sedes con buscador y ubicación')}
+    ${SW('env_marvisur', '🚐 Marvisur', 'El cliente escribe la agencia')}
+    ${SW('env_delivery', '🛵 Delivery', 'Dirección, distrito y referencia')}
+    ${SW('env_otras', '🏢 Otras agencias', 'Ciudad de destino y agencia')}
+    ${SW('env_retiro', '🏪 Retiro en tienda', 'Recoge en tu tienda')}
+    ${F('tiendaDir', 'Dirección de tu tienda (para Retiro en tienda)', 'maxlength="200" placeholder="Ej: Av. Universitaria 1234, Los Olivos"')}
   </div>
 
   <div class="card"><h3>📅 Fechas y reservas</h3>
@@ -1329,7 +1349,7 @@ function renderConfig() {
   $$('[data-k]', $('#t-config')).forEach(el => {
     const k = el.dataset.k, t = el.dataset.t, v = c[k];
     if (t === 'seg' || t === 'segn') $$('button', el).forEach(b => b.classList.toggle('on', String(b.dataset.v) === String(t === 'segn' ? baseOf(c) : v)));
-    else if (t === 'bool') el.checked = k === 'elegir' || k === 'opObl' ? v !== false : !!v;
+    else if (t === 'bool') el.checked = k === 'elegir' || k === 'opObl' || k.startsWith('env_') ? v !== false : !!v;
     else if (t === 'lines') el.value = (v || []).join('\n');
     else if (t === 'promos') el.value = (v || []).map(p => `${p.n}=${p.p}`).join('\n');
     else if (t === 'date') el.value = toLocalInput(v);

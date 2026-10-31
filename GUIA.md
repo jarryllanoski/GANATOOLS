@@ -40,11 +40,18 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
   Las reservas vencidas también van a la papelera.
 
 ## Formulario por pasos (diseño de Total-Tools)
-1. **Números** → 2. **Tus datos** (DNI → nombre automático) → 3. **Agencia Shalom** (para enviar el premio) → 4. **Pago**.
+1. **Números** → 2. **Tus datos** (DNI → nombre automático) → 3. **Pago** (el N° de operación aparece recién al subir la captura; aquí acepta las bases) → **Participar**.
 - La **foto del premio** sale grande arriba: súbela en el panel → Config → *Foto del premio*.
 - Arriba se ve un **boleto vivo** que se llena mientras el cliente escribe.
 - **Heavy** (el guía) da consejos en cada paso; se cierra con cualquier toque.
-- En el panel → Config → *Datos del participante* puedes apagar el DNI o la agencia en cada sorteo.
+
+### Envío del premio (después de registrarse, opcional)
+En su boleto el cliente ve **"📦 ¿Cómo te enviamos el premio si ganas?"** con los couriers de Total-Tools:
+Shalom y Olva (lista de sedes con buscador y ubicación), Marvisur (escribe la agencia), Delivery (dirección),
+Otras agencias (ciudad) y Retiro en tienda. Puede elegirlo después desde el link de su boleto.
+- Panel → Config → **Envío del premio**: prende o apaga la pregunta y cada courier; pon la dirección de tu tienda.
+- En el panel, cada tarjeta muestra el envío o **"⚠️ Sin datos de envío"**. El CSV trae Envío, Destino y Departamento.
+- Al registrarse, WhatsApp se abre después de que elige el envío (o toca "Lo elijo después").
 
 ### DNI con RENIEC (shalom-api.lat)
 - La clave va como secreto del Worker: **`RENIEC_API_KEY`**. Sin la clave, el cliente escribe su nombre a mano.
@@ -52,9 +59,9 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
   cada 10 minutos por red y **150 consultas nuevas al día**. Pasado el tope, el formulario sigue funcionando.
 - Si el DNI ya se consultó, se guarda el **nombre oficial** (aunque el cliente escriba otro).
 
-### Agencias Shalom
-- Lista en `public/data/agencias-shalom.json` (562 sedes, copiada de Total-Tools). Para actualizarla, reemplaza ese archivo.
-- El cliente puede usar su **ubicación** (solo para ordenar las sedes por cercanía, no se guarda) o **buscar** su provincia o distrito.
+### Listas de agencias
+- `public/data/agencias-shalom.json` (562 sedes) y `public/data/agencias-olva.json` (430 sedes), copiadas de Total-Tools.
+  Para actualizarlas, reemplaza esos archivos.
 
 ## Seguridad del PIN
 - Si alguien pone el PIN mal **5 veces seguidas**, ese celular o red queda **bloqueado 15 minutos** (aunque después ponga el correcto).

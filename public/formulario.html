@@ -242,6 +242,17 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .ag-sel .ag-item-ic{color:var(--ok)}
 .ag-cambiar{display:block;width:100%;background:none;border:none;border-top:1px solid var(--line);color:var(--ac);font-weight:800;font-size:13px;padding:11px 0 2px;margin-top:10px}
 .ag-vacio{padding:16px;text-align:center;color:var(--mu);font-size:13px}
+/* Tarjetas de courier (#courierCards de Total-Tools): 3 por fila */
+.cour-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:4px 0 12px}
+.cour-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;background:var(--bg3);border:2px solid #4a4a5e;border-radius:14px;padding:14px 6px;min-height:96px;color:var(--tx);transition:border-color .15s,background .15s}
+.cour-card .ic{font-size:26px;line-height:1}
+.cour-card b{font-size:11.5px;font-weight:800;letter-spacing:.3px;line-height:1.2}
+.cour-card::after{content:'';position:absolute;right:7px;top:7px;width:15px;height:15px;border-radius:50%;border:2px solid #6a6a80}
+.cour-card.on{border-color:var(--ac);background:#4f8ef714}
+.cour-card.on::after{background:var(--ac);border-color:var(--ac);box-shadow:inset 0 0 0 3px var(--bg3)}
+.env-res{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;background:rgba(34,197,94,.08);box-shadow:inset 0 0 0 2px var(--ok)}
+.env-res .ic{font-size:22px}.env-res b{display:block;font-size:14px}.env-res span{font-size:12px;color:var(--mu)}
+#secEnv textarea.in{resize:vertical;line-height:1.4}
 /* Heavy, el guía (clon del narrador de Total-Tools) */
 .hv{position:fixed;left:10px;bottom:12px;z-index:60;display:flex;align-items:flex-end;gap:8px;max-width:440px;pointer-events:none}
 .hv-av{position:relative;width:62px;height:62px;flex:none;pointer-events:auto;animation:hvIn .4s ease}
@@ -367,7 +378,7 @@ async function drawPicks(seed, snap, beacon, k) {
    ESTADO + ARRANQUE
    ===================================================================== */
 const P = new URLSearchParams(location.search);
-const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', sel: new Set(), page: 0, soloLib: false, qty: 1, file: null, ih: '', link: null, ts: '', pasos: [], paso: 0, agencia: null };
+const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', sel: new Set(), page: 0, soloLib: false, qty: 1, file: null, ih: '', link: null, ts: '', pasos: [], paso: 0 };
 const app = $('#app');
 
 function cabecera(c) {
@@ -435,8 +446,9 @@ async function vForm() {
     return;
   }
 
-  // Pasos: números → datos (DNI) → agencia Shalom → pago. El último lleva las bases y el antispam.
-  S.pasos = ['num', 'dat', ...(c.pedirAgencia ? ['age'] : []), ...(c.modo === 'pago' ? ['pay'] : [])];
+  // Pasos: números → datos → pago. Cómo recibir el premio se pregunta DESPUÉS, en el boleto:
+  // así nadie abandona con el pago hecho y sin registro.
+  S.pasos = ['num', 'dat', ...(c.modo === 'pago' ? ['pay'] : [])];
   const PASO = {
     num: c.elegir !== false
       ? `<div class="step-ttl">🎟️ Elige tus números *</div><p class="step-sub">Toca los que quieras. Los oscuros ya están tomados.</p>
@@ -479,12 +491,11 @@ async function vForm() {
   $('#sbar').hidden = true;
   if ($('#cd')) cuenta($('#cd'), c.cierre, () => location.reload());
   if (S.link) { $('#fNom').value = S.link.nombre || ''; $('#fCel').value = S.link.cel || ''; preSel(S.link.nums); toast('✨ Link personalizado: tus datos ya están cargados'); }
-  else { const me = lsGet('yo', null); if (me) { $('#fNom').value = me.n || ''; $('#fCel').value = me.c || ''; $('#fDni').value = me.d || ''; if (me.a && c.pedirAgencia) S.agencia = me.a; } }
+  else { const me = lsGet('yo', null); if (me) { $('#fNom').value = me.n || ''; $('#fCel').value = me.c || ''; $('#fDni').value = me.d || ''; } }
   if (c.elegir !== false) { renderPages(); renderGrid(); renderSel(); }
   bindSubida();
   if (c.tsKey) cargarTurnstile(c.tsKey);
   actBar(); irPaso(0, false, true); boletoVivo();
-  if (S.agencia) agMostrarSel();
   const d0 = $('#fDni').value.replace(/\D/g, ''); if (d0.length === 8) dniBuscar(d0, true);
   heavy(mios.length ? '¡Te reconozco! 👊 Elige más números de la suerte.' : '¡Hola! 🎟️ Soy Heavy. Elige tus números de la suerte y te acompaño hasta el final.');
 }
@@ -492,7 +503,6 @@ async function vForm() {
 /* ───── Pasos (wizard de Total-Tools) ───── */
 const HEAVY_PASO = {
   dat: () => S.cfg.pedirDni ? 'Escribe tu DNI y tu nombre sale solo, tal cual tu documento. 🪪' : 'Ahora tus datos, para avisarte si ganas. 📲',
-  age: () => S.agencia ? 'Esta es tu agencia. Si ganas, tu premio viaja ahí. 🚚' : 'Elige la agencia Shalom donde te enviaremos el premio si ganas. 🏢',
   pay: () => 'Último paso: paga con Yape o Plin y sube la captura. Revisamos cada pago a mano. 💳',
 };
 function irPaso(i, atras, inicio) {
@@ -503,8 +513,7 @@ function irPaso(i, atras, inicio) {
   $('#wzAtras').hidden = i === 0;
   $('#wzSig').innerHTML = ult ? '🎟️ Participar' : 'Continuar →';
   $('#wzRes').hidden = id !== 'num' && id !== 'pay';
-  $('#lblWrap').hidden = id === 'num' || (id === 'age' && !S.agencia);
-  if (id === 'age') agCargar().catch(() => {});
+  $('#lblWrap').hidden = id === 'num';
   if (!inicio) { $('#wz').scrollIntoView({ behavior: 'smooth', block: 'start' }); if (HEAVY_PASO[id]) heavy(HEAVY_PASO[id]()); }
 }
 function validarPaso(id) {
@@ -517,7 +526,6 @@ function validarPaso(id) {
     if (!/^9\d{8}$/.test(cel)) { marcarErr($('#fCel'), 'Celular inválido: 9 dígitos, empieza con 9'); return false; }
     return true;
   }
-  if (id === 'age') { if (!S.agencia) { agEnfocar(); toast('Elige tu agencia Shalom 🏢', 'bad'); return false; } return true; }
   if (id === 'pay') {
     if (!S.file && !$('#despues')?.checked) { marcarErr($('#drop'), c.compObl ? 'Sube la foto de tu comprobante' : 'Sube tu comprobante o marca "Pagaré después"'); return false; }
     if (S.file && c.opObl !== false && !($('#fOp')?.value || '').trim()) { marcarErr($('#fOp'), 'Escribe el N° de operación'); return false; }
@@ -537,8 +545,7 @@ function boletoVivoHTML(c) {
     <div class="lbl-h"><div class="sp"><small>SORTEO</small><b>${esc(c.titulo)}</b></div><span class="lbl-q">🎟️</span></div>
     <div class="lbl-r"><small>PARTICIPANTE</small><b id="lN" class="vacio">TU NOMBRE</b><span id="lD"></span></div>
     <div class="lbl-r"><small>TUS NÚMEROS</small><div class="lbl-nums" id="lNums"></div></div>
-    ${c.pedirAgencia ? `<div class="lbl-r"><small>SI GANAS, EL PREMIO VA A</small><span id="lAg" class="vacio">Tu agencia aparecerá aquí</span></div>` : ''}
-    <div class="lbl-f"><span>${c.pedirAgencia ? 'SHALOM' : esc((c.negocio || CONFIG.NEGOCIO).toUpperCase())}</span><span>${c.cierre ? '📅 ' + fecha(c.cierre) : ''}</span></div>
+    <div class="lbl-f"><span>${esc((c.negocio || CONFIG.NEGOCIO).toUpperCase())}</span><span>${c.cierre ? '📅 ' + fecha(c.cierre) : ''}</span></div>
   </div><div class="lbl-cap">ASÍ SE VERÁ TU BOLETO</div>`;
 }
 function boletoVivo() {
@@ -548,7 +555,6 @@ function boletoVivo() {
   $('#lD').textContent = dni ? 'DNI: ' + dni : '';
   const ns = c.elegir !== false ? [...S.sel].sort((a, b) => a - b).map(i => fmtN(c, i)) : (S.qty ? [`${S.qty} al azar`] : []);
   $('#lNums').innerHTML = ns.length ? ns.slice(0, 24).map(n => `<i>${esc(n)}</i>`).join('') + (ns.length > 24 ? `<i>+${ns.length - 24}</i>` : '') : '<span style="color:#999;font-size:12.5px">—</span>';
-  if ($('#lAg')) { $('#lAg').textContent = S.agencia ? `${S.agencia.nombre} · ${S.agencia.dir}` : 'Tu agencia aparecerá aquí'; $('#lAg').className = S.agencia ? '' : 'vacio'; }
 }
 
 /* ───── DNI → nombre oficial (RENIEC, consultado por el Worker con tu clave) ─────
@@ -583,21 +589,43 @@ function dniAceptar(silencioso) {
 function dniSoltar() { DNI.aceptado = false; const n = $('#fNom'); if (n.readOnly) { n.readOnly = false; n.value = ''; } }
 function dniCorregir() { dniSoltar(); DNI.persona = null; DNI.ult = ''; $('#fDni').value = ''; $('#dniMsg').innerHTML = ''; boletoVivo(); $('#fDni').focus(); }
 
-/* ───── Agencias Shalom (lista en data/agencias-shalom.json, igual que Total-Tools) ───── */
-const AG = { lista: null, carga: null, yo: null };
+/* ───── Cómo recibir el premio: los couriers del formulario de Total-Tools ─────
+   Se pregunta en el boleto, cuando el cliente ya participa. Es opcional y cada
+   courier se prende o apaga por sorteo en el panel (Config → Envío del premio). */
+const ENVIOS = [
+  { k: 'env_shalom', n: 'SHALOM', t: 'agencia', ic: '🚌', lista: 'data/agencias-shalom.json' },
+  { k: 'env_olva', n: 'OLVA COURIER', t: 'agencia', ic: '📦', lista: 'data/agencias-olva.json' },
+  { k: 'env_marvisur', n: 'MARVISUR', t: 'agencia', ic: '🚐' },
+  { k: 'env_delivery', n: 'DELIVERY', t: 'domicilio', ic: '🛵' },
+  { k: 'env_otras', n: 'OTRAS AGENCIAS', t: 'encomienda', ic: '🏢' },
+  { k: 'env_retiro', n: 'RETIRO EN TIENDA', t: 'retiro', ic: '🏪' },
+];
+const enviosDe = c => ENVIOS.filter(e => c[e.k] !== false);
+const envDe = p => { try { const a = p.agencia ? (typeof p.agencia === 'string' ? JSON.parse(p.agencia) : p.agencia) : null; if (a && !a.courier) { a.courier = 'SHALOM'; a.tipo = 'agencia'; } return a; } catch (e) { return null; } };
+const agDe = envDe;
+function envTexto(a, c) {
+  if (!a) return '';
+  if (a.tipo === 'retiro') return `Retiro en tienda${c?.tiendaDir ? ': ' + c.tiendaDir : ''}`;
+  if (a.tipo === 'domicilio') return `Delivery: ${[a.dir, a.dist].filter(Boolean).join(', ')}${a.ref ? ' (' + a.ref + ')' : ''}`;
+  if (a.tipo === 'encomienda') return `${a.ciudad}${a.nombre ? ' · ' + a.nombre : ''}`;
+  return `${a.nombre}${a.dir ? ' · ' + a.dir : ''}`;
+}
+const ENV = { e: null, sel: null, boleto: null };  // courier elegido, agencia elegida, contexto del boleto
+const AG = { listas: {}, carga: {}, yo: null };
 const plano = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 const tit = s => String(s || '').toLowerCase().replace(/(^|[\s(\-/.])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
-function agTitulo(a) {
+function agTitulo(a, courier) {
+  if (courier !== 'SHALOM') return tit(a.nombre);
   const p = String(a.nombre || '').split('/').map(x => x.trim()).filter(Boolean);
   const d = tit(p[2] || a.distrito || ''), r = tit(p.slice(3).join(' / '));
   return 'Shalom ' + d + (r && plano(r) !== plano(d) ? ` (${r})` : '');
 }
-function agCargar() {
-  if (AG.lista) return Promise.resolve(AG.lista);
-  return AG.carga ||= fetch('data/agencias-shalom.json').then(r => { if (!r.ok) throw new Error('lista'); return r.json(); }).then(j => {
-    AG.lista = (j.agencias || []).map(a => ({ ...a, _t: plano([a.nombre, a.departamento, a.provincia, a.distrito, a.direccion].join(' ')), _lat: +a.latitud, _lng: +a.longitud }));
-    return AG.lista;
-  }).catch(e => { AG.carga = null; throw e; });
+function agCargar(e = ENV.e) {
+  const url = e.lista;
+  if (AG.listas[url]) return Promise.resolve(AG.listas[url]);
+  return AG.carga[url] ||= fetch(url).then(r => { if (!r.ok) throw new Error('lista'); return r.json(); }).then(j => {
+    return AG.listas[url] = (j.agencias || []).map((a, i) => ({ ...a, _id: a.ter_id ? String(a.ter_id) : 'o' + i, _t: plano([a.nombre, a.departamento, a.provincia, a.distrito, a.direccion].join(' ')), _lat: +a.latitud, _lng: +a.longitud }));
+  }).catch(er => { delete AG.carga[url]; throw er; });
 }
 function km(a) {
   if (!AG.yo || !isFinite(a._lat) || !isFinite(a._lng) || !a._lat) return null;
@@ -607,12 +635,12 @@ function km(a) {
 }
 function agItem(a) {
   const k = km(a);
-  return `<div class="ag-item" data-ag="${esc(a.ter_id)}"><div class="ag-item-ic">📍</div><div><div class="ag-item-t">${esc(agTitulo(a))}</div>
+  return `<div class="ag-item" data-ag="${esc(a._id)}"><div class="ag-item-ic">📍</div><div><div class="ag-item-t">${esc(agTitulo(a, ENV.e.n))}</div>
     <div class="ag-item-d">${esc(a.direccion)}${a.referencia ? ' · ' + esc(a.referencia) : ''}</div>
-    <div class="ag-item-p"><span>${esc(a.departamento)} · Agencia #${esc(a.ter_id)}</span>${k != null ? `<span class="ag-item-km">${k < 1 ? Math.round(k * 1000) + ' m' : k.toFixed(1) + ' km'}</span>` : ''}</div></div></div>`;
+    <div class="ag-item-p"><span>${esc(a.departamento)}${a.ter_id ? ' · Agencia #' + esc(a.ter_id) : ''}${a.horario ? ' · ' + esc(a.horario) : ''}</span>${k != null ? `<span class="ag-item-km">${k < 1 ? Math.round(k * 1000) + ' m' : k.toFixed(1) + ' km'}</span>` : ''}</div></div></div>`;
 }
 async function agBuscar(q) {
-  const box = $('#agLista'); $('#agBuscar').classList.toggle('quieto', !!q);
+  const box = $('#agLista'); if (!box) return; $('#agBuscar').classList.toggle('quieto', !!q);
   let L; try { L = await agCargar(); } catch (e) { box.hidden = false; box.innerHTML = '<div class="ag-vacio">No se pudo cargar la lista de agencias. Revisa tu internet.</div>'; return; }
   const w = plano(q).split(/\s+/).filter(Boolean);
   if (!w.length && !AG.yo) { box.hidden = true; return; }
@@ -638,23 +666,92 @@ function agUbicar() {
 }
 function agEnfocar(msg) {
   if (msg) $('#agUbicSub').textContent = msg;
-  if (S.agencia) return;
+  if (ENV.sel) return;
   $('#agLupaHint').classList.add('on'); $('#agLupaHint').textContent = '👇 Busca tu provincia o distrito';
   const bx = $('#agBuscar'); bx.classList.remove('ag-foco'); void bx.offsetWidth; bx.classList.add('ag-foco');
   $('#agBusca').focus({ preventScroll: true }); bx.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 function agElegir(id) {
-  const a = (AG.lista || []).find(x => String(x.ter_id) === String(id)); if (!a) return;
-  S.agencia = { id: String(a.ter_id), nombre: agTitulo(a), dir: a.direccion || '', dep: a.departamento || '', prov: a.provincia || '', dist: a.distrito || '' };
-  agMostrarSel(); boletoVivo(); $('#lblWrap').hidden = false;
-  heavy('Agencia confirmada. Si ganas, tu premio viaja ahí. 🚚');
+  const a = (AG.listas[ENV.e.lista] || []).find(x => x._id === String(id)); if (!a) return;
+  ENV.sel = { courier: ENV.e.n, id: a.ter_id ? String(a.ter_id) : '', nombre: agTitulo(a, ENV.e.n), dir: a.direccion || '', dep: a.departamento || '', prov: a.provincia || '', dist: a.distrito || '' };
+  $('#agSel').innerHTML = `<div class="ag-sel"><div class="ag-item-ic">✅</div><div><div class="ag-item-t">${esc(ENV.sel.nombre)}</div><div class="ag-item-d">${esc(ENV.sel.dir)}</div><div class="ag-item-p">${esc(ENV.sel.dep)}${ENV.sel.prov ? ' · ' + esc(tit(ENV.sel.prov)) : ''}${ENV.sel.id ? ' · Agencia #' + esc(ENV.sel.id) : ''}</div></div></div><button class="ag-cambiar" id="agCambiar">Cambiar de sede</button>`;
+  $('#agSel').hidden = false; $('#agPick').hidden = true; $('#envGo').hidden = false;
+  heavy('Sede confirmada. Si ganas, tu premio viaja ahí. 🚚');
 }
-function agMostrarSel() {
-  const a = S.agencia; if (!a || !$('#agSel')) return;
-  $('#agSel').innerHTML = `<div class="ag-sel"><div class="ag-item-ic">✅</div><div><div class="ag-item-t">${esc(a.nombre)}</div><div class="ag-item-d">${esc(a.dir)}</div><div class="ag-item-p">${esc(a.dep)}${a.prov ? ' · ' + esc(tit(a.prov)) : ''} · Agencia #${esc(a.id)}</div></div></div><button class="ag-cambiar" id="agCambiar">Cambiar de agencia</button>`;
-  $('#agSel').hidden = false; $('#agPick').hidden = true;
+function agCambiar() { ENV.sel = null; $('#agSel').hidden = true; $('#agPick').hidden = false; $('#envGo').hidden = true; $('#agBusca').focus(); }
+
+// Tarjeta "¿Cómo te enviamos el premio?" del boleto
+function envioHTML(c, p) {
+  const ops = enviosDe(c), a = envDe(p);
+  if (!c.pedirAgencia || !ops.length || p.est === 'X') return '';
+  const ico = a ? (ENVIOS.find(e => e.n === a.courier)?.ic || '📦') : '';
+  return `<div class="card" id="secEnv"><h2>📦 ¿Cómo te enviamos el premio si ganas?</h2>
+    ${a ? `<div class="env-res"><span class="ic">${ico}</span><div><b>${esc(a.courier === 'RETIRO EN TIENDA' ? 'Retiro en tienda' : tit(a.courier))}</b><span>${esc(envTexto(a, c))}</span></div></div><button class="ag-cambiar" id="envCambiar">Cambiar</button>`
+      : `<p class="sm mu" style="margin:-4px 0 12px">Opcional: puedes elegirlo ahora o después desde este mismo link.</p>`}
+    <div id="envPick" ${a ? 'hidden' : ''}>
+      <div class="cour-grid">${ops.map(e => `<button class="cour-card" data-env="${e.k}"><span class="ic">${e.ic}</span><b>${esc(e.n)}</b></button>`).join('')}</div>
+      <div id="envForm"></div>
+      <button class="btn-main" id="envGo" hidden style="margin-top:12px">💾 Guardar</button>
+      ${!a ? `<button class="dni-link" id="envDespues" style="margin-top:6px">Lo elijo después</button>` : ''}
+    </div></div>`;
 }
-function agCambiar() { S.agencia = null; $('#agSel').hidden = true; $('#agPick').hidden = false; boletoVivo(); $('#lblWrap').hidden = true; $('#agBusca').focus(); }
+function envElegir(k) {
+  const e = ENVIOS.find(x => x.k === k), c = S.cfg; ENV.e = e; ENV.sel = null; AG.yo = null;
+  $$('#secEnv .cour-card').forEach(b => b.classList.toggle('on', b.dataset.env === k));
+  const f = $('#envForm'), go = $('#envGo');
+  if (e.lista) {
+    f.innerHTML = `<div class="agc-box"><span class="agc-lbl">Elige tu sede ${esc(tit(e.n))}</span>
+      <div id="agSel" hidden></div>
+      <div id="agPick">
+        <div class="ag-ubic" id="agUbicBox"><button class="ag-ubic-btn" id="agUbic">📍 Usar mi ubicación</button><div class="ag-ubic-sub" id="agUbicSub">Te mostramos las sedes más cerca de ti. Solo la usamos para ordenarlas; no la guardamos.</div></div>
+        <div id="agLupaHint">🔍 Busca tu provincia o distrito</div>
+        <div class="ag-buscar" id="agBuscar"><span class="ag-lupa">🔍</span><input class="in" id="agBusca" autocomplete="off" placeholder="Busca provincia o distrito"></div>
+        <div class="ag-lista" id="agLista" hidden></div>
+      </div></div>`;
+    go.hidden = true; agCargar(e).catch(() => {});
+  } else if (e.t === 'agencia') {
+    f.innerHTML = `<label class="fld"><textarea class="in" id="envAg" rows="3" maxlength="200" placeholder="¿En qué agencia ${esc(tit(e.n))} lo recoges? Ciudad y dirección *"></textarea></label>`;
+    go.hidden = false;
+  } else if (e.t === 'domicilio') {
+    f.innerHTML = `<label class="fld"><input class="in" id="envDist" maxlength="40" placeholder="Distrito *"></label>
+      <label class="fld"><input class="in" id="envDir" maxlength="200" autocomplete="street-address" placeholder="Dirección (calle, número, Mz/Lt) *"></label>
+      <label class="fld"><input class="in" id="envRef" maxlength="150" placeholder="Referencia (opcional)"></label>`;
+    go.hidden = false;
+  } else if (e.t === 'encomienda') {
+    f.innerHTML = `<label class="fld"><input class="in" id="envCiu" maxlength="60" placeholder="Ciudad de destino *"></label>
+      <label class="fld"><input class="in" id="envAg" maxlength="120" placeholder="Agencia que prefieres (opcional)"></label>`;
+    go.hidden = false;
+  } else {
+    f.innerHTML = `<div class="env-res"><span class="ic">🏪</span><div><b>Lo recoges en nuestra tienda</b><span>${esc(c.tiendaDir || 'Te enviaremos la dirección por WhatsApp.')}</span></div></div>`;
+    go.hidden = false;
+  }
+  const first = $('#envForm input, #envForm textarea'); if (first) setTimeout(() => first.focus(), 200);
+}
+async function envGuardar() {
+  const e = ENV.e; if (!e) return toast('Elige una opción de envío', 'bad');
+  const v = id => ($(id)?.value || '').trim();
+  let d = { courier: e.n };
+  if (e.lista) { if (!ENV.sel) return agEnfocar(), toast('Elige tu sede', 'bad'); d = ENV.sel; }
+  else if (e.t === 'agencia') { if (!v('#envAg')) return marcarErr($('#envAg'), 'Escribe la agencia donde lo recoges'); d.nombre = v('#envAg'); }
+  else if (e.t === 'domicilio') { if (!v('#envDist')) return marcarErr($('#envDist'), 'Escribe tu distrito'); if (!v('#envDir')) return marcarErr($('#envDir'), 'Escribe tu dirección'); Object.assign(d, { dist: v('#envDist'), dir: v('#envDir'), ref: v('#envRef') }); }
+  else if (e.t === 'encomienda') { if (!v('#envCiu')) return marcarErr($('#envCiu'), 'Escribe la ciudad de destino'); Object.assign(d, { ciudad: v('#envCiu'), nombre: v('#envAg') }); }
+  const b = $('#envGo'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Guardando…';
+  try {
+    const r = await fetch(API_URL() + `/api/t/${encodeURIComponent(ENV.boleto.tok)}/envio`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(d) });
+    const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || 'No se pudo guardar');
+    ENV.boleto.p.agencia = j.agencia; toast('📦 ¡Listo! Ya sabemos cómo enviarte el premio', 'ok');
+    heavy('¡Perfecto! 🚚 Si ganas, ya sabemos cómo enviarte el premio. ¡Mucha suerte! 🍀');
+    $('#secEnv').outerHTML = envioHTML(S.cfg, ENV.boleto.p);
+    envSeguir();
+  } catch (er) { toast(er.message, 'bad'); b.disabled = false; b.innerHTML = '💾 Guardar'; }
+}
+// Al registrarse se abre WhatsApp. Si falta el envío, se espera a que lo elija (o diga "después").
+function envSeguir() {
+  const B = ENV.boleto; if (!B || !B.waPend) return; B.waPend = false;
+  const msg = msgNegocio(S.cfg, B.p, B.tok, 'NUEVO REGISTRO');
+  if ($('#bWa') && S.cfg.wa) $('#bWa').href = waURL(S.cfg.wa, msg);
+  if (S.cfg.wa && isMobile) setTimeout(() => { location.href = waURL(S.cfg.wa, msg); }, 900);
+}
 
 /* ───── Heavy, el guía (clon del narrador de Total-Tools, adaptado al sorteo) ───── */
 const HV = { off: false, h: 0 };
@@ -688,7 +785,7 @@ function pagoHTML(c, monto) {
 function subidaHTML(c, permiteDespues) {
   return `<div class="drop" id="drop"><b>📸</b><strong>Sube la captura de tu pago</strong><span class="xs mu">Se comprime automáticamente</span><input type="file" accept="image/*" id="fFile"></div>
     <div class="prev" id="prev" hidden><img id="prevImg" alt=""><div class="sm"><b class="c-ok">✔ Comprobante listo</b><br><button class="btn sm" id="quitar" style="margin-top:6px">Cambiar foto</button></div></div>
-    ${c.opObl !== false ? `<label class="fld"><span>N° de operación</span><input class="in" id="fOp" inputmode="numeric" maxlength="30" placeholder="Aparece en tu comprobante"></label>` : ''}
+    ${c.opObl !== false ? `<div id="opBox" hidden style="margin-top:12px"><label class="fld"><span>N° de operación *</span><input class="in" id="fOp" inputmode="numeric" maxlength="30" placeholder="Aparece en tu comprobante"></label></div>` : ''}
     ${permiteDespues ? `<label class="sw"><input type="checkbox" id="despues"><span>Pagaré después <span class="mu">(reservo mis números por ${c.reservaMin || 30} min)</span></span></label>` : ''}
     <div class="warnbox">⚠️ Verificamos cada pago directamente en nuestra cuenta antes de confirmar. Los comprobantes editados se anulan.</div>`;
 }
@@ -703,6 +800,7 @@ function bindSubida() {
       if (blob.size > 1.45e6) throw new Error('La imagen es muy pesada, intenta con una captura');
       S.file = blob; S.ih = ih;
       $('#prevImg').src = URL.createObjectURL(blob); $('#prev').hidden = false; $('#drop').hidden = true;
+      if ($('#opBox')) { $('#opBox').hidden = false; setTimeout(() => $('#fOp').focus(), 250); }
       if ($('#despues')) $('#despues').checked = false;
     } catch (e) { toast(e.message, 'bad'); $('#drop').classList.remove('has'); }
     $('#drop strong').textContent = 'Sube la captura de tu pago';
@@ -786,20 +884,19 @@ async function enviar() {
   if (c.elegir !== false) fd.append('nums', [...S.sel].join(',')); else fd.append('azar', String(S.qty));
   if (op) fd.append('op', op);
   if (S.file && !despues) { fd.append('img', S.file, 'comprobante.' + (S.file.type === 'image/webp' ? 'webp' : 'jpg')); fd.append('ih', S.ih); }
-  if (S.agencia) fd.append('agencia', JSON.stringify(S.agencia));
   if (S.link) fd.append('link', S.l);
   if (S.ts) fd.append('ts', S.ts);
 
   const b = $('#wzSig'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Registrando…';
   try {
     const j = await api(`/api/r/${encodeURIComponent(S.r)}/entrar`, { body: fd });
-    lsSet('yo', { n: j.nombre || nom, c: cel, d: dni, a: S.agencia });
+    lsSet('yo', { n: j.nombre || nom, c: cel, d: dni });
     guardarBoleto(S.r, j.tok);
     const p = { nombre: j.nombre || nom, celFull: cel, nums: j.nums.join(','), monto: j.monto, op, est: j.est, vence: j.vence };
     history.replaceState(null, '', `?t=${j.tok}`);
     S.t = j.tok; S.sel.clear(); S.file = null;
     await vBoleto(j.tok, p);
-    heavy('¡Listo! 🎉 Ya estás participando. Guarda tu boleto y mucha suerte. 🍀', 9000);
+    heavy(c.pedirAgencia ? '¡Ya participas! 🎉 Último detalle (opcional): dinos cómo enviarte el premio si ganas. 📦' : '¡Listo! 🎉 Ya estás participando. Guarda tu boleto y mucha suerte. 🍀', 9000);
   } catch (e) {
     toast(e.message, 'bad');
     if (e.status === 409 && c.elegir !== false) { try { const r = await api('/api/r/' + encodeURIComponent(S.r)); S.board = r.board; [...S.sel].forEach(i => { if (S.board[i] !== '0') S.sel.delete(i); }); renderPages(); renderGrid(); renderSel(); irPaso(0, true); } catch (er) {} }
@@ -811,12 +908,11 @@ async function enviar() {
 /* =====================================================================
    VISTA: MI BOLETO
    ===================================================================== */
-function agDe(p) { try { return p.agencia ? (typeof p.agencia === 'string' ? JSON.parse(p.agencia) : p.agencia) : null; } catch (e) { return null; } }
 function msgNegocio(c, p, tok, titulo = 'NUEVO REGISTRO') {
   const nums = splitN(p.nums).map(i => fmtN(c, i)).join(', ');
   return [`🎟️ *${titulo} – ${c.titulo}*`, '', `👤 ${p.nombre}`, p.celFull ? `📞 ${p.celFull}` : null, `🔢 Números: *${nums}*`,
     c.modo === 'pago' ? `💰 Total: ${fmtS(p.monto)}` : null, p.op ? `🧾 N° operación: ${p.op}` : null,
-    agDe(p) ? `🏢 Agencia: ${agDe(p).nombre}` : null,
+    envDe(p) ? `📦 Envío: ${envDe(p).courier} – ${envTexto(envDe(p), c)}` : null,
     `📌 Estado: ${EST[p.est]?.t || p.est}`, '', `🔗 Mi boleto: ${linkBoleto(tok)}`].filter(x => x !== null).join('\n');
 }
 async function vBoleto(tok, nuevo) {
@@ -846,7 +942,7 @@ async function vBoleto(tok, nuevo) {
       <div class="tk-row"><span class="mu">Estado</span><span class="pill ${e.p}">${e.i} ${vencido ? 'Reserva vencida' : e.t}</span></div>
       ${c.modo === 'pago' ? `<div class="tk-row"><span class="mu">Monto</span><b>${fmtS(p.monto)}</b></div>` : ''}
       ${p.op ? `<div class="tk-row"><span class="mu">N° operación</span><b>${esc(p.op)}</b></div>` : ''}
-      ${agDe(p) ? `<div class="tk-row" style="align-items:flex-start;gap:12px"><span class="mu" style="flex:none">🏢 Premio a</span><span style="text-align:right"><b>${esc(agDe(p).nombre)}</b><br><span class="xs mu">${esc(agDe(p).dir)}</span></span></div>` : ''}
+      ${envDe(p) ? `<div class="tk-row" style="align-items:flex-start;gap:12px"><span class="mu" style="flex:none">📦 Premio a</span><span style="text-align:right;font-size:12.5px">${esc(envTexto(envDe(p), c))}</span></div>` : ''}
       <div class="tk-row"><span class="mu">Registrado</span><span>${fecha(p.creado || Date.now())}</span></div>
       ${c.cierre ? `<div class="tk-row"><span class="mu">Sorteo</span><span>${fecha(c.cierre)}</span></div>` : ''}
       ${p.est === 'R' && p.vence ? `<div class="tk-row"><span class="c-warn">⏳ Reserva vence en</span><b class="c-warn" id="rv" data-mode="mini"></b></div>` : ''}
@@ -859,6 +955,7 @@ async function vBoleto(tok, nuevo) {
     <a class="btn wa full" id="bWa" href="${c.wa ? waURL(c.wa, waN) : '#'}" target="_blank">💬 Enviar ${nuevo ? 'mi registro' : ''} por WhatsApp</a>
     <div class="row"><button class="btn sp" id="bDesc">💾 Guardar boleto</button><button class="btn sp" data-c="${esc(linkBoleto(tok))}">🔗 Copiar link</button></div>
   </div>`;
+  h += envioHTML(c, p);
   if (puedePagar) h += `<div class="card" id="secPay"><h2>${p.est === 'V' ? '🔁 ¿Te equivocaste de captura?' : '💳 Paga y sube tu comprobante'}</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 ${p.est === 'V' ? 'Reemplazar comprobante' : 'Enviar comprobante'}</button></div>`;
   h += `<div class="acts"><a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>${!R && c.estado === 'activa' ? `<a class="btn full" href="${linkForm(S.r)}">➕ Elegir más números</a>` : ''}</div>`;
   const otros = misBoletos(S.r).filter(t => t !== tok);
@@ -869,7 +966,9 @@ async function vBoleto(tok, nuevo) {
   $('#bDesc').onclick = () => boletoPNG(c, p, nums, tok);
   bindSubida();
   if ($('#bPagar')) $('#bPagar').onclick = () => pagoTardio(tok, c, p);
-  if (nuevo && c.wa && isMobile) setTimeout(() => { location.href = waURL(c.wa, waN); }, 900);
+  ENV.boleto = { tok, p, waPend: !!nuevo }; ENV.e = null; ENV.sel = null;
+  // Recién registrado: si falta el envío, WhatsApp se abre después de elegirlo (o de "Lo elijo después")
+  if (nuevo && !(c.pedirAgencia && enviosDe(c).length && !envDe(p))) envSeguir();
 }
 async function pagoTardio(tok, c, p) {
   if (!S.file) return marcarErr($('#drop'), 'Sube la foto de tu comprobante');
@@ -1003,6 +1102,7 @@ document.addEventListener('click', e => {
   if (t.closest('#verBases')) { e.preventDefault(); return modal(`<h2 class="syne" style="margin-bottom:10px">📜 Bases del sorteo</h2><pre>${esc(S.cfg.bases || 'El organizador aún no publicó las bases. Puedes consultarlas por WhatsApp.')}</pre>`); }
   if (t.closest('#heroFoto')) return modal(`<img src="${pubImg(S.cfg.foto)}" style="width:100%;border-radius:14px">`);
   const ag = t.closest('[data-ag]'); if (ag) return agElegir(ag.dataset.ag);
+  const ev = t.closest('[data-env]'); if (ev) return envElegir(ev.dataset.env);
   if (t.closest('#hvAv')) { if ($('#hvB').hidden && HV.ult) heavy(HV.ult); else $('#hvB').hidden = true; return; }
   if (t.closest('#hvX')) { $('#hvB').hidden = true; return; }
   if (t.id === 'qrImg') return modal(`<img src="${t.src}" style="width:100%;border-radius:14px;background:#fff;padding:10px"><a class="btn full" style="margin-top:10px" href="${t.src}" download="qr-pago">💾 Descargar QR</a>`);
@@ -1014,10 +1114,13 @@ document.addEventListener('click', e => {
     case 'dniNo': return dniCorregir();
     case 'agUbic': return agUbicar();
     case 'agCambiar': return agCambiar();
+    case 'envGo': return envGuardar();
+    case 'envCambiar': $('#envPick').hidden = false; $('#envCambiar').hidden = true; return;
+    case 'envDespues': $('#envPick').hidden = true; $('#envDespues').hidden = true; toast('Puedes elegirlo después desde el link de tu boleto'); return envSeguir();
     case 'azar': return alAzar();
     case 'qm': S.qty = Math.max(1, S.qty - 1); $('#qn').textContent = S.qty; return actBar();
     case 'qp': S.qty = Math.min(S.cfg.maxSel || 20, S.cfg.maxPer || 500, S.qty + 1); $('#qn').textContent = S.qty; return actBar();
-    case 'quitar': S.file = null; $('#prev').hidden = true; $('#drop').hidden = false; $('#drop').classList.remove('has'); $('#fFile').value = ''; return;
+    case 'quitar': S.file = null; $('#prev').hidden = true; $('#drop').hidden = false; $('#drop').classList.remove('has'); $('#fFile').value = ''; if ($('#opBox')) $('#opBox').hidden = true; return;
     case 'bVer': return verificar();
   }
 });
