@@ -6,7 +6,7 @@
      IMG  → bucket R2                  (opcional: sin R2 las fotos se guardan en D1)
    Variables (Worker → Settings → Variables and Secrets):
      ADMIN_PIN        → PIN del panel   (obligatorio, tipo Secret)
-     ALLOWED_ORIGIN   → ej: https://tuusuario.github.io  (opcional, por defecto *)
+     ALLOWED_ORIGIN   → ej: https://sorteos.tuusuario.workers.dev (opcional, por defecto *)
      TURNSTILE_SECRET → clave secreta de Turnstile        (opcional, antispam)
    Las tablas se crean solas en la primera petición.
    ========================================================================== */

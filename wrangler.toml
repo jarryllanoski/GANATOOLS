@@ -4,7 +4,7 @@ compatibility_date = "2026-10-01"
 
 # ADMIN_PIN se configura como secreto: npx wrangler secret put ADMIN_PIN
 [vars]
-ALLOWED_ORIGIN = "https://jarryllanoski.github.io"
+ALLOWED_ORIGIN = "https://sorteos.jarryllanoski.workers.dev"
 
 [[d1_databases]]
 binding = "DB"
