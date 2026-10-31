@@ -33,7 +33,8 @@ Regla: **lo que está en `main` es lo que debe estar publicado.**
 
 ## Estados y papelera
 - 🆕 **NUEVO** → registro por revisar.
-- ✅ **CONFIRMADO** → pago verificado. Cuando haces el sorteo 🎲, pasan solos a 🏁 **CULMINADO** (ya participaron).
+- ✅ **CONFIRMADO** → pago verificado, entra al sorteo.
+- 🏁 **CULMINADO** → ya participó. Al hacer el sorteo 🎲 los confirmados pasan solos; también se puede cambiar a mano. No se puede mandar a la papelera.
 - 🗑️ **Papelera** (botón al lado del dado) → toca 🗑️ **dos veces** en una tarjeta para mandarla ahí. Sus números quedan libres.
   Se puede **recuperar** con ♻️. No hay botón de vaciar: cada día, lo que lleva **30 días** se borra solo y para siempre (con su comprobante).
   Las reservas vencidas también van a la papelera.

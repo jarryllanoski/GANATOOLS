@@ -42,14 +42,19 @@ const SCHEMA = [
 ];
 // Columnas agregadas después (papelera): bor = fecha en que entró a la papelera,
 // prev = estado que tenía antes (para recuperarlo igual).
-const MIGRAR = ['ALTER TABLE part ADD COLUMN bor INTEGER', 'ALTER TABLE part ADD COLUMN prev TEXT'];
+// fin = 1 → CULMINADO (ya participó). Al crear la columna, los pagados de sorteos ya realizados pasan a culminado.
+const MIGRAR = [
+  ['ALTER TABLE part ADD COLUMN bor INTEGER'], ['ALTER TABLE part ADD COLUMN prev TEXT'],
+  ['ALTER TABLE part ADD COLUMN fin INTEGER NOT NULL DEFAULT 0', "UPDATE part SET fin=1 WHERE est='P' AND rifa IN (SELECT id FROM rifas WHERE json_extract(cfg,'$.resultado') IS NOT NULL)"],
+];
 let SCHEMA_OK = false;
 async function ensureSchema(env) {
   if (SCHEMA_OK) return;
   if (!env.DB) err('Falta el binding D1 llamado "DB" en el Worker', 500);
   await env.DB.batch(SCHEMA.map(s => env.DB.prepare(s)));
-  for (const q of MIGRAR) {
-    try { await env.DB.prepare(q).run(); } catch (e) { if (!/duplicate column/i.test(e.message)) throw e; }
+  for (const [q, ...despues] of MIGRAR) {
+    try { await env.DB.prepare(q).run(); } catch (e) { if (/duplicate column/i.test(e.message)) continue; throw e; }
+    for (const d of despues) await env.DB.prepare(d).run();
   }
   SCHEMA_OK = true;
 }
@@ -554,7 +559,7 @@ async function delRifa(env, id) {
 async function adminDetalle(env, id) {
   const r = await loadRifa(env, id);
   await limpiarPapelera(env, id);
-  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
+  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev,fin FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
   return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, board: r.board, act: r.act }, parts: results });
 }
 
@@ -588,15 +593,21 @@ async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
     memDel(p.rifa);
     return J({ ok: true });
   }
-  const MAP = { aprobar: ['P', '3'], revision: ['V', '2'], rechazar: ['X', '0'], liberar: ['X', '0'] };
+  // culminar = pagado + ya participó (fin=1). aprobar = pagado sin culminar.
+  const MAP = { aprobar: ['P', '3'], culminar: ['P', '3'], revision: ['V', '2'], rechazar: ['X', '0'], liberar: ['X', '0'] };
   if (!MAP[acc]) err('Acción inválida');
-  const [est, ch] = MAP[acc];
+  const [est, ch] = MAP[acc], fin = acc === 'culminar' ? 1 : 0;
   for (let i = 0; i < CFG.RETRIES; i++) {
-    const p = await env.DB.prepare('SELECT id,rifa,nums,est,nota FROM part WHERE id=?').bind(pid).first();
+    const p = await env.DB.prepare('SELECT id,rifa,nums,est,nota,fin FROM part WHERE id=?').bind(pid).first();
     if (!p) err('Participante no encontrado', 404);
-    if (p.est === est) return J({ ok: true, est });
+    if (p.est === est && (est !== 'P' || (p.fin || 0) === fin)) return J({ ok: true, est, fin });
+    if (est === 'X' && p.est === 'P' && p.fin) err('Ya participó del sorteo (CULMINADO): no se puede mandar a la papelera');
+    if (p.est === 'P' && est === 'P') {  // CONFIRMADO ↔ CULMINADO: los números no cambian
+      await env.DB.prepare('UPDATE part SET fin=? WHERE id=?').bind(fin, pid).run();
+      memDel(p.rifa);
+      return J({ ok: true, est, fin });
+    }
     const r = await loadRifa(env, p.rifa);
-    if (est === 'X' && p.est === 'P' && r.cfg.resultado) err('Ya participó del sorteo: no se puede mandar a la papelera');
     const idx = splitNums(p.nums);
     const b = r.board.split('');
     if (p.est === 'X') {
@@ -607,8 +618,8 @@ async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
     r.board = b.join('');
     const nn = est === 'X' ? (acc === 'rechazar' ? 'rechazado' : 'liberado') : (p.nota === 'vencido' || p.nota === 'rechazado' || p.nota === 'liberado' ? null : p.nota);
     const bor = est === 'X' ? now() : null, prev = est === 'X' ? p.est : null;
-    const pre = [env.DB.prepare(`UPDATE part SET est=?, nota=?, vence=0, bor=?, prev=? WHERE id=? AND ${VER_OK}`).bind(est, nn, bor, prev, pid, r.id, r.ver)];
-    if (await commit(env, r, pre)) return J({ ok: true, est });
+    const pre = [env.DB.prepare(`UPDATE part SET est=?, nota=?, vence=0, bor=?, prev=?, fin=? WHERE id=? AND ${VER_OK}`).bind(est, nn, bor, prev, est === 'P' ? fin : 0, pid, r.id, r.ver)];
+    if (await commit(env, r, pre)) return J({ ok: true, est, fin });
   }
   err('Intenta de nuevo', 503);
 }
@@ -634,7 +645,9 @@ async function sortear(env, id, { g = 1, s = 0, force = false }) {
       resets: prev ? (prev.resets || 0) + 1 : 0,
     };
     r.cfg = { ...r.cfg, resultado: res, estado: 'sorteada' };
-    if (await commit(env, r)) {
+    // Todos los confirmados pasan a CULMINADO (ya participaron)
+    const pre = [env.DB.prepare(`UPDATE part SET fin=1 WHERE rifa=? AND est='P' AND ${VER_OK}`).bind(id, r.id, r.ver)];
+    if (await commit(env, r, pre)) {
       const full = picks.map(n => { const p = owner.get(n) || {}; return { n, nombre: p.nombre || '', cel: p.cel || '', pid: p.id || '' }; });
       return J({ ok: true, resultado: res, full });
     }

@@ -388,16 +388,14 @@ const fecha = t => t ? new Date(t).toLocaleString('es-PE', { day: '2-digit', mon
 const fechaL = t => t ? new Date(t).toLocaleString('es-PE', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 const EST = { R: { t: 'Reservado', p: 'p-warn', i: '⏳' }, V: { t: 'En revisión', p: 'p-ac', i: '🔎' }, P: { t: 'Pagado', p: 'p-ok', i: '✅' }, X: { t: 'En papelera', p: 'p-bad', i: '🗑️' } };
 const ESTR = { activa: ['🟢 Activa', 'p-ok'], pausada: ['⏸️ Pausada', 'p-warn'], cerrada: ['🔒 Cerrada', 'p-bad'], sorteada: ['🏆 Sorteada', 'p-pur'] };
-// Estados del panel: R y V del servidor se muestran como NUEVO. Cuando el sorteo ya se
-// realizó, los confirmados pasan solos a CULMINADO (ya participaron). Los anulados (X)
-// no salen en la lista: están en la papelera 🗑️.
+// 3 etiquetas fijas: NUEVO (R y V del servidor), CONFIRMADO (pagado) y CULMINADO (pagado y
+// ya participó: fin=1). Al hacer el sorteo los confirmados pasan solos a CULMINADO; también
+// se puede cambiar a mano. Los anulados (X) no salen en la lista: están en la papelera 🗑️.
 const GRP = { N: { t: 'NUEVO', i: '🆕', bar: 'var(--bad)' }, C: { t: 'CONFIRMADO', i: '✅', bar: 'var(--ok)' }, F: { t: 'CULMINADO', i: '🏁', bar: 'var(--pur)' }, X: { t: 'PAPELERA', i: '🗑️', bar: 'var(--mu)' } };
-// Antes del sorteo: NUEVO / CONFIRMADO. Después: NUEVO / CULMINADO.
-const gord = () => culminada() ? ['N', 'F'] : ['N', 'C'], filt = () => ['todos', ...gord()];
-const ACC = { N: 'revision', C: 'aprobar', F: 'aprobar', X: 'liberar' };
+const gord = () => ['N', 'C', 'F'], filt = () => ['todos', ...gord()];
+const ACC = { N: 'revision', C: 'aprobar', F: 'culminar', X: 'liberar' };
 const PAPELERA_DIAS = 30;
-const culminada = () => !!(cfg().resultado || cfg().estado === 'sorteada');
-const grp = p => p.est === 'X' ? 'X' : p.est === 'P' ? (culminada() ? 'F' : 'C') : 'N';
+const grp = p => p.est === 'X' ? 'X' : p.est === 'P' ? (p.fin ? 'F' : 'C') : 'N';
 const ADV0 = { desde: '', hasta: '', comp: 'any', origen: 'any', min: '', max: '', cant: '', imp: 'any', orden: 'nuevo' };
 const impresos = new Set(lsGet('impresos', []));
 const marcarImpresos = l => { l.forEach(p => impresos.add(p.id)); lsSet('impresos', [...impresos].slice(-3000)); };
@@ -786,11 +784,11 @@ async function cambiarEstado(list, g) {
 // Hoja de estados (STATUS SHEET de Total-Tools): NUEVO / CONFIRMADO (o CULMINADO) / PAPELERA
 function hojaEstado(list) {
   const uno = list.length === 1 ? list[0] : null, act = uno ? grp(uno) : '';
-  const OPC = ['N', culminada() ? 'F' : 'C', 'X'];
+  const OPC = gord();  // la papelera se usa con el botón 🗑️ de cada tarjeta
   const m = modal(`<h2>🔄 ${uno ? 'Cambiar estado' : `Estado de ${list.length} seleccionados`}</h2>
     <p class="mu sm" style="margin-bottom:14px">${uno ? esc(uno.nombre) : 'Se aplica a todos los seleccionados'}</p>
     <div class="sopts">${OPC.map(g => `<button class="sopt st-${g}" data-st="${g}"><span>${GRP[g].i} ${GRP[g].t}</span>${g === act ? '<span>✓</span>' : ''}</button>`).join('')}</div>
-    <p class="xs mu" style="margin-top:12px;line-height:1.6">🆕 Nuevo: registro por revisar · ${culminada() ? '🏁 Culminado: ya participó del sorteo' : '✅ Confirmado: pago verificado, entra al sorteo'} · 🗑️ Papelera: sus números quedan libres; se puede recuperar durante ${PAPELERA_DIAS} días</p>`);
+    <p class="xs mu" style="margin-top:12px;line-height:1.6">🆕 Nuevo: registro por revisar · ✅ Confirmado: pago verificado, entra al sorteo · 🏁 Culminado: ya participó del sorteo (pasan solos al sortear)</p>`);
   m.addEventListener('click', e => {
     const b = e.target.closest('[data-st]'); if (!b) return;
     const g = b.dataset.st; m.close();
@@ -819,7 +817,7 @@ function abrirPapelera() {
     try {
       // Vuelve como estaba: confirmado si estaba pagado; si no, como nuevo (en revisión)
       await API.accion(p.id, p.prev === 'P' ? 'aprobar' : 'revision');
-      toast(`♻️ ${p.nombre.split(' ')[0]} recuperado → ${p.prev === 'P' ? GRP[culminada() ? 'F' : 'C'].t : 'NUEVO'}`, 'ok');
+      toast(`♻️ ${p.nombre.split(' ')[0]} recuperado → ${p.prev === 'P' ? 'CONFIRMADO' : 'NUEVO'}`, 'ok');
       b.closest('.trow').remove();
       await cargarDetalle();
     } catch (er) { toast(er.message, 'bad'); b.disabled = false; }
