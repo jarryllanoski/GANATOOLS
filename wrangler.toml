@@ -6,7 +6,7 @@ compatibility_date = "2026-10-01"
 [vars]
 ALLOWED_ORIGIN = "https://sorteos.jarryllanoski.workers.dev"
 # Antispam Turnstile: clave pública (Site Key). La secreta va aparte: npx wrangler secret put TURNSTILE_SECRET
-TURNSTILE_SITEKEY = ""
+TURNSTILE_SITEKEY = "0x4AAAAAAFuXYh7Y6Fx-GRp0"
 
 [[d1_databases]]
 binding = "DB"
