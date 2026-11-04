@@ -139,6 +139,14 @@ pre.bank{white-space:pre-wrap;font:inherit;font-size:13px;padding:11px;border-ra
 .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;word-break:break-all;color:var(--mu);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px;margin:4px 0 10px}
 .vok{color:var(--ok);font-weight:700}.vko{color:var(--bad);font-weight:700}
 details summary{cursor:pointer;font-weight:700;padding:4px 0}
+.ayuda{cursor:pointer}
+.faq details{border-bottom:1px solid var(--line);padding:4px 0}
+.faq summary{padding:11px 0;font-size:14.5px;list-style:none;display:flex;justify-content:space-between;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';color:var(--ac);font-size:20px;line-height:1}
+.faq details[open] summary::after{content:'−'}
+.faq p{padding:0 0 12px;font-size:13.5px;line-height:1.55;color:var(--mu)}
+.faq p b{color:var(--tx)}
 /* varios */
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);opacity:0;background:var(--bg3);border:1px solid var(--ok);color:var(--tx);padding:9px 18px;border-radius:20px;font-size:12px;font-weight:500;z-index:999;transition:opacity .3s;max-width:92vw;text-align:center;pointer-events:none}
 .toast.on{opacity:1}.toast.bad{border-color:var(--bad)}.toast.ok{border-color:var(--ok)}
@@ -455,7 +463,47 @@ const app = $('#app');
 function cabecera(c) {
   const neg = c?.negocio || CONFIG.NEGOCIO;
   document.title = c?.titulo ? `${c.titulo} · ${neg}` : neg;
-  return `<div class="hdr"><b>🎟️ ${esc(neg.toUpperCase())}</b>${c?.wa ? `<a class="ayuda" href="${waURL(c.wa, 'Hola, tengo una consulta sobre el sorteo ' + (c.titulo || ''))}" target="_blank">💬 Ayuda</a>` : ''}</div>`;
+  return `<div class="hdr"><b>🎟️ ${esc(neg.toUpperCase())}</b>${c ? '<button class="ayuda" id="bAyuda" type="button">❓ Ayuda</button>' : ''}</div>`;
+}
+/* ───── Ayuda: preguntas frecuentes según la pantalla, con los datos reales del sorteo ───── */
+const vistaActual = () => (S.t ? 'boleto' : S.v === 'p' ? 'participantes' : 'formulario');
+function preguntasFrecuentes(c, vista) {
+  const pago = c.modo === 'pago';
+  const promos = (c.promos || []).map(p => `${p.n} tickets por ${fmtS(p.p)}`).join(', ');
+  const medios = [c.yape && `Yape al ${c.yape}`, c.plin && `Plin al ${c.plin}`, c.bancos && 'transferencia bancaria'].filter(Boolean).join(', ');
+  const fechaSorteo = c.cierre ? `El sorteo es el <b>${fechaL(c.cierre)}</b>.` : 'La fecha del sorteo se anunciará pronto.';
+  const comoParticipar = { p: '¿Cómo participo?', r: `Son 3 pasos: <b>1)</b> elige cuántos tickets quieres, <b>2)</b> escribe tu DNI y tu WhatsApp, <b>3)</b> ${pago ? 'paga y sube la captura de tu pago' : 'confirma'}. Al final tocas <b>Revelar mis números</b> y ves tus números al instante.` };
+  const azar = { p: '¿Puedo elegir mis números?', r: 'No. Los números se asignan <b>al azar</b> entre los disponibles, en el momento en que te registras. Así todos tienen la misma oportunidad y nadie puede apartar los "números de la suerte".' };
+  const precio = pago && { p: '¿Cuánto cuesta?', r: `Cada ticket cuesta <b>${fmtS(c.precio)}</b>.${promos ? ` Promociones: ${promos}.` : ''} Más tickets, más oportunidades de ganar.` };
+  const comoPagar = pago && { p: '¿Cómo pago?', r: `${medios ? `Por ${medios}.` : 'Con los datos que aparecen en el paso de pago.'} Luego sube la <b>captura</b> (puedes tomar foto, elegirla de tu galería o pegarla) y escribe el <b>N° de operación</b>.` };
+  const despues = pago && !c.compObl && { p: '¿Puedo pagar después?', r: `Sí. Marca <b>"Pagaré después"</b> y tus números quedan reservados por ${c.reservaMin || 30} minutos. Paga y sube tu captura desde el link de tu ticket antes de que venza, o los números se liberan.` };
+  const dni = { p: '¿Por qué me piden el DNI?', r: 'Para que el premio se entregue <b>solo a ti</b>. Al escribirlo, tu nombre aparece tal como figura en RENIEC, sin errores. Si eres extranjero, toca <b>Carnet ext.</b> y llena tus datos a mano.' };
+  const cuando = { p: '¿Cuándo es el sorteo?', r: `${fechaSorteo} Si ganas, te escribimos por WhatsApp.` };
+  const justo = { p: '¿Cómo sé que el sorteo es limpio?', r: 'Antes de vender el primer ticket publicamos un <b>código secreto cifrado</b>. En el sorteo se revela y se combina con un número aleatorio público de internet (drand). Cualquiera puede comprobar que el resultado no fue cambiado.' };
+  const privacidad = { p: '¿Mis datos son públicos?', r: 'No. En la lista pública tu nombre y tu celular aparecen <b>ocultos</b> (por ejemplo "Juan P." y "9•• ••• 123"). Tus datos solo se usan para este sorteo (Ley 29733).' };
+  const masTickets = { p: '¿Puedo comprar más tickets después?', r: `Sí, cuantas veces quieras${c.maxPer ? ` (hasta ${c.maxPer} por persona)` : ''}. Cada compra es un registro nuevo con sus propios números${c.maxSel ? `, de hasta ${c.maxSel} tickets` : ''}.` };
+  const miTicket = { p: '¿Dónde veo mi ticket?', r: 'Al terminar se abre tu ticket. Guárdalo con <b>Guardar ticket</b> o copia su link. Si compras otra vez desde el mismo celular, ahí verás también tus otros registros.' };
+  const estados = { p: '¿Qué significa el estado de mi ticket?', r: '<b>Reservado:</b> tus números están apartados, falta pagar.<br><b>Pago en revisión:</b> recibimos tu captura y la estamos verificando.<br><b>Confirmado:</b> tu pago fue verificado y tus números ya participan.' };
+  const demora = { p: '¿Cuánto demora la confirmación?', r: 'Revisamos cada pago directamente en nuestra cuenta y lo confirmamos lo antes posible. Si quieres acelerarlo, envíanos tu registro por WhatsApp con el botón verde.' };
+  const premio = { p: 'Si gano, ¿cómo recibo el premio?', r: `Te escribimos por WhatsApp.${c.pedirAgencia ? ' En tu ticket puedes dejar elegido cómo quieres recibirlo (agencia, delivery o recojo en tienda).' : ''} Para recibirlo debes mostrar el <b>DNI</b> que registraste.` };
+  const perdi = { p: 'Perdí el link de mi ticket', r: 'Escríbenos por WhatsApp con tu DNI y te lo reenviamos.' };
+  const invitar = { p: '¿Para qué sirve "Invita a tus amigos"?', r: `Es tu link personal: cuando un amigo participa con él, sabemos que llegó de tu parte.${c.premioReferido ? ` <b>${esc(c.premioReferido)}</b>` : ''}` };
+  const lista = { p: '¿Por qué los nombres están ocultos?', r: 'Para proteger los datos de cada participante. Igual puedes buscar tu nombre o tu número para comprobar que estás en la lista.' };
+  const verificar = { p: '¿Cómo verifico el resultado?', r: 'Cuando se realice el sorteo, en esta página aparece el botón <b>Verificar ahora</b>. Tu celular repite el cálculo y comprueba que los ganadores son exactamente los publicados.' };
+
+  const porVista = {
+    formulario: [comoParticipar, azar, precio, comoPagar, despues, dni, cuando, justo, privacidad, masTickets, miTicket],
+    boleto: [estados, demora, despues && { ...despues, p: '¿Qué pasa si no pago a tiempo?' }, premio, cuando, masTickets, invitar, perdi, privacidad],
+    participantes: [lista, justo, verificar, cuando, privacidad],
+  };
+  return porVista[vista].filter(Boolean);
+}
+function abrirAyuda() {
+  const c = S.cfg || {}, preguntas = preguntasFrecuentes(c, vistaActual());
+  const m = modal(`<h2>❓ Preguntas frecuentes</h2>
+    <div class="faq">${preguntas.map((q, i) => `<details${i ? '' : ' open'}><summary>${q.p}</summary><p>${q.r}</p></details>`).join('')}</div>
+    ${c.wa ? `<a class="btn wa full" style="margin-top:14px" href="${waURL(c.wa, 'Hola, tengo una consulta sobre el sorteo ' + (c.titulo || ''))}" target="_blank">💬 ¿Otra duda? Escríbenos por WhatsApp</a>` : ''}`);
+  m.addEventListener('toggle', e => { if (e.target.open) $$('details', m).forEach(d => { if (d !== e.target) d.open = false; }); }, true);
 }
 const participantesVisibles = () => (S.participantes || 0) >= CONFIG.MIN_PARTICIPANTES_VISIBLES;
 function pie(c) {
@@ -1427,6 +1475,7 @@ document.addEventListener('click', e => {
     case 'pegar': return pegarComprobante();
     case 'verComprobante': return verComprobante();
     case 'bVer': return verificar();
+    case 'bAyuda': return abrirAyuda();
   }
 });
 document.addEventListener('paste', e => {
