@@ -122,6 +122,9 @@ a{color:var(--ac)}
 .pre>b{display:flex;align-items:center;padding:0 11px;background:var(--bg3);border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;font-weight:600;font-size:12px;color:var(--mu)}
 .pre input{border-radius:0 8px 8px 0!important}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
+.in-sel{width:100%;padding:11px 12px;border-radius:9px;background:var(--bg2);border:1.5px solid var(--line);color:var(--tx);font-size:14px}
+.sopt.mig{border-color:var(--line);background:var(--bg2);color:var(--tx);font-weight:600;flex-direction:column;align-items:flex-start;gap:2px}
+.sopt.mig.on{border-color:var(--ac);background:#388bfd1a}
 .seg button{padding:7px 13px;border-radius:20px;border:1.5px solid var(--line);background:var(--bg2);color:var(--mu);font-weight:600;font-size:12px}
 .seg button.on{background:var(--ac);border-color:var(--ac);color:#fff}
 .sw{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
@@ -346,6 +349,8 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
         <button class="ibtn" id="bRes" title="Resultado">🏆</button>
         <button class="ibtn gold" id="bSort" title="Sortear">🎲</button>
         <button class="ibtn" id="bTrash" title="Papelera">🗑️</button>
+        <button class="ibtn" id="bAgregar" title="Agregar participante">➕</button>
+        <button class="ibtn" id="bMigrar" title="Migrar participantes a otro sorteo">⇄</button>
       </div>
     </div>
     <div id="lista"></div>
@@ -847,7 +852,7 @@ function renderSelBar() {
   const b = $('#selbar'), n = S.sel.size;
   $('#bSelAll').classList.toggle('sel-on', n > 0);
   b.hidden = !n || S.tab !== 'sorteo';
-  if (n) b.innerHTML = `<span class="sp">☑️ ${n} seleccionado${n > 1 ? 's' : ''}</span><button class="btn sm" id="sbPr">🖨️ Imprimir</button><button class="btn sm" id="sbSt">🔄 Estado</button><button class="btn sm" id="sbX">✕</button>`;
+  if (n) b.innerHTML = `<span class="sp">☑️ ${n} seleccionado${n > 1 ? 's' : ''}</span><button class="btn sm" id="sbPr">🖨️ Imprimir</button><button class="btn sm" id="sbSt">🔄 Estado</button><button class="btn sm" id="sbMig">⇄ Migrar</button><button class="btn sm" id="sbX">✕</button>`;
 }
 const selList = () => S.d.parts.filter(p => S.sel.has(p.id));
 function selTodo() {
@@ -993,6 +998,124 @@ function imprimirTickets(participantes) {
     renderLista(); renderBell();
   });
 }
+/* =====================================================================
+   AGREGAR PARTICIPANTE (ventas por WhatsApp, en tienda, etc.)
+   ===================================================================== */
+function abrirAgregarParticipante() {
+  const c = cfg();
+  if (c.resultado) return toast('Este sorteo ya se realizó');
+  const m = modal(`<h2>➕ Agregar participante</h2>
+    <div class="fld"><span>Documento</span><div class="seg" id="apTipo"><button data-v="DNI" class="on">DNI</button><button data-v="CE">Carnet ext.</button></div></div>
+    <label class="fld"><input id="apDni" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="DNI (el nombre sale solo)"></label>
+    <p class="hint" id="apDniMsg" style="margin:-6px 0 10px"></p>
+    <label class="fld"><span>Nombre completo *</span><input id="apNom" maxlength="60" autocomplete="off"></label>
+    <label class="fld"><span>Celular (WhatsApp) *</span><input id="apCel" inputmode="numeric" maxlength="9" autocomplete="off"></label>
+    <div class="grid2"><label class="fld"><span>Tickets al azar</span><input id="apCant" type="number" min="1" max="500" value="1" inputmode="numeric"></label>
+    <label class="fld"><span>O números exactos</span><input id="apNums" placeholder="Ej: 12, 45" inputmode="numeric"></label></div>
+    ${c.modo === 'pago' ? '<p class="hint" id="apTotal" style="margin:-4px 0 10px"></p>' : ''}
+    <div class="fld"><span>Estado</span><div class="seg" id="apEst"><button data-v="P" class="on">✅ Confirmado</button><button data-v="V">🆕 Nuevo</button></div></div>
+    <label class="fld"><span>N° de operación (opcional)</span><input id="apOp" maxlength="30" inputmode="numeric"></label>
+    <label class="fld"><span>Nota interna (opcional)</span><input id="apNota" maxlength="200" placeholder="Ej: pagó en efectivo en tienda"></label>
+    <button class="btn-pri" id="apOk">➕ Agregar participante</button><button class="btn-sec" data-x>Cancelar</button>`);
+  const campo = id => $('#' + id, m);
+  let tipoDoc = 'DNI', estado = 'P', ultimoDni = '';
+  const elegirEnGrupo = (grupo, boton) => $$('button', grupo).forEach(b => b.classList.toggle('on', b === boton));
+  const cantidadPedida = () => campo('apNums').value.split(/[^\d]+/).filter(Boolean).length || Math.max(1, +campo('apCant').value || 1);
+  const actualizarTotal = () => { if (campo('apTotal')) campo('apTotal').textContent = `${cantidadPedida()} ticket(s) · Total ${fmtS(precioTotal(c, cantidadPedida()))}`; };
+  const buscarNombre = async dni => {
+    if (tipoDoc !== 'DNI' || dni.length !== 8 || dni === ultimoDni) return;
+    ultimoDni = dni; campo('apDniMsg').textContent = 'Buscando en RENIEC…';
+    try {
+      const j = await (await fetch(S.api.replace(/\/$/, '') + '/api/dni/' + dni)).json();
+      if (campo('apDni').value !== dni) return;
+      if (j.ok) { campo('apNom').value = j.persona.completo; campo('apDniMsg').textContent = '✅ Nombre de RENIEC'; campo('apCel').focus(); }
+      else campo('apDniMsg').textContent = j.motivo === 'NO_EXISTE' ? 'No se encontró ese DNI: escribe el nombre a mano' : 'Escribe el nombre a mano';
+    } catch (e) { campo('apDniMsg').textContent = 'Escribe el nombre a mano'; }
+  };
+  m.addEventListener('click', e => {
+    const tipo = e.target.closest('#apTipo button'), est = e.target.closest('#apEst button');
+    if (tipo) {
+      tipoDoc = tipo.dataset.v; elegirEnGrupo(campo('apTipo'), tipo);
+      const dni = campo('apDni'); dni.value = ''; ultimoDni = ''; campo('apDniMsg').textContent = '';
+      dni.maxLength = tipoDoc === 'CE' ? 12 : 8; dni.inputMode = tipoDoc === 'CE' ? 'text' : 'numeric';
+      dni.placeholder = tipoDoc === 'CE' ? 'N° de carnet de extranjería' : 'DNI (el nombre sale solo)'; dni.focus();
+    }
+    if (est) { estado = est.dataset.v; elegirEnGrupo(campo('apEst'), est); }
+  });
+  m.addEventListener('input', e => {
+    if (e.target.id === 'apDni') {
+      e.target.value = tipoDoc === 'CE' ? e.target.value.replace(/[^a-z0-9]/gi, '').toUpperCase() : e.target.value.replace(/\D/g, '');
+      buscarNombre(e.target.value);
+    }
+    if (e.target.id === 'apCel') e.target.value = e.target.value.replace(/\D/g, '');
+    if (e.target.id === 'apCant' || e.target.id === 'apNums') actualizarTotal();
+  });
+  actualizarTotal();
+  setTimeout(() => campo('apDni').focus(), 200);
+  campo('apOk').onclick = async () => {
+    const boton = campo('apOk'); boton.disabled = true;
+    try {
+      const j = await API.req(`/api/admin/r/${S.rid}/part`, { body: {
+        tipoDoc, dni: campo('apDni').value, nombre: campo('apNom').value, cel: campo('apCel').value,
+        cantidad: +campo('apCant').value || 1, numeros: campo('apNums').value, estado, op: campo('apOp').value, nota: campo('apNota').value,
+      } });
+      m.close();
+      await cargarDetalle();
+      const nuevo = S.d.parts.find(p => p.id === j.id);
+      const listo = modal(`<h2>✅ Participante agregado</h2>
+        <p class="mu" style="margin-bottom:6px">${esc(j.nombre)}${c.modo === 'pago' ? ' · ' + fmtS(j.monto) : ''}</p>
+        <div class="nums" style="margin:6px 0 14px">${j.nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
+        <button class="bt-wa" id="apWa">💬 Enviarle su ticket por WhatsApp</button><button class="btn-sec" id="apImp">🖨️ Imprimir sus tickets</button>`);
+      $('#apWa', listo).onclick = () => { abrir(waURL(nuevo.cel, msgCliente(nuevo, cfg()))); listo.close(); };
+      $('#apImp', listo).onclick = () => { imprimirTickets([nuevo]); listo.close(); };
+    } catch (er) { toast(er.message, 'bad'); boton.disabled = false; }
+  };
+}
+
+/* =====================================================================
+   MIGRAR PARTICIPANTES A OTRO SORTEO
+   ===================================================================== */
+function abrirMigrar() {
+  const destinos = S.rifas.filter(r => r.id !== S.rid && r.estado !== 'sorteada');
+  if (!destinos.length) return toast('Crea primero otro sorteo (sin realizar) para migrar participantes');
+  const migrable = p => p.est === 'V' || p.est === 'P';
+  const grupos = [
+    { id: 'sel', nombre: 'Los seleccionados', lista: selList().filter(migrable) },
+    { id: 'conf', nombre: 'Todos los confirmados', lista: S.d.parts.filter(p => p.est === 'P') },
+    { id: 'todos', nombre: 'Todos (nuevos con pago y confirmados)', lista: S.d.parts.filter(migrable) },
+  ].filter(g => g.lista.length);
+  if (!grupos.length) return toast('No hay participantes con pago para migrar');
+  const tickets = l => l.reduce((t, p) => t + splitN(p.nums).length, 0);
+  const m = modal(`<h2>⇄ Migrar participantes</h2>
+    <p class="mu sm" style="margin-bottom:12px">Pasan a otro sorteo con sus datos y comprobantes. Sus números quedan libres aquí. Las reservas sin pago no se migran.</p>
+    <div class="fld"><span>¿Quiénes?</span><div class="sopts">${grupos.map((g, i) => `<button class="sopt mig${i ? '' : ' on'}" data-grupo="${g.id}"><span>${g.nombre}</span><span class="xs mu">${g.lista.length} · ${tickets(g.lista)} tickets</span></button>`).join('')}</div></div>
+    <label class="fld"><span>¿A qué sorteo?</span><select id="mgDestino" class="in-sel">${destinos.map(r => `<option value="${r.id}">${esc(r.titulo)} · ${r.st.libres} libres</option>`).join('')}</select></label>
+    <div class="fld"><span>Números</span><div class="seg" id="mgNumeros"><button data-v="mismos" class="on">Los mismos si están libres</button><button data-v="azar">Nuevos al azar</button></div></div>
+    <button class="btn-pri" id="mgOk">⇄ Migrar</button><button class="btn-sec" data-x>Cancelar</button>`);
+  let grupo = grupos[0], numeros = 'mismos';
+  m.addEventListener('click', e => {
+    const g = e.target.closest('[data-grupo]'), n = e.target.closest('#mgNumeros button');
+    if (g) { grupo = grupos.find(x => x.id === g.dataset.grupo); $$('[data-grupo]', m).forEach(b => b.classList.toggle('on', b === g)); }
+    if (n) { numeros = n.dataset.v; $$('#mgNumeros button', m).forEach(b => b.classList.toggle('on', b === n)); }
+  });
+  $('#mgOk', m).onclick = async () => {
+    const destino = destinos.find(r => r.id === $('#mgDestino', m).value);
+    if (!confirm(`¿Mover ${grupo.lista.length} participante(s) con ${tickets(grupo.lista)} ticket(s) a "${destino.titulo}"?`)) return;
+    const boton = $('#mgOk', m); boton.disabled = true;
+    try {
+      const j = await API.req('/api/admin/migrar', { body: { origen: S.rid, destino: destino.id, ids: grupo.lista.map(p => p.id), numeros } });
+      m.close(); S.sel.clear();
+      await cargarRifas(); await cargarDetalle();
+      const nombres = Object.fromEntries(grupo.lista.map(p => [p.id, p.nombre]));
+      modal(`<h2>✅ ${j.migrados} participante${j.migrados === 1 ? '' : 's'} migrado${j.migrados === 1 ? '' : 's'}</h2>
+        <p class="mu sm" style="margin-bottom:6px">Ahora están en <b style="color:var(--tx)">${esc(destino.titulo)}</b>.</p>
+        ${j.detalle.map(d => `<div class="trow"><div><b>${esc(nombres[d.id] || d.id)}</b>
+          <div class="xs mu">${d.antes.join(', ')} → <b style="color:${d.antes.join() === d.ahora.join() ? 'var(--ok)' : 'var(--warn)'}">${d.ahora.join(', ')}</b></div></div></div>`).join('')}
+        <p class="hint" style="margin-top:10px">En amarillo, los que recibieron números nuevos: avísales por WhatsApp.</p>`);
+    } catch (er) { toast(er.message, 'bad'); boton.disabled = false; }
+  };
+}
+
 function msgCliente(p, c) {
   const nums = splitN(p.nums).map(i => fmtN(c, i)).join(', '), nom = p.nombre.split(' ')[0];
   const pie = `\n\n🔗 Tu boleto: ${linkBoleto(p.tok)}\n👥 Participantes: ${linkPart(S.rid)}`;
@@ -1464,6 +1587,9 @@ document.addEventListener('click', async e => {
     case 'bPrint': return S.d && imprimirSel();
     case 'sbPr': return imprimirSel();
     case 'sbSt': return hojaEstado(selList());
+    case 'sbMig': return S.d && abrirMigrar();
+    case 'bMigrar': return S.d && abrirMigrar();
+    case 'bAgregar': return S.d && abrirAgregarParticipante();
     case 'sbX': S.sel.clear(); return renderLista();
     case 'cTkC': return imprimirTickets(S.d.parts.filter(p => p.est === 'P'));
     case 'cTkP': return imprimirTickets(S.d.parts.filter(p => grp(p) !== 'X' && !impresos.has(p.id)));

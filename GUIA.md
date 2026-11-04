@@ -85,6 +85,15 @@ En la ventana de impresión elige el **mismo tamaño de papel**, **márgenes: ni
 Cada ticket es una página, así la ticketera corta entre ticket y ticket.
 El código está en `public/impresion.js`: para agregar un tamaño, se añade una entrada en `FORMATOS`.
 
+## Agregar y migrar participantes (panel)
+- **➕ Agregar participante** (barra de herramientas): para ventas por WhatsApp o en tienda. DNI con nombre
+  automático (o carnet de extranjería), celular, tickets al azar **o** números exactos, estado Confirmado o Nuevo,
+  N° de operación y nota opcionales. Al terminar ofrece enviarle su ticket por WhatsApp o imprimirlo.
+- **⇄ Migrar** (barra de herramientas, o "⇄ Migrar" con participantes seleccionados): mueve a otro sorteo
+  los seleccionados, todos los confirmados o todos los que tienen pago. Sus números quedan libres en el
+  origen; en el destino reciben **los mismos si están libres** o **nuevos al azar**. Se mueven con sus
+  comprobantes. Es todo o nada: si algo cambia a la mitad, no se mueve nadie. Las reservas sin pago no se migran.
+
 ## Eliminar un sorteo (papelera de sorteos)
 - Config → **Eliminar este sorteo** pide tu **PIN** otra vez.
 - El sorteo va a la **papelera de sorteos** con todos sus participantes, números y comprobantes:

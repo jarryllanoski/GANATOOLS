@@ -606,6 +606,8 @@ async function admin(req, env, s) {
   if (s[0] === 'rifas' && s[1] && !s[2] && m === 'DELETE') return enviarRifaAPapelera(env, s[1], await body());
   if (s[0] === 'rifas' && s[1] && s[2] === 'restaurar' && m === 'POST') return restaurarRifa(env, s[1]);
   if (s[0] === 'r' && s[1] && s[2] === 'part' && m === 'GET') return adminDetalle(env, s[1]);
+  if (s[0] === 'r' && s[1] && s[2] === 'part' && m === 'POST') return agregarParticipante(env, s[1], await body());
+  if (s[0] === 'migrar' && m === 'POST') return migrarParticipantes(env, await body());
   if (s[0] === 'r' && s[1] && s[2] === 'sortear' && m === 'POST') return sortear(env, s[1], await body());
   if (s[0] === 'part' && s[1] && m === 'POST') return accion(env, s[1], await body());
   if (s[0] === 'upload' && m === 'POST') return upload(req, env);
@@ -694,6 +696,130 @@ async function borrarRifaDefinitivo(env, id) {
   ]);
   await delImgs(env, `c/${id}/`);
   memDel(id);
+}
+
+/* ---------------- Participantes agregados o movidos desde el panel ---------------- */
+function documentoDesde(tipo, valor) {
+  if (!valor) return '';
+  if (tipo === 'CE') {
+    const ce = 'CE ' + String(valor).replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 12);
+    if (!/^CE [A-Z0-9]{9,12}$/.test(ce)) err('Carnet de extranjería inválido (9 a 12 caracteres)');
+    return ce;
+  }
+  const dni = String(valor).replace(/\D/g, '');
+  if (!/^\d{8}$/.test(dni)) err('DNI inválido (8 dígitos)');
+  return dni;
+}
+function indicesDesdeTexto(cfg, texto) {
+  return [...new Set(String(texto || '').split(/[^\d]+/).filter(Boolean).map(n => parseInt(n, 10) - baseOf(cfg)))];
+}
+
+// Venta registrada por el organizador (WhatsApp, tienda, etc.): sin antispam ni límites del formulario
+async function agregarParticipante(env, id, datos) {
+  let nombre = String(datos.nombre || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+  const cel = String(datos.cel || '').replace(/\D/g, '').slice(-9);
+  const dni = documentoDesde(datos.tipoDoc, datos.dni);
+  const est = datos.estado === 'V' ? 'V' : 'P';
+  const op = String(datos.op || '').replace(/\s/g, '').slice(0, 30) || null;
+  const nota = String(datos.nota || '').trim().slice(0, 200) || null;
+  if (nombre.length < 3) err('Escribe el nombre completo');
+  if (!/^9\d{8}$/.test(cel)) err('Celular inválido: 9 dígitos y empieza con 9');
+  const oficial = /^\d{8}$/.test(dni) ? await dniCache(env, dni) : null;
+  if (oficial) nombre = oficial.completo.slice(0, 60);
+
+  for (let intento = 0; intento < CFG.RETRIES; intento++) {
+    const r = await loadRifa(env, id);
+    if (r.cfg.resultado) err('Este sorteo ya se realizó');
+    const tablero = r.board.split('');
+    const pedidos = indicesDesdeTexto(r.cfg, datos.numeros);
+    let indices;
+    if (pedidos.length) {
+      const fuera = pedidos.filter(j => !(j >= 0 && j < tablero.length));
+      if (fuera.length) err(`Estos números no existen en el sorteo: ${fuera.map(j => j + baseOf(r.cfg)).join(', ')}`);
+      const tomados = pedidos.filter(j => tablero[j] !== '0');
+      if (tomados.length) err(`Ya están tomados: ${tomados.map(j => fmtNum(r.cfg, j)).join(', ')}`, 409);
+      indices = pedidos;
+    } else {
+      const cantidad = Math.max(1, Math.min(500, parseInt(datos.cantidad, 10) || 1));
+      const libres = tablero.flatMap((c, j) => (c === '0' ? [j] : []));
+      if (libres.length < cantidad) err(libres.length ? `Solo quedan ${libres.length} números libres` : 'Ya no quedan números libres', 409);
+      indices = pickRandom(libres, cantidad);
+    }
+    indices.sort((a, b) => a - b);
+    indices.forEach(j => { tablero[j] = est === 'P' ? '3' : '2'; });
+    r.board = tablero.join('');
+    const pid = rid(8), tok = rid(18), monto = r.cfg.modo === 'pago' ? precioTotal(r.cfg, indices.length) : 0;
+    const insertar = env.DB.prepare(`INSERT INTO part (id,rifa,tok,nombre,cel,dni,nums,monto,op,est,creado,vence,nota) SELECT ?,?,?,?,?,?,?,?,?,?,?,0,? WHERE ${VER_OK}`)
+      .bind(pid, id, tok, nombre, cel, dni, indices.join(','), monto, op, est, now(), nota, id, r.ver);
+    if (await commit(env, r, [insertar], 1)) return J({ ok: true, id: pid, tok, nombre, nums: indices, monto });
+  }
+  err('Intenta de nuevo', 503);
+}
+
+async function copiarImagen(env, origen, destino) {
+  if (env.IMG) {
+    const objeto = await env.IMG.get(origen);
+    if (objeto) await env.IMG.put(destino, await objeto.arrayBuffer(), { httpMetadata: objeto.httpMetadata });
+  }
+  await env.DB.prepare('INSERT OR REPLACE INTO imgs (k,mime,b64) SELECT ?,mime,b64 FROM imgs WHERE k=?').bind(destino, origen).run();
+}
+async function borrarImagen(env, clave) {
+  if (env.IMG) await env.IMG.delete(clave);
+  await env.DB.prepare('DELETE FROM imgs WHERE k=?').bind(clave).run();
+}
+
+// Mueve participantes (con pago subido o confirmado) a otro sorteo. Sus números se liberan en el
+// origen y en el destino reciben los mismos (si están libres) o nuevos al azar. Todo o nada.
+async function migrarParticipantes(env, { origen, destino, ids = [], numeros = 'mismos' }) {
+  if (!origen || !destino || origen === destino) err('Elige un sorteo de destino distinto');
+  const seleccion = [...new Set(ids.map(String))].slice(0, 1000);
+  if (!seleccion.length) err('No hay participantes para migrar');
+
+  for (let intento = 0; intento < CFG.RETRIES; intento++) {
+    const [o, d] = await Promise.all([loadRifa(env, origen), loadRifa(env, destino)]);
+    if (d.cfg.resultado) err('El sorteo de destino ya se realizó');
+    const marcadores = seleccion.map(() => '?').join(',');
+    const { results: participantes } = await env.DB.prepare(`SELECT id,nums,est,img FROM part WHERE rifa=? AND est IN ('V','P') AND id IN (${marcadores})`).bind(origen, ...seleccion).all();
+    if (!participantes.length) err('Solo se pueden migrar participantes con pago subido o confirmado');
+
+    const tableroOrigen = o.board.split(''), tableroDestino = d.board.split('');
+    participantes.forEach(p => splitNums(p.nums).forEach(j => { tableroOrigen[j] = '0'; }));
+    const asignados = participantes.map(p => {
+      const anteriores = splitNums(p.nums), marca = p.est === 'P' ? '3' : '2', nuevos = [];
+      if (numeros === 'mismos') {
+        for (const j of anteriores) {
+          const mismo = j + baseOf(o.cfg) - baseOf(d.cfg);
+          if (mismo >= 0 && mismo < tableroDestino.length && tableroDestino[mismo] === '0') { tableroDestino[mismo] = marca; nuevos.push(mismo); }
+        }
+      }
+      const faltan = anteriores.length - nuevos.length;
+      if (faltan) {
+        const libres = tableroDestino.flatMap((c, j) => (c === '0' ? [j] : []));
+        if (libres.length < faltan) err(`El sorteo de destino no tiene suficientes números libres (faltan ${faltan - libres.length})`, 409);
+        for (const j of pickRandom(libres, faltan)) { tableroDestino[j] = marca; nuevos.push(j); }
+      }
+      nuevos.sort((a, b) => a - b);
+      const imagen = p.img && p.img.startsWith(`c/${origen}/`) ? `c/${destino}/` + p.img.slice(`c/${origen}/`.length) : p.img;
+      return { ...p, nuevos, imagen };
+    });
+
+    for (const a of asignados) if (a.img && a.imagen !== a.img) await copiarImagen(env, a.img, a.imagen);
+    const ambosSinCambios = '(SELECT ver FROM rifas WHERE id=?)=? AND (SELECT ver FROM rifas WHERE id=?)=?';
+    const sentencias = [
+      ...asignados.map(a => env.DB.prepare(`UPDATE part SET rifa=?, nums=?, img=?, fin=0 WHERE id=? AND rifa=? AND ${ambosSinCambios}`)
+        .bind(destino, a.nuevos.join(','), a.imagen, a.id, origen, origen, o.ver, destino, d.ver)),
+      env.DB.prepare(`UPDATE rifas SET board=?, ver=ver+1 WHERE id=? AND ver=? AND (SELECT ver FROM rifas WHERE id=?)=?`)
+        .bind(tableroOrigen.join(''), origen, o.ver, destino, d.ver),
+      env.DB.prepare(`UPDATE rifas SET board=?, ver=ver+1, act=act+? WHERE id=? AND ver=? AND (SELECT ver FROM rifas WHERE id=?)=?`)
+        .bind(tableroDestino.join(''), asignados.length, destino, d.ver, origen, o.ver + 1),
+    ];
+    const resultado = await env.DB.batch(sentencias);
+    if (!resultado[resultado.length - 1].meta.changes) continue;
+    memDel(origen); memDel(destino);
+    for (const a of asignados) if (a.img && a.imagen !== a.img) await borrarImagen(env, a.img);
+    return J({ ok: true, migrados: asignados.length, detalle: asignados.map(a => ({ id: a.id, antes: splitNums(a.nums).map(j => fmtNum(o.cfg, j)), ahora: a.nuevos.map(j => fmtNum(d.cfg, j)) })) });
+  }
+  err('Hubo cambios mientras migrabas. Intenta de nuevo.', 503);
 }
 
 async function adminDetalle(env, id) {
