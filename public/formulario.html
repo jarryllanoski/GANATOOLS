@@ -278,6 +278,28 @@ details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .tkc-talon small{font-size:11px;font-weight:800;letter-spacing:1px}
 .tkc-talon b{font-size:32px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
 .tk-det{padding:4px 16px}
+/* ───── Pantalla en vivo ───── */
+body.en-vivo .wrap{max-width:1200px;padding-bottom:30px}
+.vv-cab{display:flex;align-items:center;gap:12px;padding:16px 0}
+.vv-cab b{flex:1;font-size:16px;letter-spacing:1px;color:var(--mu)}
+.vv-envivo{color:#fff;background:#e30613;padding:4px 12px;border-radius:20px;font-weight:900;font-size:13px;animation:pulso 1.6s infinite}
+.vv-grid{display:grid;gap:22px;align-items:center}
+@media(min-width:800px){.vv-grid{grid-template-columns:1.1fr 1fr}}
+.vv-foto img{width:100%;border-radius:20px;display:block;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.vv-info h1{font-size:clamp(28px,4vw,52px);font-weight:900;line-height:1.1;margin-bottom:10px}
+.vv-premio{font-size:clamp(17px,2vw,24px);font-weight:700;margin:4px 0}
+.vv-aviso{font-size:clamp(20px,2.4vw,30px);font-weight:900;color:var(--ok);margin:14px 0}
+.vv-cifras{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.vv-cifras div{text-align:center;padding:14px;border-radius:14px;background:var(--bg3);border:1px solid var(--line)}
+.vv-cifras b{display:block;font-size:clamp(32px,4vw,56px);font-weight:900;color:var(--ac);font-variant-numeric:tabular-nums}
+.vv-cifras span{font-size:13px;color:var(--mu);text-transform:uppercase;letter-spacing:1px}
+.vv-qr{display:flex;align-items:center;gap:14px;padding:12px;border-radius:14px;background:#fff;color:#111;width:max-content;max-width:100%}
+.vv-qr img,.vv-qr canvas{width:120px!important;height:120px!important}
+.vv-qr p{font-weight:900;font-size:18px;max-width:140px}
+.vv-revela .rv-caja{max-width:900px}
+.vv-puesto{font-size:clamp(26px,4vw,48px);font-weight:900;margin-bottom:26px}
+.vv-num span{width:clamp(48px,8vw,110px)!important;font-size:clamp(48px,8vw,110px)!important}
+.vv-nombre{font-size:clamp(24px,3.6vw,44px);font-weight:900;margin-top:22px;color:var(--ok);min-height:1.2em}
 /* Tarjetas de courier (#courierCards de Total-Tools): 3 por fila */
 .cour-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:4px 0 12px}
 .cour-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;background:var(--bg3);border:2px solid #4a4a5e;border-radius:14px;padding:14px 6px;min-height:96px;color:var(--tx);transition:border-color .15s,background .15s}
@@ -398,8 +420,17 @@ function cuenta(el, t, fin) {
   };
   const h = setInterval(tick, 1000); tick();
 }
-const misBoletos = r => lsGet('bol_' + r, []);
-function guardarBoleto(r, tok) { const a = misBoletos(r).filter(x => x !== tok); a.unshift(tok); lsSet('bol_' + r, a.slice(0, 20)); }
+/* Tickets registrados desde este aparato, cada uno con la identidad de su dueño (DNI o celular).
+   Solo se muestran juntos los de la misma persona: en una PC compartida nadie ve los de otro. */
+const identidadDe = (documento, celular) => String(documento || celular || '').toUpperCase();
+const ticketsGuardados = r => lsGet('bol_' + r, []).filter(x => x && typeof x === 'object' && x.tok && x.id);
+const ticketsDe = (r, identidad) => (identidad ? ticketsGuardados(r).filter(x => x.id === identidad) : []);
+const identidadDelTicket = (r, tok) => ticketsGuardados(r).find(x => x.tok === tok)?.id || '';
+function guardarBoleto(r, tok, identidad) {
+  const lista = ticketsGuardados(r), id = identidad || lista.find(x => x.tok === tok)?.id;
+  if (!id) return;
+  lsSet('bol_' + r, [{ tok, id }, ...lista.filter(x => x.tok !== tok)].slice(0, 30));
+}
 
 /* Sorteo verificable — mismo algoritmo que el servidor */
 async function drawPicks(seed, snap, beacon, k) {
@@ -418,7 +449,7 @@ async function drawPicks(seed, snap, beacon, k) {
    ESTADO + ARRANQUE
    ===================================================================== */
 const P = new URLSearchParams(location.search);
-const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), cfg: null, board: '', qty: 0, maxTickets: 1, fijos: [], file: null, ih: '', link: null, ts: '', doc: 'DNI' };
+const S = { r: P.get('r'), t: P.get('t'), v: P.get('v'), l: P.get('l'), ref: P.get('ref') || '', cfg: null, board: '', qty: 0, maxTickets: 1, fijos: [], file: null, ih: '', link: null, ts: '', doc: 'DNI' };
 const app = $('#app');
 
 function cabecera(c) {
@@ -446,6 +477,7 @@ async function boot() {
     }
     if (!S.r) return vError('Link incompleto', 'Pide al organizador el link correcto del sorteo.');
     if (S.v === 'p') return await vPart();
+    if (S.v === 'vivo') return await vVivo();
     return await vForm();
   } catch (e) { vError(e.status === 404 ? 'No encontrado' : 'Algo salió mal', e.message, `<button class="btn" onclick="location.reload()">🔄 Reintentar</button>`); }
 }
@@ -459,9 +491,8 @@ async function vForm() {
   const c = S.cfg, total = S.board.length, libres = (S.board.match(/0/g) || []).length;
   const cierreVenta = c.cierre ? c.cierre - (c.bloqueoH || 0) * 3600e3 : 0;
   const abierta = c.estado === 'activa' && (!cierreVenta || Date.now() < cierreVenta) && libres > 0;
-  const mios = misBoletos(S.r);
-  let h = cabecera(c) + portadaHTML(c, total, libres, cierreVenta)
-    + (mios.length ? `<a class="mine" href="${linkBoleto(mios[0])}">🎟️ <span class="sp">Ya tienes ${mios.length} registro${mios.length === 1 ? '' : 's'} en este sorteo</span><b>Ver ➜</b></a>` : '');
+  const yo = lsGet('yo', null), mios = ticketsDe(S.r, identidadDe(yo?.doc === 'CE' ? 'CE ' + yo.d : yo?.d, yo?.c));
+  let h = cabecera(c) + portadaHTML(c, total, libres, cierreVenta) + '<div id="misTickets"></div>';
 
   if (c.resultado) {
     app.innerHTML = h + resultadoHTML(c) + (participantesVisibles() ? `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes y verificación</a>` : '') + pie(c);
@@ -476,6 +507,7 @@ async function vForm() {
   }
 
   S.fijos = S.link ? numerosDelLink(S.link.nums) : [];
+  if (S.ref) lsSet('ref_' + S.r, S.ref); else S.ref = lsGet('ref_' + S.r, '');
   S.maxTickets = Math.max(1, Math.min(c.maxSel || 20, c.maxPer || Infinity, libres));
   app.innerHTML = h + pasoCantidadHTML(c) + pasoDatosHTML(c) + pasoPagoHTML(c) + pie(c);
   mostrarBarra(true);
@@ -486,7 +518,18 @@ async function vForm() {
   if (S.fijos.length) elegirCantidad(S.fijos.length, { sinScroll: true });
   actualizarFlujo();
   cargarActividad();
+  avisoMisTickets();
   heavy(mios.length ? '¡Te reconozco! 👊 ¿Más tickets, más oportunidades?' : '¡Hola! 🎟️ Elige cuántos tickets quieres. Tus números salen al azar al final.');
+}
+function identidadEscrita() {
+  if (!$('#fDni')) return '';
+  const documento = valorDocumento();
+  return identidadDe(documento && (S.doc === 'CE' ? 'CE ' + documento : documento), $('#fCel').value.replace(/\D/g, '').slice(-9));
+}
+function avisoMisTickets() {
+  const caja = $('#misTickets'); if (!caja) return;
+  const mios = ticketsDe(S.r, identidadEscrita());
+  caja.innerHTML = mios.length ? `<a class="mine" href="${linkBoleto(mios[0].tok)}">🎟️ <span class="sp">Ya tienes ${mios.length} registro${mios.length === 1 ? '' : 's'} en este sorteo</span><b>Ver ➜</b></a>` : '';
 }
 
 /* ───── Portada: foto del premio, urgencia y escasez reales ───── */
@@ -1013,6 +1056,7 @@ async function enviar() {
   if (op) fd.append('op', op);
   if (S.file && !despues) { fd.append('img', S.file, 'comprobante.' + (S.file.type === 'image/webp' ? 'webp' : 'jpg')); fd.append('ih', S.ih); }
   if (S.link) fd.append('link', S.l);
+  if (S.ref) fd.append('ref', S.ref);
   if (S.ts) fd.append('ts', S.ts);
 
   const b = $('#sbGo'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Registrando…';
@@ -1020,7 +1064,7 @@ async function enviar() {
     const j = await api(`/api/r/${encodeURIComponent(S.r)}/entrar`, { body: fd });
     lsSet('yo', { n: j.nombre || nom, c: cel, d: dni, doc: S.doc });
     try { localStorage.removeItem('sxf_' + claveBorrador()); } catch (e) {}
-    guardarBoleto(S.r, j.tok);
+    guardarBoleto(S.r, j.tok, identidadDe(dni && (S.doc === 'CE' ? 'CE ' + dni : dni), cel));
     history.replaceState(null, '', `?t=${j.tok}`);
     S.t = j.tok; S.file = null;
     mostrarBarra(false);
@@ -1039,6 +1083,18 @@ async function enviar() {
 /* =====================================================================
    VISTA: MI BOLETO
    ===================================================================== */
+/* Invitar amigos: el link lleva el código de este participante (?ref=) */
+const linkInvitacion = (r, idParticipante) => `${linkForm(r)}&ref=${idParticipante}`;
+function invitarHTML(c, p, invitados) {
+  if (c.resultado || c.estado !== 'activa' || p.est === 'X' || !p.id) return '';
+  const enlace = linkInvitacion(S.r, p.id);
+  const mensaje = `🎟️ Estoy participando en *${c.titulo}*${c.premios?.[0] ? ` por ${c.premios[0]}` : ''}. ¡Participa tú también aquí! 👇\n${enlace}`;
+  return `<div class="card" id="secInvitar"><h2>🤝 Invita a tus amigos</h2>
+    ${c.premioReferido ? `<p class="sm" style="margin:-4px 0 10px"><b class="c-ok">🎁 ${esc(c.premioReferido)}</b></p>` : '<p class="sm mu" style="margin:-4px 0 10px">Comparte tu link personal: así sabemos que vienen de tu parte.</p>'}
+    ${invitados ? `<p class="sm" style="margin-bottom:10px">🔥 <b>${invitados} amigo${invitados === 1 ? '' : 's'}</b> ya participa${invitados === 1 ? '' : 'n'} con tu link</p>` : ''}
+    <a class="btn wa full" href="https://wa.me/?text=${encodeURIComponent(mensaje)}" target="_blank">💬 Invitar por WhatsApp</a>
+    <button class="btn full" data-c="${esc(enlace)}" style="margin-top:8px">🔗 Copiar mi link de invitación</button></div>`;
+}
 function msgNegocio(c, p, tok, titulo = 'NUEVO REGISTRO') {
   const nums = splitN(p.nums).map(i => fmtN(c, i)).join(', ');
   return [`🎟️ *${titulo} – ${c.titulo}*`, '', `👤 ${p.nombre}`, p.celFull ? `📞 ${p.celFull}` : null, `🔢 Números: *${nums}*`,
@@ -1081,15 +1137,15 @@ async function vBoleto(tok, nuevo) {
       <div class="tk-row"><span class="mu">Código</span><b>${esc(String(p.id || '').toUpperCase())}</b></div>
   </div>
   <p class="sm" style="text-align:center;margin:0 6px 12px">${expl}</p>`;
-  h += envioHTML(c, p);
+  h += envioHTML(c, p) + invitarHTML(c, p, j.invitados || 0);
   if (puedePagar) h += `<div class="card" id="secPay"><h2>💳 Paga y sube tu comprobante</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 Enviar comprobante</button></div>`;
   const acciones = [
     participantesVisibles() && `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>`,
     !R && c.estado === 'activa' && `<a class="btn full" href="${linkForm(S.r)}">➕ Comprar más tickets</a>`,
   ].filter(Boolean);
   if (acciones.length) h += `<div class="acts">${acciones.join('')}</div>`;
-  const otros = misBoletos(S.r).filter(t => t !== tok);
-  if (otros.length) h += `<div class="card"><h2>🎟️ Mis otros registros</h2>${otros.map((t, i) => `<a class="btn full sm" style="margin-top:6px" href="${linkBoleto(t)}">Registro ${otros.length - i}</a>`).join('')}</div>`;
+  const otros = ticketsDe(S.r, identidadDelTicket(S.r, tok)).filter(x => x.tok !== tok);
+  if (otros.length) h += `<div class="card"><h2>🎟️ Mis otros registros</h2>${otros.map((x, i) => `<a class="btn full sm" style="margin-top:6px" href="${linkBoleto(x.tok)}">Registro ${otros.length - i}</a>`).join('')}</div>`;
   app.innerHTML = h;
   if ($('#rv')) cuenta($('#rv'), p.vence, () => setTimeout(() => location.reload(), 1500));
   if (!c.wa) $('#bWa').onclick = ev => { ev.preventDefault(); toast('El organizador no configuró su WhatsApp', 'bad'); };
@@ -1184,6 +1240,91 @@ function wrap(x, t, cx, y, mw, lh, maxL) {
   const w = String(t).split(' '); let l = '', n = 0;
   for (const p of w) { const tt = l ? l + ' ' + p : p; if (x.measureText(tt).width > mw && l) { x.fillText(l, cx, y + n * lh); l = p; if (++n >= maxL - 1) break; } else l = tt; }
   x.fillText(l, cx, y + n * lh);
+}
+
+/* =====================================================================
+   VISTA: PANTALLA EN VIVO (para proyectar o transmitir el sorteo)
+   Se actualiza sola. Cuando el organizador sortea desde el panel, revela
+   a los ganadores con la animación de tragamonedas.
+   ===================================================================== */
+const VIVO_ACTUALIZAR_MS = 4000, VIVO_GIRO_MS = 3200, VIVO_PAUSA_MS = 1600;
+async function vVivo() {
+  const datos = await api('/api/r/' + encodeURIComponent(S.r));
+  const c = S.cfg = datos.cfg;
+  mostrarBarra(false); document.body.classList.add('en-vivo'); document.title = `En vivo · ${c.titulo}`;
+  app.innerHTML = `<div class="vv">
+    <header class="vv-cab"><b>🎟️ ${esc((c.negocio || CONFIG.NEGOCIO).toUpperCase())}</b><span class="vv-envivo">● EN VIVO</span><button class="btn sm" id="vvCompleta">⛶ Pantalla completa</button></header>
+    <div class="vv-grid">
+      ${c.foto ? `<div class="vv-foto"><img src="${pubImg(c.foto)}" alt="Premio"></div>` : ''}
+      <div class="vv-info">
+        <h1>${esc(c.titulo)}</h1>
+        ${(c.premios || []).map((p, i) => `<p class="vv-premio">${['🥇', '🥈', '🥉'][i] || '🎁'} ${esc(p)}</p>`).join('')}
+        <div id="vvEstado"></div>
+        <div class="vv-cifras"><div><b id="vvJuego">0</b><span>tickets en juego</span></div><div><b id="vvLibres">0</b><span>disponibles</span></div></div>
+        <div class="vv-qr"><div id="vvQr"></div><p>Escanea y participa</p></div>
+      </div>
+    </div>
+    <div id="vvGanadores"></div>
+  </div>`;
+  $('#vvCompleta').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {}));
+  dibujarQrVivo(linkForm(S.r));
+  actualizarVivo(datos);
+  if (c.resultado) return mostrarGanadores(c);
+  const repetir = setInterval(async () => {
+    let nuevos;
+    try { nuevos = await api('/api/r/' + encodeURIComponent(S.r)); } catch (e) { return; }
+    actualizarVivo(nuevos);
+    if (!nuevos.cfg.resultado) return;
+    clearInterval(repetir);
+    S.cfg = nuevos.cfg;
+    await revelarGanadores(nuevos.cfg);
+    mostrarGanadores(nuevos.cfg);
+  }, VIVO_ACTUALIZAR_MS);
+}
+function actualizarVivo({ cfg, board }) {
+  $('#vvJuego').textContent = (board.match(/3/g) || []).length;
+  $('#vvLibres').textContent = (board.match(/0/g) || []).length;
+  const estado = $('#vvEstado');
+  if (cfg.resultado) { estado.innerHTML = '<p class="vv-aviso">🏆 Sorteo realizado</p>'; return; }
+  if (!cfg.cierre || estado.dataset.cuenta) return;
+  estado.dataset.cuenta = '1';
+  estado.innerHTML = `<p class="mu">📅 ${fechaL(cfg.cierre)}</p><div class="count" id="vvCuenta"></div>`;
+  cuenta($('#vvCuenta'), cfg.cierre, () => { estado.innerHTML = '<p class="vv-aviso">🎲 ¡Comienza el sorteo!</p>'; });
+}
+function dibujarQrVivo(enlace) {
+  const dibujar = () => { try { new QRCode($('#vvQr'), { text: enlace, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} };
+  if (window.QRCode) return dibujar();
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  script.onload = dibujar;
+  document.head.appendChild(script);
+}
+const esperar = ms => new Promise(listo => setTimeout(listo, ms));
+async function revelarGanadores(c) {
+  const R = c.resultado, capa = document.createElement('div');
+  capa.className = 'revela vv-revela';
+  document.body.appendChild(capa);
+  for (let k = 0; k < R.picks.length; k++) {
+    const pick = R.picks[k], esGanador = k < R.g, numero = fmtN(c, pick.n);
+    capa.innerHTML = `<div class="rv-caja"><p class="vv-puesto">${esGanador ? `🏆 ${k + 1}° ${esc((c.premios || [])[k] || 'premio')}` : `🎗️ Suplente ${k - R.g + 1}`}</p>
+      <div class="rv-nums"><div class="rv-num vv-num">${'<span>0</span>'.repeat(numero.length)}</div></div><p class="vv-nombre" id="vvNombre">&nbsp;</p></div>`;
+    const digitos = $$('.rv-num span', capa);
+    const giro = setInterval(() => digitos.forEach(d => { d.textContent = Math.floor(Math.random() * 10); }), 55);
+    await esperar(VIVO_GIRO_MS);
+    clearInterval(giro);
+    [...numero].forEach((d, i) => { digitos[i].textContent = d; });
+    $('.rv-num', capa).classList.add('ok');
+    capa.classList.add('fin');
+    $('#vvNombre', capa).textContent = pick.nom;
+    if (esGanador) confeti(capa);
+    await esperar(VIVO_PAUSA_MS + (esGanador ? 1800 : 0));
+    capa.classList.remove('fin');
+  }
+  capa.parentNode.removeChild(capa);
+}
+function mostrarGanadores(c) {
+  $('#vvGanadores').innerHTML = resultadoHTML(c) + '<button class="btn full" id="vvRepetir" style="margin-top:10px">🔁 Repetir animación</button>';
+  $('#vvRepetir').onclick = () => revelarGanadores(c);
 }
 
 /* =====================================================================
@@ -1302,7 +1443,7 @@ let aT; document.addEventListener('input', e => {
   if (id === 'fCel') e.target.value = e.target.value.replace(/[^\d ]/g, '');
   if (id === 'fDni') { e.target.value = valorDocumento(); dniBuscar(e.target.value); }
   if (id === 'fOp' && !$('#sbar').hidden) actBar();
-  if (id === 'fDni' || id === 'fNom' || id === 'fCel') { guardarBorrador(); actualizarFlujo(); }
+  if (id === 'fDni' || id === 'fNom' || id === 'fCel') { guardarBorrador(); actualizarFlujo(); avisoMisTickets(); }
   if (id === 'agBusca') { clearTimeout(aT); aT = setTimeout(() => agBuscar(e.target.value), 200); }
 });
 document.addEventListener('keydown', e => {

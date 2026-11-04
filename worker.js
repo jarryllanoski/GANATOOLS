@@ -55,6 +55,7 @@ const SCHEMA = [
 const MIGRAR = [
   ['ALTER TABLE part ADD COLUMN bor INTEGER'], ['ALTER TABLE part ADD COLUMN prev TEXT'],
   ['ALTER TABLE part ADD COLUMN agencia TEXT'],  // agencia Shalom elegida (JSON) para enviar el premio
+  ['ALTER TABLE part ADD COLUMN ref TEXT', 'CREATE INDEX IF NOT EXISTS ix_part_ref ON part(ref)'],  // quién lo invitó (id de otro participante)
   ['ALTER TABLE part ADD COLUMN fin INTEGER NOT NULL DEFAULT 0', "UPDATE part SET fin=1 WHERE est='P' AND rifa IN (SELECT id FROM rifas WHERE json_extract(cfg,'$.resultado') IS NOT NULL)"],
 ];
 let SCHEMA_OK = false;
@@ -100,6 +101,7 @@ export default {
   // Tarea diaria (cron en wrangler.toml): vacía lo que lleva más de 30 días en la papelera
   async scheduled(evt, env, ctx) {
     ctx.waitUntil(ensureSchema(env).then(async () => {
+      await crearRespaldo(env);
       await limpiarPapelera(env);
       await vaciarRifasVencidas(env);
       // Borra registros de intentos de PIN viejos (más de 1 día sin actividad)
@@ -354,6 +356,7 @@ async function entrar(req, env, id) {
   const op = g('op').replace(/\s/g, '').slice(0, 30);
   const ih = g('ih').replace(/[^a-f0-9]/gi, '').slice(0, 64);
   const code = g('link').slice(0, 20);
+  const invitadoPor = g('ref').replace(/[^a-z0-9]/gi, '').slice(0, 12);
   const azar = Math.max(0, Math.min(500, parseInt(g('azar'), 10) || 0));
   const pedidos = [...new Set(splitNums(g('nums')))];
   const cantidadVista = parseInt(g('cantidad'), 10), totalVisto = parseFloat(g('total'));
@@ -402,6 +405,7 @@ async function entrar(req, env, id) {
   if (file) await dupPago(env, id, op, ih);
 
   const pid = rid(8), tok = rid(18), t = now();
+  const referente = await referenteValido(env, id, invitadoPor, cel);
   const key = file ? await putImg(env, `c/${id}/${pid}.${ext(file.mime)}`, file.buf, file.mime) : null;
   const est = c.modo === 'gratis' ? (c.aprobar ? 'V' : 'P') : (file ? 'V' : 'R');
   const ch = { R: '1', V: '2', P: '3' }[est];
@@ -426,8 +430,8 @@ async function entrar(req, env, id) {
     if (vence) r.cfg = { ...r.cfg, _nx: r.cfg._nx ? Math.min(r.cfg._nx, vence) : vence };
     const monto = c.modo === 'pago' ? precioTotal(c, idx.length) : 0;
     const pre = [
-      env.DB.prepare(`INSERT INTO part (id,rifa,tok,nombre,cel,dni,nums,monto,op,img,ih,est,creado,vence,ip,nota,agencia) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE ${VER_OK}`)
-        .bind(pid, id, tok, nombre, cel, dni, idx.join(','), monto, op || null, key, ih || null, est, t, vence, iph, code ? 'link:' + code : null, agencia, id, r.ver),
+      env.DB.prepare(`INSERT INTO part (id,rifa,tok,nombre,cel,dni,nums,monto,op,img,ih,est,creado,vence,ip,nota,agencia,ref) SELECT ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? WHERE ${VER_OK}`)
+        .bind(pid, id, tok, nombre, cel, dni, idx.join(','), monto, op || null, key, ih || null, est, t, vence, iph, code ? 'link:' + code : null, agencia, referente, id, r.ver),
     ];
     if (code) pre.push(env.DB.prepare(`UPDATE links SET usado=1 WHERE code=? AND usado=0 AND ${VER_OK}`).bind(code, id, r.ver));
     if (await commit(env, r, pre, 1)) return J({ ok: true, tok, id: pid, nums: idx, est, vence, monto, nombre });
@@ -521,12 +525,20 @@ async function guardarEnvio(req, env, tok) {
   return J({ ok: true, agencia: v });
 }
 
+// Solo cuenta como invitación si el que invita participa en el mismo sorteo y no es la misma persona
+async function referenteValido(env, rifa, invitadoPor, celular) {
+  if (!invitadoPor) return null;
+  const quien = await env.DB.prepare("SELECT id,cel FROM part WHERE id=? AND rifa=? AND est!='X'").bind(invitadoPor, rifa).first();
+  return quien && quien.cel !== celular ? quien.id : null;
+}
+
 async function boleto(env, tok) {
   const p = await env.DB.prepare('SELECT id,rifa,nombre,cel,nums,monto,op,img,est,creado,vence,nota,agencia FROM part WHERE tok=?').bind(tok).first();
   if (!p) err('Boleto no encontrado', 404);
   const r = await loadRifa(env, p.rifa);
   if (p.est === 'R' && p.vence && p.vence <= now()) { p.est = 'X'; p.nota = 'vencido'; }
-  return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, participantes: await contarParticipantes(env, r.id) }, p: { ...p, cel: maskCel(p.cel), img: !!p.img } });
+  const invitados = await env.DB.prepare("SELECT COUNT(*) n FROM part WHERE ref=? AND est IN ('V','P')").bind(p.id).first();
+  return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, participantes: await contarParticipantes(env, r.id) }, p: { ...p, cel: maskCel(p.cel), img: !!p.img }, invitados: invitados?.n || 0 });
 }
 
 async function pagoTardio(req, env, tok) {
@@ -613,6 +625,11 @@ async function admin(req, env, s) {
   if (s[0] === 'upload' && m === 'POST') return upload(req, env);
   if (s[0] === 'img' && s[1] && m === 'GET') return getImg(env, s.slice(1).join('/'), false);
   if (s[0] === 'links' && m === 'POST') return crearLink(env, await body());
+  if (s[0] === 'respaldos' && !s[1] && m === 'GET') return J({ ok: true, respaldos: await listarRespaldos(env) });
+  if (s[0] === 'respaldos' && !s[1] && m === 'POST') return J({ ok: true, ...(await crearRespaldo(env)) });
+  if (s[0] === 'respaldos' && s[1] && !s[2] && m === 'GET') return descargarRespaldo(env, s[1]);
+  if (s[0] === 'respaldos' && s[1] && s[2] === 'sorteos' && m === 'GET') return sorteosDelRespaldo(env, s[1]);
+  if (s[0] === 'respaldos' && s[1] && s[2] === 'restaurar' && m === 'POST') return restaurarSorteoDesdeRespaldo(env, s[1], await body());
   err('Ruta admin no encontrada', 404);
 }
 
@@ -635,7 +652,7 @@ function sanitize(c) {
   num('bloqueoH', 0, 720); num('reservaMin', 5, 10080); num('precio', 0, 1e6, false); num('cierre', 0, 4e12);
   bool('elegir'); bool('aprobar'); bool('compObl'); bool('opObl'); bool('pedirDni'); bool('pedirAgencia');
   for (const e of ENVIOS) bool(e.k);
-  str('tiendaDir', 200);
+  str('tiendaDir', 200); str('premioReferido', 200);
   if ('promos' in c) o.promos = (Array.isArray(c.promos) ? c.promos : []).map(p => ({ n: Math.round(+p.n || 0), p: Math.max(0, Math.round((+p.p || 0) * 100) / 100) })).filter(p => p.n > 1).slice(0, 10);
   return o;
 }
@@ -822,10 +839,84 @@ async function migrarParticipantes(env, { origen, destino, ids = [], numeros = '
   err('Hubo cambios mientras migrabas. Intenta de nuevo.', 503);
 }
 
+/* ---------------- Respaldos diarios en R2 ----------------
+   La tarea diaria guarda una copia de sorteos, participantes y links en R2 (respaldos/AAAA-MM-DD.json)
+   y conserva los últimos RESPALDOS_DIAS. Un sorteo que ya no existe se puede restaurar desde una copia
+   sin tocar el resto de la base. Las fotos ya viven en R2 y no se copian. */
+const RESPALDOS_PREFIJO = 'respaldos/', RESPALDOS_DIAS = 30, TABLAS_RESPALDADAS = ['rifas', 'part', 'links'];
+const claveDeRespaldo = nombre => {
+  if (!/^\d{4}-\d{2}-\d{2}\.json$/.test(nombre)) err('Respaldo no encontrado', 404);
+  return RESPALDOS_PREFIJO + nombre;
+};
+function necesitaR2(env) { if (!env.IMG) err('Los respaldos necesitan el bucket R2 conectado', 500); }
+
+async function crearRespaldo(env) {
+  necesitaR2(env);
+  const tablas = {};
+  for (const t of TABLAS_RESPALDADAS) tablas[t] = (await env.DB.prepare(`SELECT * FROM ${t}`).all()).results;
+  const nombre = new Date(now() - 5 * 3600e3).toISOString().slice(0, 10) + '.json';
+  const contenido = JSON.stringify({ version: 1, creado: now(), tablas });
+  await env.IMG.put(RESPALDOS_PREFIJO + nombre, contenido, { httpMetadata: { contentType: 'application/json' } });
+  const lista = await listarRespaldos(env);
+  await Promise.all(lista.slice(RESPALDOS_DIAS).map(r => env.IMG.delete(RESPALDOS_PREFIJO + r.nombre)));
+  return { nombre, bytes: contenido.length, sorteos: tablas.rifas.length, participantes: tablas.part.length };
+}
+async function listarRespaldos(env) {
+  necesitaR2(env);
+  const objetos = [];
+  let cursor;
+  do {
+    const pagina = await env.IMG.list({ prefix: RESPALDOS_PREFIJO, cursor });
+    objetos.push(...pagina.objects);
+    cursor = pagina.truncated ? pagina.cursor : undefined;
+  } while (cursor);
+  return objetos.map(o => ({ nombre: o.key.slice(RESPALDOS_PREFIJO.length), bytes: o.size, creado: o.uploaded })).sort((a, b) => b.nombre.localeCompare(a.nombre));
+}
+async function leerRespaldo(env, nombre) {
+  necesitaR2(env);
+  const objeto = await env.IMG.get(claveDeRespaldo(nombre));
+  if (!objeto) err('Respaldo no encontrado', 404);
+  return objeto.json();
+}
+async function descargarRespaldo(env, nombre) {
+  necesitaR2(env);
+  const objeto = await env.IMG.get(claveDeRespaldo(nombre));
+  if (!objeto) err('Respaldo no encontrado', 404);
+  return new Response(objeto.body, { headers: { 'content-type': 'application/json', 'content-disposition': `attachment; filename="sorteos-${nombre}"` } });
+}
+async function sorteosDelRespaldo(env, nombre) {
+  const { tablas } = await leerRespaldo(env, nombre);
+  const existentes = new Set((await env.DB.prepare('SELECT id FROM rifas').all()).results.map(r => r.id));
+  return J({ ok: true, sorteos: tablas.rifas.map(r => {
+    const cfg = JSON.parse(r.cfg);
+    return { id: r.id, titulo: cfg.titulo, eliminado: !!cfg._eliminado, participantes: tablas.part.filter(p => p.rifa === r.id && p.est !== 'X').length, existe: existentes.has(r.id) };
+  }) });
+}
+function insertarFila(env, tabla, fila, modo = 'INSERT') {
+  const columnas = Object.keys(fila).filter(c => /^[a-z_]+$/.test(c));
+  return env.DB.prepare(`${modo} INTO ${tabla} (${columnas.join(',')}) VALUES (${columnas.map(() => '?').join(',')})`).bind(...columnas.map(c => fila[c]));
+}
+async function restaurarSorteoDesdeRespaldo(env, nombre, { rifa }) {
+  const { tablas } = await leerRespaldo(env, nombre);
+  const sorteo = tablas.rifas.find(r => r.id === rifa);
+  if (!sorteo) err('Ese sorteo no está en el respaldo', 404);
+  if (await env.DB.prepare('SELECT 1 FROM rifas WHERE id=?').bind(rifa).first()) err('Ese sorteo todavía existe. Si está en la papelera de sorteos, recupéralo desde ahí.', 409);
+  const sentencias = [
+    insertarFila(env, 'rifas', sorteo),
+    ...tablas.part.filter(p => p.rifa === rifa).map(p => insertarFila(env, 'part', p, 'INSERT OR IGNORE')),
+    ...tablas.links.filter(l => l.rifa === rifa).map(l => insertarFila(env, 'links', l, 'INSERT OR IGNORE')),
+  ];
+  const resultados = [];
+  for (let i = 0; i < sentencias.length; i += 50) resultados.push(...await env.DB.batch(sentencias.slice(i, i + 50)));
+  memDel(rifa);
+  const omitidos = resultados.slice(1).filter(r => !r.meta.changes).length;
+  return J({ ok: true, restaurados: resultados.length - 1 - omitidos, omitidos });
+}
+
 async function adminDetalle(env, id) {
   const r = await loadRifa(env, id);
   await limpiarPapelera(env, id);
-  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev,fin,agencia FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
+  const { results } = await env.DB.prepare('SELECT id,tok,nombre,cel,dni,nums,monto,op,img,est,creado,vence,nota,bor,prev,fin,agencia,ref FROM part WHERE rifa=? ORDER BY creado DESC').bind(id).all();
   return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, board: r.board, act: r.act }, parts: results });
 }
 

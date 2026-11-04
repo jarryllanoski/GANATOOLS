@@ -122,6 +122,15 @@ a{color:var(--ac)}
 .pre>b{display:flex;align-items:center;padding:0 11px;background:var(--bg3);border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;font-weight:600;font-size:12px;color:var(--mu)}
 .pre input{border-radius:0 8px 8px 0!important}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
+.trec.hecho{color:var(--ok);border-color:#2ea04366}
+.caja-hoy{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 14px}
+.caja-hoy div{padding:12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);text-align:center}
+.caja-hoy b{display:block;font-size:18px;font-weight:800}
+.caja-hoy span{font-size:11px;color:var(--mu)}
+.caja-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
+.caja-tabla th{text-align:left;color:var(--mu);font-weight:600;font-size:11px;padding:6px 4px;border-bottom:1px solid var(--line)}
+.caja-tabla td{padding:8px 4px;border-bottom:1px solid var(--line)}
+.caja-tabla tfoot td{font-weight:800;border-bottom:0}
 .in-sel{width:100%;padding:11px 12px;border-radius:9px;background:var(--bg2);border:1.5px solid var(--line);color:var(--tx);font-size:14px}
 .sopt.mig{border-color:var(--line);background:var(--bg2);color:var(--tx);font-weight:600;flex-direction:column;align-items:flex-start;gap:2px}
 .sopt.mig.on{border-color:var(--ac);background:#388bfd1a}
@@ -350,6 +359,8 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
         <button class="ibtn gold" id="bSort" title="Sortear">🎲</button>
         <button class="ibtn" id="bTrash" title="Papelera">🗑️</button>
         <button class="ibtn" id="bAgregar" title="Agregar participante">➕</button>
+        <button class="ibtn" id="bRecordar" title="Recordar a reservas sin pago">⏰</button>
+        <button class="ibtn" id="bCaja" title="Caja del día">💰</button>
         <button class="ibtn" id="bMigrar" title="Migrar participantes a otro sorteo">⇄</button>
       </div>
     </div>
@@ -466,6 +477,7 @@ const S = {
 const formURL = () => (S.form || new URL('formulario.html', location.href).href).split('?')[0];
 const linkSorteo = id => `${formURL()}?r=${id}`;
 const linkPart = id => `${formURL()}?r=${id}&v=p`;
+const linkVivo = id => `${formURL()}?r=${id}&v=vivo`;
 const linkBoleto = tok => `${formURL()}?t=${tok}`;
 const pubImg = k => k ? S.api.replace(/\/$/, '') + '/pub/' + k : '';
 
@@ -648,6 +660,7 @@ function renderChips() {
   $('#chipTodos').className = 'chip fija' + (S.filtro === 'todos' ? ' on' : '');
   $('#chipTodos').innerHTML = `<span>TODOS</span><b>📋 ${activos}</b>`;
   const nX = n('X'); $('#bTrash').innerHTML = '🗑️' + (nX ? `<span class="bdg">${nX}</span>` : '');
+  const nR = reservasPendientes().length; $('#bRecordar').innerHTML = '⏰' + (nR ? `<span class="bdg">${nR}</span>` : '');
   $('#chips').innerHTML = gord().map(g => `<button class="chip fija ${S.filtro === g ? 'on' : ''}" data-f="${g}"><span>${GRP[g].t}</span><b>${GRP[g].i} ${n(g)}</b></button>`).join('');
 }
 function setFiltro(f) { if (S.filtro === f) return; S.filtro = f; if (S.vista === 'grilla') S.vista = 'lista'; renderChips(); renderLista(); }
@@ -712,7 +725,7 @@ function cardHTML(p, c) {
     <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
-    ${info}${p.dni ? `<div class="card-addr">🪪 ${esc(documentoDe(p.dni))}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
+    ${info}${p.dni ? `<div class="card-addr">🪪 ${esc(documentoDe(p.dni))}</div>` : ''}${p.ref ? `<div class="card-addr">🤝 Invitado por ${esc(S.d.parts.find(x => x.id === p.ref)?.nombre || 'otro participante')}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
     <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="${g === 'F' ? 'Ya participó del sorteo' : 'Mandar a la papelera (toca 2 veces)'}" ${g === 'F' ? 'disabled' : ''}>🗑️</button></div>
   </div>`;
 }
@@ -1072,6 +1085,79 @@ function abrirAgregarParticipante() {
   };
 }
 
+function rankingReferidosHTML() {
+  const conPago = S.d.parts.filter(p => p.ref && (p.est === 'V' || p.est === 'P'));
+  const porReferente = new Map();
+  for (const p of conPago) {
+    const r = porReferente.get(p.ref) || { invitados: 0, tickets: 0 };
+    r.invitados++; r.tickets += splitN(p.nums).length; porReferente.set(p.ref, r);
+  }
+  const ranking = [...porReferente.entries()].sort((a, b) => b[1].invitados - a[1].invitados || b[1].tickets - a[1].tickets).slice(0, 20);
+  if (!ranking.length) return '<p class="hint">Aún nadie ha llegado con un link de invitación.</p>';
+  return ranking.map(([id, r], i) => {
+    const quien = S.d.parts.find(p => p.id === id);
+    return `<div class="trow"><div><b>${i + 1}. ${esc(quien?.nombre || 'Participante eliminado')}</b><div class="xs mu">${quien ? esc(quien.cel) + ' · ' : ''}${r.tickets} tickets de sus invitados</div></div><b class="c-ok">${r.invitados} 🤝</b></div>`;
+  }).join('');
+}
+
+/* =====================================================================
+   RECORDAR A RESERVAS SIN PAGO
+   ===================================================================== */
+const reservasPendientes = () => (S.d?.parts || []).filter(p => p.est === 'R' && (!p.vence || p.vence > Date.now())).sort((a, b) => (a.vence || 0) - (b.vence || 0));
+const claveRecordados = () => 'recordados_' + S.rid;
+function abrirRecordatorios() {
+  const lista = reservasPendientes(), c = cfg();
+  if (!lista.length) return toast('No hay reservas sin pago por ahora');
+  const recordados = new Set(lsGet(claveRecordados(), []));
+  const faltan = p => { const min = Math.max(0, Math.round((p.vence - Date.now()) / 6e4)); return p.vence ? (min < 60 ? `vence en ${min} min` : `vence en ${Math.round(min / 60)} h`) : 'sin vencimiento'; };
+  const m = modal(`<h2>⏰ Reservas sin pago (${lista.length})</h2>
+    <p class="mu sm" style="margin-bottom:6px">Recuérdales que paguen antes de que sus números se liberen. Toca 💬 en cada uno: se abre WhatsApp con el mensaje listo.</p>
+    ${lista.map(p => `<div class="trow"><div><b>${esc(p.nombre)}</b>
+      <div class="xs mu">${splitN(p.nums).map(i => fmtN(c, i)).join(', ')} · ${c.modo === 'pago' ? fmtS(p.monto) + ' · ' : ''}<b class="c-warn">${faltan(p)}</b></div></div>
+      <button class="btn-sec trec${recordados.has(p.id) ? ' hecho' : ''}" data-recordar="${p.id}">${recordados.has(p.id) ? '✓ Enviado' : '💬 Recordar'}</button></div>`).join('')}`);
+  m.addEventListener('click', e => {
+    const b = e.target.closest('[data-recordar]'); if (!b) return;
+    const p = lista.find(x => x.id === b.dataset.recordar);
+    abrir(waURL(p.cel, msgCliente(p, c)));
+    recordados.add(p.id); lsSet(claveRecordados(), [...recordados].slice(-500));
+    b.classList.add('hecho'); b.textContent = '✓ Enviado';
+  });
+}
+
+/* =====================================================================
+   CAJA DEL DÍA (por fecha de registro, hora de Perú)
+   ===================================================================== */
+const diaPeru = ms => new Date(ms - 5 * 3600e3).toISOString().slice(0, 10);
+function resumenPorDia(participantes) {
+  const dias = new Map();
+  for (const p of participantes) {
+    if (p.est === 'X') continue;
+    const dia = diaPeru(p.creado), d = dias.get(dia) || { registros: 0, tickets: 0, confirmado: 0, revision: 0, reservado: 0 };
+    d.registros++; d.tickets += splitN(p.nums).length;
+    const monto = +p.monto || 0;
+    if (p.est === 'P') d.confirmado += monto; else if (p.est === 'V') d.revision += monto; else d.reservado += monto;
+    dias.set(dia, d);
+  }
+  return [...dias.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+}
+function abrirCaja() {
+  const c = cfg(), hoy = diaPeru(Date.now()), dias = resumenPorDia(S.d.parts);
+  const deHoy = dias.find(([d]) => d === hoy)?.[1] || { registros: 0, tickets: 0, confirmado: 0, revision: 0, reservado: 0 };
+  const total = dias.reduce((t, [, d]) => ({ confirmado: t.confirmado + d.confirmado, revision: t.revision + d.revision, reservado: t.reservado + d.reservado }), { confirmado: 0, revision: 0, reservado: 0 });
+  const nombreDia = d => d === hoy ? 'Hoy' : new Date(d + 'T12:00').toLocaleDateString('es-PE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+  modal(`<h2>💰 Caja · ${esc(c.titulo)}</h2>
+    <div class="caja-hoy">
+      <div><b class="c-ok">${fmtS(deHoy.confirmado)}</b><span>Confirmado hoy</span></div>
+      <div><b class="c-ac">${fmtS(deHoy.revision)}</b><span>Por confirmar hoy</span></div>
+      <div><b>${deHoy.tickets}</b><span>Tickets hoy</span></div>
+      <div><b>${deHoy.registros}</b><span>Registros hoy</span></div>
+    </div>
+    <table class="caja-tabla"><thead><tr><th>Día</th><th>Tickets</th><th>Confirmado</th><th>Por confirmar</th></tr></thead>
+      <tbody>${dias.slice(0, 14).map(([d, x]) => `<tr><td>${nombreDia(d)}</td><td>${x.tickets}</td><td class="c-ok">${fmtS(x.confirmado)}</td><td class="c-ac">${fmtS(x.revision)}</td></tr>`).join('') || '<tr><td colspan="4" class="mu">Sin registros todavía</td></tr>'}</tbody>
+      <tfoot><tr><td>Total</td><td></td><td class="c-ok">${fmtS(total.confirmado)}</td><td class="c-ac">${fmtS(total.revision)}</td></tr></tfoot></table>
+    <p class="hint" style="margin-top:10px">Por fecha de registro. "Por confirmar" son pagos con captura que aún no revisas.${total.reservado ? ` Además hay ${fmtS(total.reservado)} en reservas sin pago.` : ''}</p>`);
+}
+
 /* =====================================================================
    MIGRAR PARTICIPANTES A OTRO SORTEO
    ===================================================================== */
@@ -1253,7 +1339,7 @@ function verResultado() {
    ===================================================================== */
 function renderCompartir() {
   if (!S.d) return;
-  const c = cfg(), L = linkSorteo(S.rid), P = linkPart(S.rid), ps = S.d.parts;
+  const c = cfg(), L = linkSorteo(S.rid), P = linkPart(S.rid), V = linkVivo(S.rid), ps = S.d.parts;
   const nC = ps.filter(p => p.est === 'P').length, nP = ps.filter(p => grp(p) !== 'X' && !impresos.has(p.id)).length;
   $('#t-compartir').innerHTML = `
     <div class="hero"><b>🔑</b><h2>Links para clientes</h2><p>Comparte el sorteo o genera un link único por cliente.<br>El link personalizado se bloquea tras un uso.</p></div>
@@ -1278,6 +1364,17 @@ function renderCompartir() {
       <div class="link-box" data-c="${esc(P)}" title="Toca para copiar">${esc(P)}</div>
       <div class="frow"><button class="bt-dark" data-c="${esc(P)}">📋 Copiar link</button><button class="bt-dark mu" data-o="${esc(P)}">↗ Abrir</button></div>
       <button class="bt-wa" id="cWaP" style="margin-top:8px">💬 Compartir por WhatsApp</button>
+    </div>
+
+    <div class="cfg-sec"><div class="cfg-ttl">📺 Pantalla del sorteo en vivo</div>
+      <div class="cfg-sub">Ábrela en un televisor, proyector o en tu transmisión. Muestra el premio, la cuenta regresiva, los tickets en juego y un QR para participar. Cuando sortees con 🎲, revela a los ganadores sola.</div>
+      <div class="link-box" data-c="${esc(V)}" title="Toca para copiar">${esc(V)}</div>
+      <div class="frow"><button class="bt-dark" data-c="${esc(V)}">📋 Copiar link</button><button class="bt-dark mu" data-o="${esc(V)}">↗ Abrir</button></div>
+    </div>
+
+    <div class="cfg-sec"><div class="cfg-ttl">🤝 Referidos</div>
+      <div class="cfg-sub">Cada cliente tiene en su ticket un link para invitar amigos. Aquí ves quién trae más gente (solo cuentan los invitados con pago). El premio por invitar se configura en Config.</div>
+      ${rankingReferidosHTML()}
     </div>
 
     <div class="sec-hdr pur">🧰 Nuevas funciones</div>
@@ -1404,6 +1501,11 @@ function renderConfig() {
     ${F('tiendaDir', 'Dirección de tu tienda (para Retiro en tienda)', 'maxlength="200" placeholder="Ej: Av. Universitaria 1234, Los Olivos"')}
   </div>
 
+  <div class="card"><h3>🤝 Referidos</h3>
+    ${F('premioReferido', 'Premio por invitar (opcional, lo ve el cliente en su ticket)', 'maxlength="200" placeholder="Ej: Por cada 3 amigos que participen, te regalamos 1 ticket"')}
+    <p class="hint">El premio lo entregas tú con ➕ Agregar participante. El ranking está en la pestaña Compartir.</p>
+  </div>
+
   <div class="card"><h3>📅 Fechas y reservas</h3>
     ${F('cierre', 'Fecha y hora del sorteo', 'data-t="date"', 'datetime-local')}
     <div class="grid2">${F('bloqueoH', 'Cerrar venta (horas antes)', 'min="0" inputmode="numeric" data-t="num"', 'number')}${F('reservaMin', 'Reserva sin pago (minutos)', 'min="5" inputmode="numeric" data-t="num"', 'number')}</div>
@@ -1438,7 +1540,13 @@ function renderConfig() {
     <label class="fld"><span>URL de formulario.html</span><input id="sysForm" placeholder="${esc(new URL('formulario.html', location.href).href)}"></label>
     <p class="hint">🔐 Compromiso de semilla: <span style="word-break:break-all">${esc(cfg().seedHash || '')}</span></p>
     <div style="display:grid;gap:8px;margin-top:12px"><button class="btn bad full" id="cfgDel">🗑️ Eliminar este sorteo</button></div>
+  </div>
+  <div class="card"><h3>💾 Respaldos</h3>
+    <p class="hint" style="margin:0 0 10px">Cada día se guarda una copia de todos los sorteos y participantes. Se conservan los últimos 30 días.</p>
+    <div id="respaldos"><p class="hint">Cargando…</p></div>
+    <button class="btn full" id="respaldarAhora" style="margin-top:10px">💾 Respaldar ahora</button>
   </div>`;
+  cargarRespaldos();
   const c = cfg();
   $$('[data-k]', $('#t-config')).forEach(el => {
     const k = el.dataset.k, t = el.dataset.t, v = c[k];
@@ -1509,6 +1617,51 @@ function eliminarRifa() {
   boton.onclick = confirmar;
   pin.onkeydown = e => { if (e.key === 'Enter') confirmar(); };
 }
+/* =====================================================================
+   RESPALDOS (copias diarias en R2)
+   ===================================================================== */
+const pesoLegible = bytes => bytes < 1024 ? `${bytes} B` : bytes < 1048576 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+async function cargarRespaldos() {
+  const caja = $('#respaldos'); if (!caja) return;
+  try {
+    const { respaldos } = await API.req('/api/admin/respaldos');
+    caja.innerHTML = respaldos.length ? respaldos.slice(0, 10).map(r => `<div class="trow"><div><b>${r.nombre.replace('.json', '')}</b><div class="xs mu">${pesoLegible(r.bytes)}</div></div>
+      <button class="btn sm" data-descargar="${r.nombre}">⬇️</button><button class="btn sm" data-restaurar-de="${r.nombre}">♻️ Restaurar</button></div>`).join('')
+      : '<p class="hint">Aún no hay respaldos. El primero se crea esta noche, o toca "Respaldar ahora".</p>';
+  } catch (e) { caja.innerHTML = `<p class="hint c-bad">${esc(e.message)}</p>`; }
+}
+async function respaldarAhora() {
+  const b = $('#respaldarAhora'); b.disabled = true;
+  try { const r = await API.req('/api/admin/respaldos', { method: 'POST' }); toast(`💾 Respaldo listo: ${r.sorteos} sorteos, ${r.participantes} participantes`, 'ok'); await cargarRespaldos(); }
+  catch (e) { toast(e.message, 'bad'); }
+  b.disabled = false;
+}
+async function descargarRespaldo(nombre) {
+  try {
+    const r = await fetch(S.api.replace(/\/$/, '') + '/api/admin/respaldos/' + nombre, { headers: { 'x-pin': S.pin } });
+    if (!r.ok) throw new Error('No se pudo descargar');
+    descargar(await r.blob(), 'sorteos-' + nombre);
+  } catch (e) { toast(e.message, 'bad'); }
+}
+async function abrirRestaurarDesde(nombre) {
+  let sorteos;
+  try { ({ sorteos } = await API.req(`/api/admin/respaldos/${nombre}/sorteos`)); } catch (e) { return toast(e.message, 'bad'); }
+  const m = modal(`<h2>♻️ Restaurar del ${nombre.replace('.json', '')}</h2>
+    <p class="mu sm" style="margin-bottom:6px">Solo se pueden restaurar los sorteos que ya no existen. No se toca nada más.</p>
+    ${sorteos.map(r => `<div class="trow"><div><b>${esc(r.titulo)}</b><div class="xs mu">${r.participantes} participantes${r.eliminado ? ' · estaba en la papelera' : ''}</div></div>
+      ${r.existe ? '<span class="xs mu">Existe</span>' : `<button class="btn-sec trec" data-sorteo="${r.id}">♻️ Restaurar</button>`}</div>`).join('')}`);
+  m.addEventListener('click', async e => {
+    const b = e.target.closest('[data-sorteo]'); if (!b) return;
+    if (!confirm('¿Restaurar este sorteo tal como estaba ese día?')) return;
+    b.disabled = true;
+    try {
+      const r = await API.req(`/api/admin/respaldos/${nombre}/restaurar`, { body: { rifa: b.dataset.sorteo } });
+      m.close(); toast(`♻️ Sorteo restaurado con ${r.restaurados} registro(s)`, 'ok');
+      S.rid = b.dataset.sorteo; await cargarRifas(); await cargarDetalle(); irTab('sorteo');
+    } catch (er) { toast(er.message, 'bad'); b.disabled = false; }
+  });
+}
+
 function abrirRifasEliminadas() {
   const DIA = 864e5, quedan = r => Math.max(0, Math.ceil((r.eliminado + PAPELERA_DIAS * DIA - Date.now()) / DIA));
   const m = modal(`<h2>🗑️ Sorteos eliminados</h2>
@@ -1569,6 +1722,8 @@ document.addEventListener('click', async e => {
   const gp = t.closest('[data-gp]'); if (gp) return imprimirSel(gp.dataset.gp);
   const sc = t.closest('[data-sc]'); if (sc) return scrollCard(+sc.dataset.sc);
   const nv = t.closest('[data-nv]'); if (nv) return irAlRegistro(nv.dataset.nv);
+  const desc = t.closest('[data-descargar]'); if (desc) return descargarRespaldo(desc.dataset.descargar);
+  const rest = t.closest('[data-restaurar-de]'); if (rest) return abrirRestaurarDesde(rest.dataset.restaurarDe);
   const np = t.closest('[data-np]'); if (np) { const p = S.d.parts.find(x => x.id === np.dataset.np); return p && imprimirTickets([p]); }
   const im = t.closest('img[data-img]'); if (im && im.src) return modal(`<h2>🧾 Comprobante</h2><img class="bigimg" src="${im.src}"><a class="btn full" style="margin-top:10px" href="${im.src}" download="comprobante.webp">💾 Descargar</a>`);
   const nb = t.closest('.nb[data-n]');
@@ -1590,6 +1745,8 @@ document.addEventListener('click', async e => {
     case 'sbMig': return S.d && abrirMigrar();
     case 'bMigrar': return S.d && abrirMigrar();
     case 'bAgregar': return S.d && abrirAgregarParticipante();
+    case 'bRecordar': return S.d && abrirRecordatorios();
+    case 'bCaja': return S.d && abrirCaja();
     case 'sbX': S.sel.clear(); return renderLista();
     case 'cTkC': return imprimirTickets(S.d.parts.filter(p => p.est === 'P'));
     case 'cTkP': return imprimirTickets(S.d.parts.filter(p => grp(p) !== 'X' && !impresos.has(p.id)));
@@ -1611,6 +1768,7 @@ document.addEventListener('click', async e => {
     case 'difW': return abrir(waURL('', $('#dif').value));
     case 'cfgSave': return guardarCfg();
     case 'cfgDel': return eliminarRifa();
+    case 'respaldarAhora': return respaldarAhora();
     case 'bRifasEliminadas': return abrirRifasEliminadas();
     case 'basesTpl': { const ta = $('[data-k="bases"]'); if (ta.value && !confirm('¿Reemplazar las bases actuales?')) return; ta.value = plantillaBases(); return; }
     case 'qx': S.q = ''; $('#q').value = ''; $('#qx').hidden = true; return renderLista();

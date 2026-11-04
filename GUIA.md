@@ -94,6 +94,29 @@ El código está en `public/impresion.js`: para agregar un tamaño, se añade un
   origen; en el destino reciben **los mismos si están libres** o **nuevos al azar**. Se mueven con sus
   comprobantes. Es todo o nada: si algo cambia a la mitad, no se mueve nadie. Las reservas sin pago no se migran.
 
+## Herramientas del panel
+- **⏰ Recordar**: lista las reservas sin pago (con cuánto falta para que venzan) y abre WhatsApp con el mensaje listo, una por una.
+- **💰 Caja**: confirmado y por confirmar de hoy, y de los últimos 14 días (por fecha de registro).
+- **🤝 Referidos**: cada ticket trae un link personal para invitar amigos (`?ref=`). Solo cuentan los invitados con pago y
+  nadie puede invitarse a sí mismo. Ranking en Compartir; el premio por invitar se escribe en Config y lo entregas con ➕.
+- **📺 Pantalla en vivo** (Compartir): `formulario?r=ID&v=vivo`. Para TV, proyector o transmisión: premio, cuenta regresiva,
+  tickets en juego y QR. Al sortear con 🎲, revela los ganadores sola.
+
+## Mis otros registros
+Se guardan en el navegador de cada aparato, junto al DNI (o celular) de su dueño. En el ticket solo aparecen los
+del mismo DNI: en una PC compartida, cada cliente ve solo los suyos. No consume consultas.
+
+## Respaldos
+- Cada día (3:17 a. m.) se guarda una copia de sorteos, participantes y links en R2 (`respaldos/AAAA-MM-DD.json`). Se guardan 30 días.
+- Panel → Config → **Respaldos**: respaldar ahora, descargar, y **restaurar** un sorteo que ya no exista (no toca nada más).
+- Las fotos ya están en R2 y no se copian.
+
+## Dominio propio (paso manual)
+1. Tu dominio (por ejemplo `totaltools.pe`) debe estar en Cloudflare: dash.cloudflare.com → **Agregar sitio** y cambiar los
+   servidores DNS en tu proveedor del dominio por los que te da Cloudflare.
+2. Workers & Pages → **sorteos** → Configuración → **Dominios y rutas** → **Agregar** → **Dominio personalizado** → `sorteos.totaltools.pe`.
+3. Avisar para cambiar `ALLOWED_ORIGIN` y la URL de la API en las páginas.
+
 ## Eliminar un sorteo (papelera de sorteos)
 - Config → **Eliminar este sorteo** pide tu **PIN** otra vez.
 - El sorteo va a la **papelera de sorteos** con todos sus participantes, números y comprobantes:
