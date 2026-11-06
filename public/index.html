@@ -122,6 +122,7 @@ a{color:var(--ac)}
 .pre>b{display:flex;align-items:center;padding:0 11px;background:var(--bg3);border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;font-weight:600;font-size:12px;color:var(--mu)}
 .pre input{border-radius:0 8px 8px 0!important}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
+.card-note.regalo{color:var(--ok);border-color:#2ea04355;background:#2ea0431a}
 .faq details{border-bottom:1px solid var(--line)}
 .faq summary{padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px}
 .faq summary::-webkit-details-marker{display:none}
@@ -733,7 +734,7 @@ function cardHTML(p, c) {
     <div class="card-meta"><a class="m" href="tel:${esc(p.cel)}">📞 ${esc(p.cel)}</a><span class="m">📅 ${fecha(p.creado)}</span>${c.modo === 'pago' ? `<span class="m amt">💰 ${fmtS(p.monto)}</span>` : ''}${lk ? '<span class="m" style="color:var(--pur)">🔗 Link personal</span>' : ''}</div>
     <div class="nums">${nums.map(i => `<span class="num">${fmtN(c, i)}</span>`).join('')}</div>
     ${p.img || p.op ? `<div class="comp">${p.img ? `<img class="thumb" data-img="${esc(p.img)}" alt="Comprobante">` : ''}<div class="sm">${p.op ? `🧾 N° op: <b>${esc(p.op)}</b><br>` : ''}${p.img ? '<span class="mu">Toca la foto para ampliar.<br>⚠️ Confirma en tu app de Yape antes de confirmar.</span>' : ''}</div></div>` : ''}
-    ${info}${p.dni ? `<div class="card-addr">🪪 ${esc(documentoDe(p.dni))}</div>` : ''}${p.ref ? `<div class="card-addr">🤝 Invitado por ${esc(S.d.parts.find(x => x.id === p.ref)?.nombre || 'otro participante')}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
+    ${info}${p.dni ? `<div class="card-addr">🪪 ${esc(documentoDe(p.dni))}</div>` : ''}${p.ref ? `<div class="card-addr">🤝 Invitado por ${esc(S.d.parts.find(x => x.id === p.ref)?.nombre || 'otro participante')}</div>` : ''}${agDe(p) ? `<div class="card-addr">${ENV_IC[agDe(p).courier] || '📦'} <b>${esc(agDe(p).courier)}</b> · ${esc(envTexto(agDe(p)))}${agDe(p).dep ? ' · ' + esc(agDe(p).dep) : ''}</div>` : c.pedirAgencia && p.est !== 'X' ? '<div class="card-addr c-warn">⚠️ Sin datos de envío (pídeselos si gana)</div>' : ''}${p.nota?.startsWith('regalo:') ? '<div class="card-note regalo">🎁 Ticket de regalo por invitar amigos</div>' : p.nota && !lk ? `<div class="card-note">📝 ${esc(p.nota)}</div>` : ''}
     <div class="card-actions"><button class="btn-st st-${g}" data-a="estado">${GRP[g].i} ${GRP[g].t}</button><button class="btn-edit" data-a="editar" title="Editar">✏️</button><button class="btn-del" data-a="anular" title="${g === 'F' ? 'Ya participó del sorteo' : 'Mandar a la papelera (toca 2 veces)'}" ${g === 'F' ? 'disabled' : ''}>🗑️</button></div>
   </div>`;
 }
@@ -794,7 +795,14 @@ async function cambiarEstado(list, g) {
   if (fijos.length) toast(`🏁 ${fijos.length > 1 ? fijos.length + ' ya participaron' : 'Ya participó'} del sorteo: no va a la papelera`);
   if (!todo.length) return fijos.length ? null : toast(`Ya está en ${GRP[g].t}`);
   let ok = 0; const fallos = [];
-  for (const p of todo) { try { await API.accion(p.id, ACC[g]); ok++; S.sel.delete(p.id); } catch (e) { fallos.push(`${p.nombre.split(' ')[0]}: ${e.message}`); } }
+  const regalos = [];
+  for (const p of todo) {
+    try {
+      const j = await API.accion(p.id, ACC[g]); ok++; S.sel.delete(p.id);
+      if (j.regalo) regalos.push(`${j.regalo.para.split(' ')[0]} (N° ${j.regalo.numero})`);
+    } catch (e) { fallos.push(`${p.nombre.split(' ')[0]}: ${e.message}`); }
+  }
+  if (regalos.length) setTimeout(() => toast(`🎁 Ticket de regalo por invitar: ${regalos.join(', ')}`, 'ok'), 1800);
   if (ok) toast(g === 'X' ? `🗑️ ${ok > 1 ? ok + ' registros enviados' : 'Enviado'} a la papelera · se puede recuperar ${PAPELERA_DIAS} días` : `${GRP[g].i} ${ok > 1 ? ok + ' registros' : 'Registro'} → ${GRP[g].t}`, 'ok');
   if (fallos.length) setTimeout(() => toast(fallos[0], 'bad'), ok ? 1600 : 0);
   await cargarDetalle();
@@ -1045,7 +1053,7 @@ const AYUDA_PANEL = {
       ['¿Para qué sirve el link personalizado?', 'Para un cliente específico (por ejemplo, alguien que te escribió por WhatsApp): su nombre y celular ya vienen llenos. Se puede usar <b>una sola vez</b>.'],
       ['¿Quién puede ver la lista de participantes?', 'Cualquiera con el link, con nombres y celulares ocultos. A los clientes el enlace les aparece recién cuando hay <b>100 participantes o más</b>.'],
       ['¿Cómo uso la pantalla en vivo?', 'Ábrela en un televisor, proyector o en tu transmisión antes de sortear. Muestra el premio, la cuenta regresiva, los tickets en juego y un QR. Cuando toques 🎲 en el panel, revela a los ganadores sola en unos segundos.'],
-      ['¿Cómo funcionan los referidos?', 'Cada cliente tiene en su ticket un link para invitar amigos. Aquí ves el ranking de quién trae más gente (solo cuentan los invitados con pago). Si ofreces un premio por invitar, escríbelo en Config y entrégalo con <b>➕</b>.'],
+      ['¿Cómo funcionan los referidos?', 'Cada cliente tiene en su ticket un link para invitar amigos. Cuando confirmas el pago de un invitado, quien lo invitó <b>recibe solo un ticket gratis</b> (lo ajustas en Config → Referidos). Aquí ves el ranking de quién trae más gente.'],
       ['¿Para qué es el QR?', 'Para tu tienda, volantes o publicaciones: al escanearlo se abre el link del sorteo.'],
     ],
   },
@@ -1561,8 +1569,10 @@ function renderConfig() {
   </div>
 
   <div class="card"><h3>🤝 Referidos</h3>
-    ${F('premioReferido', 'Premio por invitar (opcional, lo ve el cliente en su ticket)', 'maxlength="200" placeholder="Ej: Por cada 3 amigos que participen, te regalamos 1 ticket"')}
-    <p class="hint">El premio lo entregas tú con ➕ Agregar participante. El ranking está en la pestaña Compartir.</p>
+    ${F('refRegalo', 'Ticket gratis cada cuántos amigos confirmados (0 = sin regalo)', 'min="0" max="50" inputmode="numeric" data-t="num"', 'number')}
+    <p class="hint" style="margin:-4px 0 10px">Se regala solo: al confirmar el pago del amigo, quien lo invitó recibe un ticket con un número al azar.</p>
+    ${F('premioReferido', 'Mensaje extra para el cliente (opcional)', 'maxlength="200" placeholder="Ej: ¡Y el que más amigos traiga gana un premio sorpresa!"')}
+    <p class="hint">El ranking de quién trae más amigos está en la pestaña Compartir.</p>
   </div>
 
   <div class="card"><h3>📅 Fechas y reservas</h3>
@@ -1614,6 +1624,7 @@ function renderConfig() {
     else if (t === 'lines') el.value = (v || []).join('\n');
     else if (t === 'promos') el.value = (v || []).map(p => `${p.n}=${p.p}`).join('\n');
     else if (t === 'date') el.value = toLocalInput(v);
+    else if (k === 'refRegalo') el.value = v ?? 1;
     else el.value = v ?? '';
   });
   $$('[data-prev]').forEach(im => { const k = c[im.dataset.prev]; im.src = k ? pubImg(k) : ''; im.style.visibility = k ? 'visible' : 'hidden'; });

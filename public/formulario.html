@@ -140,6 +140,17 @@ pre.bank{white-space:pre-wrap;font:inherit;font-size:13px;padding:11px;border-ra
 .vok{color:var(--ok);font-weight:700}.vko{color:var(--bad);font-weight:700}
 details summary{cursor:pointer;font-weight:700;padding:4px 0}
 .ayuda{cursor:pointer}
+.sonido{width:38px;height:34px;border-radius:9px;background:var(--bg3);border:1px solid var(--line);font-size:15px}
+.prev.listo .prev-ver{animation:popComprobante .6s cubic-bezier(.2,1.6,.4,1)}
+.prev.listo .prev-ver img{box-shadow:0 0 0 3px var(--ok),0 0 24px #22c55e88;transition:box-shadow 1.2s}
+.prev.listo .prev-ok{display:inline-block;animation:popComprobante .6s .1s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes popComprobante{0%{transform:scale(.6);opacity:.2}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
+#fOp{cursor:pointer}
+.invitar{border-color:#22c55e55;background:linear-gradient(160deg,#22c55e14,var(--bg3) 60%)}
+.regalos{padding:10px 12px;border-radius:12px;background:#22c55e1a;border:1px solid #22c55e55;margin-bottom:12px}
+.regalos b{display:block;color:var(--ok);margin-bottom:6px}
+.regalos .lbl-nums{display:flex;flex-wrap:wrap;gap:5px}
+.regalos .lbl-nums i{font-style:normal;font-weight:900;font-size:14px;padding:2px 9px;border-radius:6px;background:var(--ok);color:#04120a}
 .faq details{border-bottom:1px solid var(--line);padding:4px 0}
 .faq summary{padding:11px 0;font-size:14.5px;list-style:none;display:flex;justify-content:space-between;gap:10px}
 .faq summary::-webkit-details-marker{display:none}
@@ -381,6 +392,36 @@ function mostrarBarra(visible) {
   $('#sbar').hidden = !visible;
   document.documentElement.style.setProperty('--alto-barra', visible ? $('#sbar').offsetHeight + 'px' : '0px');
 }
+/* Sonidos de la interfaz: tonos cortos generados con Web Audio. Se silencian con 🔊 y se recuerda. */
+const SONIDOS = {
+  toque: [[660, 0, 0.05]],
+  tic: [[1200, 0, 0.025]],
+  exito: [[523, 0, 0.09], [659, 0.08, 0.09], [784, 0.16, 0.16]],
+  premio: [[523, 0, 0.1], [659, 0.1, 0.1], [784, 0.2, 0.1], [1047, 0.3, 0.3]],
+};
+const audio = { contexto: null, mudo: lsGet('mudo', false) };
+function sonido(nombre) {
+  if (audio.mudo || !SONIDOS[nombre]) return;
+  try {
+    audio.contexto ||= new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audio.contexto, inicio = ctx.currentTime;
+    for (const [frecuencia, retraso, duracion] of SONIDOS[nombre]) {
+      const oscilador = ctx.createOscillator(), volumen = ctx.createGain();
+      oscilador.type = 'sine'; oscilador.frequency.value = frecuencia;
+      volumen.gain.setValueAtTime(0.0001, inicio + retraso);
+      volumen.gain.exponentialRampToValueAtTime(0.12, inicio + retraso + 0.01);
+      volumen.gain.exponentialRampToValueAtTime(0.0001, inicio + retraso + duracion);
+      oscilador.connect(volumen).connect(ctx.destination);
+      oscilador.start(inicio + retraso); oscilador.stop(inicio + retraso + duracion + 0.02);
+    }
+  } catch (e) {}
+}
+const vibrar = patron => { try { navigator.vibrate?.(patron); } catch (e) {} };
+function alternarSonido() {
+  audio.mudo = !audio.mudo; lsSet('mudo', audio.mudo);
+  $$('.sonido').forEach(b => { b.textContent = audio.mudo ? '🔇' : '🔊'; });
+  if (!audio.mudo) sonido('toque');
+}
 function toast(msg, tipo = '') { const t = $('#toast'); t.textContent = msg; t.className = 'toast on ' + tipo; clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 3200); }
 function modal(html) {
   const m = document.createElement('div'); m.className = 'mod';
@@ -390,7 +431,7 @@ function modal(html) {
 }
 async function copiar(t) {
   try { await navigator.clipboard.writeText(t); } catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
-  toast('📋 Copiado');
+  toast('📋 Copiado'); sonido('toque');
 }
 function waURL(num, text) { let n = String(num || '').replace(/\D/g, ''); if (n.length === 9) n = '51' + n; return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text); }
 function precioTotal(c, k) {
@@ -463,7 +504,7 @@ const app = $('#app');
 function cabecera(c) {
   const neg = c?.negocio || CONFIG.NEGOCIO;
   document.title = c?.titulo ? `${c.titulo} · ${neg}` : neg;
-  return `<div class="hdr"><b>🎟️ ${esc(neg.toUpperCase())}</b>${c ? '<button class="ayuda" id="bAyuda" type="button">❓ Ayuda</button>' : ''}</div>`;
+  return `<div class="hdr"><b>🎟️ ${esc(neg.toUpperCase())}</b>${c ? `<button class="sonido" id="bSonido" type="button" aria-label="Sonido">${audio.mudo ? '🔇' : '🔊'}</button><button class="ayuda" id="bAyuda" type="button">❓ Ayuda</button>` : ''}</div>`;
 }
 /* ───── Ayuda: preguntas frecuentes según la pantalla, con los datos reales del sorteo ───── */
 const vistaActual = () => (S.t ? 'boleto' : S.v === 'p' ? 'participantes' : 'formulario');
@@ -472,7 +513,7 @@ function preguntasFrecuentes(c, vista) {
   const promos = (c.promos || []).map(p => `${p.n} tickets por ${fmtS(p.p)}`).join(', ');
   const medios = [c.yape && `Yape al ${c.yape}`, c.plin && `Plin al ${c.plin}`, c.bancos && 'transferencia bancaria'].filter(Boolean).join(', ');
   const fechaSorteo = c.cierre ? `El sorteo es el <b>${fechaL(c.cierre)}</b>.` : 'La fecha del sorteo se anunciará pronto.';
-  const comoParticipar = { p: '¿Cómo participo?', r: `Son 3 pasos: <b>1)</b> elige cuántos tickets quieres, <b>2)</b> escribe tu DNI y tu WhatsApp, <b>3)</b> ${pago ? 'paga y sube la captura de tu pago' : 'confirma'}. Al final tocas <b>Revelar mis números</b> y ves tus números al instante.` };
+  const comoParticipar = { p: '¿Cómo participo?', r: `Son 3 pasos: <b>1)</b> elige cuántos tickets quieres, <b>2)</b> escribe tu DNI y tu WhatsApp, <b>3)</b> ${pago ? 'paga y sube la captura de tu pago' : 'confirma'}. Al final tocas <b>Confirmar mis tickets</b> y ves tus números al instante.` };
   const azar = { p: '¿Puedo elegir mis números?', r: 'No. Los números se asignan <b>al azar</b> entre los disponibles, en el momento en que te registras. Así todos tienen la misma oportunidad y nadie puede apartar los "números de la suerte".' };
   const precio = pago && { p: '¿Cuánto cuesta?', r: `Cada ticket cuesta <b>${fmtS(c.precio)}</b>.${promos ? ` Promociones: ${promos}.` : ''} Más tickets, más oportunidades de ganar.` };
   const comoPagar = pago && { p: '¿Cómo pago?', r: `${medios ? `Por ${medios}.` : 'Con los datos que aparecen en el paso de pago.'} Luego sube la <b>captura</b> (puedes tomar foto, elegirla de tu galería o pegarla) y escribe el <b>N° de operación</b>.` };
@@ -487,7 +528,8 @@ function preguntasFrecuentes(c, vista) {
   const demora = { p: '¿Cuánto demora la confirmación?', r: 'Revisamos cada pago directamente en nuestra cuenta y lo confirmamos lo antes posible. Si quieres acelerarlo, envíanos tu registro por WhatsApp con el botón verde.' };
   const premio = { p: 'Si gano, ¿cómo recibo el premio?', r: `Te escribimos por WhatsApp.${c.pedirAgencia ? ' En tu ticket puedes dejar elegido cómo quieres recibirlo (agencia, delivery o recojo en tienda).' : ''} Para recibirlo debes mostrar el <b>DNI</b> que registraste.` };
   const perdi = { p: 'Perdí el link de mi ticket', r: 'Escríbenos por WhatsApp con tu DNI y te lo reenviamos.' };
-  const invitar = { p: '¿Para qué sirve "Invita a tus amigos"?', r: `Es tu link personal: cuando un amigo participa con él, sabemos que llegó de tu parte.${c.premioReferido ? ` <b>${esc(c.premioReferido)}</b>` : ''}` };
+  const porTicket = c.refRegalo ?? 1;
+  const invitar = { p: '¿Cómo gano tickets gratis?', r: porTicket ? `Comparte tu link desde tu ticket. Cuando ${porTicket === 1 ? 'un amigo participa' : `${porTicket} amigos participan`} con él y su pago se confirma, te regalamos <b>1 ticket gratis</b> con un número al azar. Aparece en tu ticket automáticamente.${c.premioReferido ? ` ${esc(c.premioReferido)}` : ''}` : `Es tu link personal: cuando un amigo participa con él, sabemos que llegó de tu parte.${c.premioReferido ? ` <b>${esc(c.premioReferido)}</b>` : ''}` };
   const lista = { p: '¿Por qué los nombres están ocultos?', r: 'Para proteger los datos de cada participante. Igual puedes buscar tu nombre o tu número para comprobar que estás en la lista.' };
   const verificar = { p: '¿Cómo verifico el resultado?', r: 'Cuando se realice el sorteo, en esta página aparece el botón <b>Verificar ahora</b>. Tu celular repite el cálculo y comprueba que los ganadores son exactamente los publicados.' };
 
@@ -700,7 +742,7 @@ function datosValidos() {
 function pasoPagoHTML(c) {
   const pago = c.modo === 'pago';
   return `<section class="paso" id="pPago" hidden>
-    <div class="paso-cab"><span class="paso-n">3</span><div><h2>${pago ? 'Paga y asegura tus tickets' : 'Confirma tu participación'}</h2><p class="mu sm">${pago ? 'Yapea, sube la captura y revela tus números.' : 'Un toque y revelas tus números.'}</p></div></div>
+    <div class="paso-cab"><span class="paso-n">3</span><div><h2>${pago ? 'Paga y asegura tus tickets' : 'Confirma tu participación'}</h2><p class="mu sm">${pago ? 'Yapea, sube la captura y confirma tus tickets.' : 'Un toque y tus tickets quedan listos.'}</p></div></div>
     ${pago ? `<div id="secPay">${pagoHTML(c)}${subidaHTML(c, !c.compObl)}</div>` : ''}
     <div id="tsBox" style="margin-top:12px"></div>
     <p class="legal">Al participar aceptas las <a href="#" id="verBases">bases del sorteo</a>. Tu nombre y celular aparecen ocultos en la lista pública.</p>
@@ -718,7 +760,7 @@ function actualizarFlujo(opciones = {}) {
   if (S.qty && !datosValidos()) {
     const primera = $('#pPago').hidden;
     revelarSeccion('pPago', opciones);
-    if (primera && !opciones.sinScroll) { document.activeElement?.blur(); heavy(S.cfg.modo === 'pago' ? '¡Último paso! 💳 Yapea, sube tu captura y revela tus números. 🎲' : '¡Último paso! Toca revelar y mira tus números. 🎲'); }
+    if (primera && !opciones.sinScroll) { document.activeElement?.blur(); heavy(S.cfg.modo === 'pago' ? '¡Último paso! 💳 Yapea, sube tu captura y confirma tus tickets.' : '¡Último paso! Confirma y mira tus números. 🎲'); }
   }
   actBar();
 }
@@ -739,7 +781,7 @@ function actBar() {
   const c = S.cfg, n = S.qty, listo = n && !loQueFalta();
   $('#sbN').textContent = n ? `${n} ticket${n === 1 ? '' : 's'}` : 'Elige tus tickets';
   $('#sbT').textContent = n ? (c.modo === 'pago' ? fmtS(precioTotal(c, n)) : 'Gratis') : '';
-  $('#sbGo').textContent = !n ? 'Elegir' : listo ? '🎲 Revelar mis números' : 'Continuar';
+  $('#sbGo').textContent = !n ? 'Elegir' : listo ? '✅ Confirmar mis tickets' : 'Continuar';
   $('#sbGo').classList.toggle('ok', !!listo);
   $$('.tot').forEach(e => e.textContent = fmtS(precioTotal(c, n)));
 }
@@ -778,20 +820,20 @@ function animarRevelado(numeros) {
   return new Promise(listo => {
     const terminar = () => {
       $('#rvT', capa).textContent = numeros.length === 1 ? '¡Este es tu número!' : '¡Estos son tus números!';
-      capa.classList.add('fin'); confeti(capa);
+      capa.classList.add('fin'); confeti(capa); sonido('premio'); vibrar([40, 60, 120]);
       let cerrado = false;
       const cerrar = () => { if (cerrado) return; cerrado = true; capa.classList.add('sale'); setTimeout(() => { capa.remove(); listo(); }, 350); };
       capa.onclick = cerrar;
-      setTimeout(cerrar, 2800);
+      setTimeout(cerrar, 1500);
     };
     if (sinMovimiento) { cajas.forEach((caja, i) => { caja.innerHTML = [...fmtN(c, visibles[i])].map(d => `<span>${d}</span>`).join(''); caja.classList.add('ok'); }); return terminar(); }
     const giro = setInterval(() => $$('.rv-num:not(.ok) span', capa).forEach(d => { d.textContent = Math.floor(Math.random() * 10); }), 55);
-    const paso = Math.min(700, 2400 / visibles.length);
+    const paso = Math.min(320, 1400 / visibles.length);
     cajas.forEach((caja, i) => setTimeout(() => {
       caja.innerHTML = [...fmtN(c, visibles[i])].map(d => `<span>${d}</span>`).join(''); caja.classList.add('ok');
-      try { navigator.vibrate?.(35); } catch (e) {}
-      if (i === cajas.length - 1) { clearInterval(giro); setTimeout(terminar, 350); }
-    }, 900 + i * paso));
+      sonido('tic'); vibrar(30);
+      if (i === cajas.length - 1) { clearInterval(giro); setTimeout(terminar, 250); }
+    }, 450 + i * paso));
   });
 }
 function confeti(capa) {
@@ -984,7 +1026,7 @@ async function envGuardar() {
   try {
     const r = await fetch(API_URL() + `/api/t/${encodeURIComponent(ENV.boleto.tok)}/envio`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(d) });
     const j = await r.json(); if (!r.ok || !j.ok) throw new Error(j.error || 'No se pudo guardar');
-    ENV.boleto.p.agencia = j.agencia; toast('📦 ¡Listo! Ya sabemos cómo enviarte el premio', 'ok');
+    ENV.boleto.p.agencia = j.agencia; toast('📦 ¡Listo! Ya sabemos cómo enviarte el premio', 'ok'); sonido('exito');
     heavy('¡Perfecto! 🚚 Si ganas, ya sabemos cómo enviarte el premio. ¡Mucha suerte! 🍀');
     $('#secEnv').outerHTML = envioHTML(S.cfg, ENV.boleto.p);
     envSeguir();
@@ -1033,7 +1075,7 @@ function subidaHTML(c, permiteDespues) {
       </div>
       ${isMobile ? '' : '<span class="xs mu">o arrástrala aquí, o pégala con Ctrl + V</span>'}
     </div>
-    <div class="prev" id="prev" hidden><button class="prev-ver" id="verComprobante" type="button" aria-label="Ver comprobante"><img id="prevImg" alt=""><span>🔍</span></button><div class="sm"><b class="c-ok">✔ Comprobante listo</b><br><span class="xs mu">Toca la imagen para verla grande</span><br><button class="btn sm" id="quitar" style="margin-top:6px">Cambiar foto</button></div></div>
+    <div class="prev" id="prev" hidden><button class="prev-ver" id="verComprobante" type="button" aria-label="Ver comprobante"><img id="prevImg" alt=""><span>🔍</span></button><div class="sm"><b class="c-ok prev-ok">✔ ¡Pago recibido!</b><br><span class="xs mu">Toca la imagen para verla grande</span><br><button class="btn sm" id="quitar" style="margin-top:6px">Cambiar foto</button></div></div>
     ${c.opObl !== false ? `<div id="opBox" hidden style="margin-top:12px"><label class="fld"><span>N° de operación *</span><input class="in" id="fOp" inputmode="numeric" maxlength="30" placeholder="Aparece en tu comprobante"></label></div>` : ''}
     ${permiteDespues ? `<label class="sw"><input type="checkbox" id="despues"><span>Pagaré después <span class="mu">(reservo mis números por ${c.reservaMin || 30} min)</span></span></label>` : ''}
     <div class="warnbox">⚠️ Verificamos cada pago directamente en nuestra cuenta antes de confirmar. Los comprobantes editados se anulan.</div>`;
@@ -1065,11 +1107,18 @@ async function procesarComprobante(file) {
     if (blob.size > 1.45e6) throw new Error('La imagen es muy pesada, intenta con una captura');
     S.file = blob; S.ih = ih;
     $('#prevImg').src = URL.createObjectURL(blob); $('#prev').hidden = false; zona.hidden = true;
-    if ($('#opBox')) { $('#opBox').hidden = false; setTimeout(() => $('#fOp').focus(), 250); }
+    celebrarComprobante();
+    if ($('#opBox')) { $('#opBox').hidden = false; setTimeout(() => $('#opBox').scrollIntoView({ behavior: 'smooth', block: 'center' }), 350); }
     if ($('#despues')) $('#despues').checked = false;
   } catch (e) { toast(e.message, 'bad'); zona.classList.remove('has'); }
   titulo.textContent = 'Sube la captura de tu pago';
   if ($('#sbar') && !$('#sbar').hidden) actBar();
+}
+function celebrarComprobante() {
+  const vista = $('#prev');
+  vista.classList.remove('listo'); void vista.offsetWidth; vista.classList.add('listo');
+  sonido('exito'); vibrar([25, 40, 60]);
+  heavy($('#opBox') ? '¡Pago recibido! 📸 Solo falta el N° de operación: toca el campo y lo copias mirando tu captura.' : '¡Pago recibido! 📸 Ya casi: confirma tus tickets.');
 }
 function quitarComprobante() {
   S.file = null; $('#prev').hidden = true; $('#drop').hidden = false; $('#drop').classList.remove('has');
@@ -1080,7 +1129,7 @@ function verComprobante() {
   const conOp = !!$('#fOp');
   const m = modal(`<h2>🧾 Tu comprobante</h2><img src="${$('#prevImg').src}" class="comp-grande" alt="Comprobante">
     ${conOp ? `<label class="fld" style="margin-top:12px"><span>N° de operación *</span><input class="in" id="fOpGrande" inputmode="numeric" maxlength="30" placeholder="Cópialo de la imagen" value="${esc($('#fOp').value)}"></label>` : ''}
-    <button class="btn-main" data-x>Listo</button>`);
+    <button class="btn-main" data-x>✔ Listo</button>`);
   const grande = $('#fOpGrande', m);
   if (grande) { grande.oninput = () => { $('#fOp').value = grande.value; if (!$('#sbar').hidden) actBar(); }; setTimeout(() => grande.focus(), 250); }
 }
@@ -1133,15 +1182,22 @@ async function enviar() {
    ===================================================================== */
 /* Invitar amigos: el link lleva el código de este participante (?ref=) */
 const linkInvitacion = (r, idParticipante) => `${linkForm(r)}&ref=${idParticipante}`;
-function invitarHTML(c, p, invitados) {
+function invitarHTML(c, p, { invitados = 0, invitadosConfirmados = 0, regalos = [] } = {}) {
   if (c.resultado || c.estado !== 'activa' || p.est === 'X' || !p.id) return '';
-  const enlace = linkInvitacion(S.r, p.id);
-  const mensaje = `🎟️ Estoy participando en *${c.titulo}*${c.premios?.[0] ? ` por ${c.premios[0]}` : ''}. ¡Participa tú también aquí! 👇\n${enlace}`;
-  return `<div class="card" id="secInvitar"><h2>🤝 Invita a tus amigos</h2>
-    ${c.premioReferido ? `<p class="sm" style="margin:-4px 0 10px"><b class="c-ok">🎁 ${esc(c.premioReferido)}</b></p>` : '<p class="sm mu" style="margin:-4px 0 10px">Comparte tu link personal: así sabemos que vienen de tu parte.</p>'}
-    ${invitados ? `<p class="sm" style="margin-bottom:10px">🔥 <b>${invitados} amigo${invitados === 1 ? '' : 's'}</b> ya participa${invitados === 1 ? '' : 'n'} con tu link</p>` : ''}
-    <a class="btn wa full" href="https://wa.me/?text=${encodeURIComponent(mensaje)}" target="_blank">💬 Invitar por WhatsApp</a>
-    <button class="btn full" data-c="${esc(enlace)}" style="margin-top:8px">🔗 Copiar mi link de invitación</button></div>`;
+  const enlace = linkInvitacion(S.r, p.id), porTicket = c.refRegalo ?? 1;
+  const mensaje = `🎟️ ¡Ya estoy participando por *${c.premios?.[0] || c.titulo}*! Entra con mi link y participa tú también 👇\n${enlace}`;
+  const promesa = porTicket
+    ? `Comparte tu link: <b>por ${porTicket === 1 ? 'cada amigo' : `cada ${porTicket} amigos`} que participe, te llevas 1 ticket GRATIS</b> 🎁`
+    : 'Comparte tu link personal: así sabemos que tus amigos vienen de tu parte.';
+  const faltan = porTicket ? porTicket - (invitadosConfirmados % porTicket) : 0;
+  const enEspera = invitados - invitadosConfirmados;
+  return `<div class="card invitar" id="secInvitar"><h2>🎁 Gana tickets gratis</h2>
+    <p class="sm" style="margin:-4px 0 12px">${promesa}</p>
+    ${c.premioReferido ? `<p class="sm c-ok" style="margin:-6px 0 12px">${esc(c.premioReferido)}</p>` : ''}
+    ${regalos.length ? `<div class="regalos"><b>🎉 Ganaste ${regalos.length} ticket${regalos.length === 1 ? '' : 's'} gratis</b><div class="lbl-nums">${regalos.map(n => `<i>${esc(n)}</i>`).join('')}</div></div>` : ''}
+    ${invitados ? `<p class="sm" style="margin-bottom:10px">🔥 <b>${invitados} amigo${invitados === 1 ? '' : 's'}</b> ya participa${invitados === 1 ? '' : 'n'} con tu link${enEspera ? ` (${enEspera} esperando confirmación de pago)` : ''}.${porTicket > 1 ? ` Te falta${faltan === 1 ? '' : 'n'} ${faltan} para el próximo ticket.` : ''}</p>` : ''}
+    <a class="btn wa full" href="https://wa.me/?text=${encodeURIComponent(mensaje)}" target="_blank">💬 Compartir con mis amigos</a>
+    <button class="btn full" data-c="${esc(enlace)}" style="margin-top:8px">🔗 Copiar mi link</button></div>`;
 }
 function msgNegocio(c, p, tok, titulo = 'NUEVO REGISTRO') {
   const nums = splitN(p.nums).map(i => fmtN(c, i)).join(', ');
@@ -1185,7 +1241,7 @@ async function vBoleto(tok, nuevo) {
       <div class="tk-row"><span class="mu">Código</span><b>${esc(String(p.id || '').toUpperCase())}</b></div>
   </div>
   <p class="sm" style="text-align:center;margin:0 6px 12px">${expl}</p>`;
-  h += envioHTML(c, p) + invitarHTML(c, p, j.invitados || 0);
+  h += invitarHTML(c, p, j) + envioHTML(c, p);
   if (puedePagar) h += `<div class="card" id="secPay"><h2>💳 Paga y sube tu comprobante</h2>${pagoHTML(c, p.monto)}${subidaHTML(c, false)}<button class="btn ac full" id="bPagar" style="margin-top:12px">📤 Enviar comprobante</button></div>`;
   const acciones = [
     participantesVisibles() && `<a class="btn full" href="${linkPart(S.r)}">👥 Ver participantes</a>`,
@@ -1450,7 +1506,8 @@ document.addEventListener('click', e => {
   const t = e.target;
   // El globo de Heavy se cierra con cualquier toque fuera de él: nunca tapa un botón
   if ($('#hvB') && !t.closest('#hv')) $('#hvB').hidden = true;
-  const pack = t.closest('[data-qty]'); if (pack) return elegirCantidad(+pack.dataset.qty);
+  if (t.id === 'fOp' && S.file) return verComprobante();
+  const pack = t.closest('[data-qty]'); if (pack) { sonido('toque'); vibrar(12); return elegirCantidad(+pack.dataset.qty); }
   const doc = t.closest('[data-doc]'); if (doc) return cambiarDocumento(doc.dataset.doc);
   const pfb = t.closest('[data-pf]'); if (pfb) { pf = pfb.dataset.pf; $$('[data-pf]').forEach(b => b.classList.toggle('on', b === pfb)); return renderPList(); }
   const cp = t.closest('[data-c]'); if (cp) return copiar(cp.dataset.c);
@@ -1469,14 +1526,24 @@ document.addEventListener('click', e => {
     case 'envGo': return envGuardar();
     case 'envCambiar': $('#envPick').hidden = false; $('#envCambiar').hidden = true; return;
     case 'envDespues': $('#envPick').hidden = true; $('#envDespues').hidden = true; toast('Puedes elegirlo después desde el link de tu boleto'); return envSeguir();
-    case 'qm': return elegirCantidad(Math.max(1, S.qty - 1));
-    case 'qp': if (S.qty >= S.maxTickets) return toast(`Máximo ${S.maxTickets} tickets por registro`); return elegirCantidad(S.qty + 1);
+    case 'qm': sonido('toque'); return elegirCantidad(Math.max(1, S.qty - 1));
+    case 'qp': if (S.qty >= S.maxTickets) return toast(`Máximo ${S.maxTickets} tickets por registro`); sonido('toque'); return elegirCantidad(S.qty + 1);
     case 'quitar': return quitarComprobante();
     case 'pegar': return pegarComprobante();
     case 'verComprobante': return verComprobante();
     case 'bVer': return verificar();
     case 'bAyuda': return abrirAyuda();
+    case 'bSonido': return alternarSonido();
   }
+});
+// Con la captura cargada, tocar el N° de operación abre la captura grande con el campo (sin teclado
+// encima de la imagen). Se abre en el click, cuando ya se levantó el dedo: si se abriera al presionar,
+// ese mismo click caería sobre el fondo de la ventana y la cerraría.
+document.addEventListener('pointerdown', e => { if (e.target.id === 'fOp' && S.file) e.preventDefault(); });
+document.addEventListener('focusin', e => {
+  if (e.target.id !== 'fOp' || !S.file || $('.mod')) return;
+  e.target.blur();
+  verComprobante();
 });
 document.addEventListener('paste', e => {
   const zona = $('#drop'); if (!zona || zona.hidden || !zona.offsetParent) return;

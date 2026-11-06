@@ -80,6 +80,7 @@ const DEF = {
   compObl: false, opObl: true, wa: '', negocio: '', bases: '', tsKey: '',
   pedirDni: true, pedirAgencia: true,  // DNI obligatorio (con nombre de RENIEC) y preguntar cómo enviar el premio (opcional para el cliente)
   tiendaDir: '',                       // dirección de la tienda, para "Retiro en tienda"
+  refRegalo: 1,                        // amigos confirmados por cada ticket de regalo al que invita (0 = sin regalo)
 };
 
 /* ---------------- Entrada ---------------- */
@@ -434,6 +435,11 @@ async function entrar(req, env, id) {
         .bind(pid, id, tok, nombre, cel, dni, idx.join(','), monto, op || null, key, ih || null, est, t, vence, iph, code ? 'link:' + code : null, agencia, referente, id, r.ver),
     ];
     if (code) pre.push(env.DB.prepare(`UPDATE links SET usado=1 WHERE code=? AND usado=0 AND ${VER_OK}`).bind(code, id, r.ver));
+    if (est === 'P' && referente) {
+      const tablero = r.board.split('');
+      const regalo = await regaloPorInvitar(env, r, { ref: referente }, tablero);
+      if (regalo) { pre.push(regalo.sentencia); r.board = tablero.join(''); }
+    }
     if (await commit(env, r, pre, 1)) return J({ ok: true, tok, id: pid, nums: idx, est, vence, monto, nombre });
     r = await loadRifa(env, id);
   }
@@ -525,6 +531,29 @@ async function guardarEnvio(req, env, tok) {
   return J({ ok: true, agencia: v });
 }
 
+// Regalo por invitar: cada `refRegalo` amigos con pago confirmado, quien invitó recibe un ticket
+// gratis con un número al azar. Se calcula sobre lo ya regalado, así confirmar dos veces no duplica.
+// Devuelve la sentencia a sumar al mismo commit (condicionada a la versión) o null.
+const notaRegalo = idParticipante => 'regalo:' + idParticipante;
+async function regaloPorInvitar(env, r, invitado, tablero) {
+  const porTicket = r.cfg.refRegalo ?? 1;
+  if (!invitado.ref || !porTicket) return null;
+  const quien = await env.DB.prepare("SELECT id,nombre,cel,dni FROM part WHERE id=? AND rifa=? AND est!='X'").bind(invitado.ref, r.id).first();
+  if (!quien) return null;
+  const [confirmados, regalados] = await Promise.all([
+    env.DB.prepare("SELECT COUNT(*) n FROM part WHERE ref=? AND rifa=? AND est='P' AND id!=?").bind(quien.id, r.id, invitado.id || '').first(),
+    env.DB.prepare("SELECT COUNT(*) n FROM part WHERE nota=? AND rifa=? AND est!='X'").bind(notaRegalo(quien.id), r.id).first(),
+  ]);
+  if (Math.floor((confirmados.n + 1) / porTicket) <= regalados.n) return null;
+  const libres = tablero.flatMap((c, j) => (c === '0' ? [j] : []));
+  if (!libres.length) return null;
+  const [numero] = pickRandom(libres, 1);
+  tablero[numero] = '3';
+  const sentencia = env.DB.prepare(`INSERT INTO part (id,rifa,tok,nombre,cel,dni,nums,monto,est,creado,vence,nota) SELECT ?,?,?,?,?,?,?,0,'P',?,0,? WHERE ${VER_OK}`)
+    .bind(rid(8), r.id, rid(18), quien.nombre, quien.cel, quien.dni, String(numero), now(), notaRegalo(quien.id), r.id, r.ver);
+  return { sentencia, numero, para: quien.nombre };
+}
+
 // Solo cuenta como invitación si el que invita participa en el mismo sorteo y no es la misma persona
 async function referenteValido(env, rifa, invitadoPor, celular) {
   if (!invitadoPor) return null;
@@ -538,7 +567,9 @@ async function boleto(env, tok) {
   const r = await loadRifa(env, p.rifa);
   if (p.est === 'R' && p.vence && p.vence <= now()) { p.est = 'X'; p.nota = 'vencido'; }
   const invitados = await env.DB.prepare("SELECT COUNT(*) n FROM part WHERE ref=? AND est IN ('V','P')").bind(p.id).first();
-  return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, participantes: await contarParticipantes(env, r.id) }, p: { ...p, cel: maskCel(p.cel), img: !!p.img }, invitados: invitados?.n || 0 });
+  const confirmados = await env.DB.prepare("SELECT COUNT(*) n FROM part WHERE ref=? AND est='P'").bind(p.id).first();
+  const { results: regalos } = await env.DB.prepare("SELECT nums FROM part WHERE nota=? AND est!='X'").bind(notaRegalo(p.id)).all();
+  return J({ ok: true, rifa: { id: r.id, cfg: r.cfg, participantes: await contarParticipantes(env, r.id) }, p: { ...p, cel: maskCel(p.cel), img: !!p.img }, invitados: invitados?.n || 0, invitadosConfirmados: confirmados?.n || 0, regalos: regalos.flatMap(x => splitNums(x.nums)).map(j => fmtNum(r.cfg, j)) });
 }
 
 async function pagoTardio(req, env, tok) {
@@ -652,7 +683,7 @@ function sanitize(c) {
   num('bloqueoH', 0, 720); num('reservaMin', 5, 10080); num('precio', 0, 1e6, false); num('cierre', 0, 4e12);
   bool('elegir'); bool('aprobar'); bool('compObl'); bool('opObl'); bool('pedirDni'); bool('pedirAgencia');
   for (const e of ENVIOS) bool(e.k);
-  str('tiendaDir', 200); str('premioReferido', 200);
+  str('tiendaDir', 200); str('premioReferido', 200); num('refRegalo', 0, 50);
   if ('promos' in c) o.promos = (Array.isArray(c.promos) ? c.promos : []).map(p => ({ n: Math.round(+p.n || 0), p: Math.max(0, Math.round((+p.p || 0) * 100) / 100) })).filter(p => p.n > 1).slice(0, 10);
   return o;
 }
@@ -955,7 +986,7 @@ async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
   if (!MAP[acc]) err('Acción inválida');
   const [est, ch] = MAP[acc], fin = acc === 'culminar' ? 1 : 0;
   for (let i = 0; i < CFG.RETRIES; i++) {
-    const p = await env.DB.prepare('SELECT id,rifa,nums,est,nota,fin FROM part WHERE id=?').bind(pid).first();
+    const p = await env.DB.prepare('SELECT id,rifa,nums,est,nota,fin,ref FROM part WHERE id=?').bind(pid).first();
     if (!p) err('Participante no encontrado', 404);
     if (p.est === est && (est !== 'P' || (p.fin || 0) === fin)) return J({ ok: true, est, fin });
     if (est === 'X' && p.est === 'P' && p.fin) err('Ya participó del sorteo (CULMINADO): no se puede mandar a la papelera');
@@ -976,7 +1007,9 @@ async function accion(env, pid, { acc, nota, nombre, cel, dni, op }) {
     const nn = est === 'X' ? (acc === 'rechazar' ? 'rechazado' : 'liberado') : (p.nota === 'vencido' || p.nota === 'rechazado' || p.nota === 'liberado' ? null : p.nota);
     const bor = est === 'X' ? now() : null, prev = est === 'X' ? p.est : null;
     const pre = [env.DB.prepare(`UPDATE part SET est=?, nota=?, vence=0, bor=?, prev=?, fin=? WHERE id=? AND ${VER_OK}`).bind(est, nn, bor, prev, est === 'P' ? fin : 0, pid, r.id, r.ver)];
-    if (await commit(env, r, pre)) return J({ ok: true, est, fin });
+    const regalo = est === 'P' ? await regaloPorInvitar(env, r, p, b) : null;
+    if (regalo) { pre.push(regalo.sentencia); r.board = b.join(''); }
+    if (await commit(env, r, pre)) return J({ ok: true, est, fin, regalo: regalo && { para: regalo.para, numero: fmtNum(r.cfg, regalo.numero) } });
   }
   err('Intenta de nuevo', 503);
 }
