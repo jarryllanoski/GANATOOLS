@@ -122,6 +122,13 @@ a{color:var(--ac)}
 .pre>b{display:flex;align-items:center;padding:0 11px;background:var(--bg3);border:1px solid var(--line);border-right:0;border-radius:8px 0 0 8px;font-weight:600;font-size:12px;color:var(--mu)}
 .pre input{border-radius:0 8px 8px 0!important}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{padding:12px 0;font-size:14px;font-weight:700;cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:'+';color:var(--ac);font-size:20px;line-height:1}
+.faq details[open] summary::after{content:'−'}
+.faq p{padding:0 0 12px;font-size:13px;line-height:1.6;color:var(--mu)}
+.faq p b{color:var(--tx)}
 .trec.hecho{color:var(--ok);border-color:#2ea04366}
 .caja-hoy{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 14px}
 .caja-hoy div{padding:12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);text-align:center}
@@ -361,6 +368,7 @@ canvas.tal{width:100%;border-radius:10px;border:1px solid var(--line);margin-top
         <button class="ibtn" id="bAgregar" title="Agregar participante">➕</button>
         <button class="ibtn" id="bRecordar" title="Recordar a reservas sin pago">⏰</button>
         <button class="ibtn" id="bCaja" title="Caja del día">💰</button>
+        <button class="ibtn" id="bAyudaSorteo" title="Ayuda">❓</button>
         <button class="ibtn" id="bMigrar" title="Migrar participantes a otro sorteo">⇄</button>
       </div>
     </div>
@@ -1012,6 +1020,57 @@ function imprimirTickets(participantes) {
   });
 }
 /* =====================================================================
+   AYUDA DEL PANEL (preguntas frecuentes del organizador, por pestaña)
+   ===================================================================== */
+const AYUDA_PANEL = {
+  sorteo: {
+    titulo: '❓ Ayuda · Sorteo',
+    preguntas: [
+      ['¿Qué significan NUEVO, CONFIRMADO y CULMINADO?', '<b>🆕 Nuevo:</b> registro por revisar (reservó o subió su captura).<br><b>✅ Confirmado:</b> verificaste su pago y sus números participan.<br><b>🏁 Culminado:</b> ya participó del sorteo. Al sortear con 🎲, los confirmados pasan solos a culminado.'],
+      ['¿Cómo confirmo un pago?', 'Abre la captura (toca la foto), revisa en <b>tu app de Yape o tu banco</b> que el dinero llegó con ese N° de operación y toca el botón de estado de la tarjeta → <b>✅ Confirmado</b>. Luego puedes enviarle la confirmación por WhatsApp.'],
+      ['¿Qué hace cada botón de la barra?', '<b>☑️</b> seleccionar todos · <b>🖨️</b> imprimir seleccionados · <b>📊</b> descargar Excel (CSV) · <b>🔄</b> actualizar · <b>▦</b> ver talonario · <b>🏆</b> resultado · <b>🎲</b> sortear · <b>🗑️</b> papelera · <b>➕</b> agregar participante · <b>⇄</b> migrar a otro sorteo · <b>⏰</b> recordar a reservas sin pago · <b>💰</b> caja del día.'],
+      ['¿Cómo borro un registro?', 'Toca el tacho 🗑️ de la tarjeta <b>dos veces</b>. Va a la papelera, sus números quedan libres y puedes <b>recuperarlo durante 30 días</b>. Los culminados no se pueden borrar: ya participaron.'],
+      ['¿Cómo agrego a alguien que pagó por WhatsApp o en tienda?', 'Toca <b>➕</b>. Escribe su DNI (el nombre sale solo), su celular y cuántos tickets quiere <b>o</b> los números exactos. Al terminar puedes enviarle su ticket por WhatsApp o imprimirlo.'],
+      ['¿Cómo paso participantes a otro sorteo?', 'Toca <b>⇄</b> (o selecciona algunos y toca "⇄ Migrar"). Elige a quiénes, el sorteo de destino y si conservan sus números (si están libres) o reciben nuevos al azar. Se mueven con sus comprobantes y al final ves quién cambió de número.'],
+      ['¿Cómo imprimo los tickets?', 'Selecciona participantes y toca <b>🖨️</b>. Elige el formato: A4 a color, ticketera de 80 o 58 mm, o sticker. Sale <b>un ticket por cada número</b>. En la ventana de impresión elige el mismo tamaño de papel, márgenes "ninguno" y escala 100 %.'],
+      ['¿Cómo hago el sorteo?', 'Toca <b>🎲</b>, elige cuántos ganadores y suplentes, y confirma. Solo participan los números <b>confirmados</b>. El resultado queda publicado y es verificable. Si abres antes la <b>📺 pantalla en vivo</b> (pestaña Compartir), revela a los ganadores sola.'],
+      ['¿Qué es la campana 🔔?', 'Muestra los registros de las últimas 48 horas. El número rojo son los que aún no imprimes.'],
+      ['¿Cómo busco a alguien?', 'Escribe en el buscador su nombre, celular, N° de operación o uno de sus números. Con <b>⚙️</b> filtras por fecha, comprobante, monto o cantidad de números.'],
+    ],
+  },
+  compartir: {
+    titulo: '📖 Ayuda · Compartir',
+    preguntas: [
+      ['¿Qué link le mando a mis clientes?', 'El <b>Link del sorteo</b>: ahí eligen cuántos tickets quieren, ponen su DNI y WhatsApp, pagan y ven sus números al instante.'],
+      ['¿Para qué sirve el link personalizado?', 'Para un cliente específico (por ejemplo, alguien que te escribió por WhatsApp): su nombre y celular ya vienen llenos. Se puede usar <b>una sola vez</b>.'],
+      ['¿Quién puede ver la lista de participantes?', 'Cualquiera con el link, con nombres y celulares ocultos. A los clientes el enlace les aparece recién cuando hay <b>100 participantes o más</b>.'],
+      ['¿Cómo uso la pantalla en vivo?', 'Ábrela en un televisor, proyector o en tu transmisión antes de sortear. Muestra el premio, la cuenta regresiva, los tickets en juego y un QR. Cuando toques 🎲 en el panel, revela a los ganadores sola en unos segundos.'],
+      ['¿Cómo funcionan los referidos?', 'Cada cliente tiene en su ticket un link para invitar amigos. Aquí ves el ranking de quién trae más gente (solo cuentan los invitados con pago). Si ofreces un premio por invitar, escríbelo en Config y entrégalo con <b>➕</b>.'],
+      ['¿Para qué es el QR?', 'Para tu tienda, volantes o publicaciones: al escanearlo se abre el link del sorteo.'],
+    ],
+  },
+  config: {
+    titulo: '📖 Ayuda · Configuración',
+    preguntas: [
+      ['¿Cómo guardo los cambios?', 'Toca <b>💾 Guardar</b> (arriba a la derecha). Guardar no pide PIN. El botón rojo "Eliminar este sorteo" es otra cosa: <b>no lo uses para guardar</b>.'],
+      ['¿Dónde pongo la foto del premio?', 'En <b>Foto del premio</b>: sale grande al inicio del formulario y en la pantalla en vivo.'],
+      ['¿Cómo pongo promociones?', 'En <b>Promociones</b>, una por línea con el formato <b>cantidad=precio</b>. Ejemplo: <b>3=25</b> y <b>10=80</b>. El formulario las muestra como paquetes con el ahorro.'],
+      ['¿Qué es "Comprobante obligatorio"?', 'Si está prendido, el cliente debe subir la captura para registrarse. Si lo apagas, puede marcar <b>"Pagaré después"</b> y sus números quedan reservados los minutos que indiques en <b>Reserva sin pago</b>.'],
+      ['¿Qué hace "Pedir DNI"?', 'El cliente escribe su DNI y su nombre sale solo de RENIEC. Los extranjeros eligen <b>Carnet ext.</b> y llenan a mano.'],
+      ['¿Qué es "Envío del premio"?', 'Después de registrarse, el cliente puede elegir cómo recibir el premio si gana (Shalom, Olva, Marvisur, delivery, otras agencias o retiro en tienda). Puedes apagar cada opción y escribir la dirección de tu tienda.'],
+      ['¿Qué pasa al eliminar un sorteo?', 'Pide tu PIN y lo manda a la <b>papelera de sorteos</b> con todo. Se recupera desde <b>🗑️ Eliminados</b> en la barra de sorteos durante 30 días; después se borra para siempre.'],
+      ['¿Qué son los respaldos?', 'Cada noche se guarda una copia de todos los sorteos (30 días). Con <b>♻️ Restaurar</b> recuperas un sorteo que ya no existe, sin tocar el resto. También puedes respaldar ahora o descargar la copia.'],
+      ['¿Cómo cambio mi PIN?', 'En Cloudflare: Workers & Pages → sorteos → Configuración → Variables y secretos → <b>ADMIN_PIN</b> → ✏️ → Rotar.'],
+    ],
+  },
+};
+function abrirAyudaPanel(tema) {
+  const { titulo, preguntas } = AYUDA_PANEL[tema];
+  const m = modal(`<h2>${titulo}</h2><div class="faq">${preguntas.map(([pregunta, respuesta], i) => `<details${i ? '' : ' open'}><summary>${pregunta}</summary><p>${respuesta}</p></details>`).join('')}</div>`);
+  m.addEventListener('toggle', e => { if (e.target.open) $$('details', m).forEach(d => { if (d !== e.target) d.open = false; }); }, true);
+}
+
+/* =====================================================================
    AGREGAR PARTICIPANTE (ventas por WhatsApp, en tienda, etc.)
    ===================================================================== */
 function abrirAgregarParticipante() {
@@ -1342,7 +1401,7 @@ function renderCompartir() {
   const c = cfg(), L = linkSorteo(S.rid), P = linkPart(S.rid), V = linkVivo(S.rid), ps = S.d.parts;
   const nC = ps.filter(p => p.est === 'P').length, nP = ps.filter(p => grp(p) !== 'X' && !impresos.has(p.id)).length;
   $('#t-compartir').innerHTML = `
-    <div class="hero"><b>🔑</b><h2>Links para clientes</h2><p>Comparte el sorteo o genera un link único por cliente.<br>El link personalizado se bloquea tras un uso.</p></div>
+    <div class="hero"><b>🔑</b><h2>Links para clientes <button class="ay" id="bAyudaCompartir">📖 Ayuda</button></h2><p>Comparte el sorteo o genera un link único por cliente.<br>El link personalizado se bloquea tras un uso.</p></div>
 
     <div class="cfg-sec"><div class="cfg-ttl">🎟️ Link del sorteo</div>
       <div class="cfg-sub">Los clientes eligen números, pagan y suben su comprobante.</div>
@@ -1751,7 +1810,9 @@ document.addEventListener('click', async e => {
     case 'cTkC': return imprimirTickets(S.d.parts.filter(p => p.est === 'P'));
     case 'cTkP': return imprimirTickets(S.d.parts.filter(p => grp(p) !== 'X' && !impresos.has(p.id)));
     case 'lkAy': return modal(`<h2>📖 Link personalizado</h2><p class="mu" style="line-height:1.6">Crea un link para <b>un cliente específico</b>. Al abrirlo, su nombre, celular y números ya vienen llenos.<br><br>🔒 Se puede usar <b>una sola vez</b>: después de registrarse, el link queda bloqueado.<br><br>💡 Útil para clientes que te piden números por WhatsApp o por llamada.</p>`);
-    case 'cfgAy': return modal(`<h2>📖 Configuración</h2><p class="mu" style="line-height:1.6"><b>📋 Formulario del cliente</b>: lo que ve el cliente al participar (premios, números, fechas, pagos y contacto).<br><br><b>⚙️ Configuración avanzada</b>: antispam, dirección del formulario y eliminar el sorteo.<br><br>Toca <b>💾 Guardar</b> para aplicar los cambios.</p>`);
+    case 'cfgAy': return abrirAyudaPanel('config');
+    case 'bAyudaSorteo': return abrirAyudaPanel('sorteo');
+    case 'bAyudaCompartir': return abrirAyudaPanel('compartir');
     case 'bRef': toast('🔄 Actualizando…'); await cargarRifas().catch(() => {}); return cargarDetalle();
     case 'bVista': S.vista = S.vista === 'lista' ? 'grilla' : 'lista'; return renderLista();
     case 'bCsv': return exportarCSV();
